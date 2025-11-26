@@ -98,7 +98,7 @@ DATASETS = {
     'airport': {
         'name': 'airport',
         'database_name': 'airport',
-        'primary_table': 'airport_data',
+        'primary_table': 'airports',
         'key_column': 'id',
         'tables': ['airport_data'],
         'domain_file': 'airport_domain_map.json',

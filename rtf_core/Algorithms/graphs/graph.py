@@ -167,3 +167,11 @@ plt.tight_layout(rect = [0, 0, 0.8, 1])
 plt.savefig('attribute_threshold_scatter_plot_paper_size.png', dpi = 300)
 
 print("Plot saved as 'attribute_threshold_scatter_plot_paper_size.png'")
+"""1. #dependencies (hyper-edges)
+2. #cells instantiated
+3. #cells deleted
+4. Length of longest path (depth)
+5. End to end time to delete
+ Please be careful of the scale you use for each axis.
+
+"""

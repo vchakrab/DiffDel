@@ -1,0 +1,1001 @@
+voter_id,voter_reg_num,name_prefix,first_name,middle_name,last_name,name_suffix,age,gender,race,ethnic,street_address,city,state,zip_code,full_phone_num,birth_place,register_date,download_month
+00000000,990000454758,nan,rodney,john,glockner,nan,37,m,w,nl,1708 pembroke jones dr,wilmington,nc,28405,910 509 3864,nj,01/01/1930,2011-10
+00000001,999000021841,nan,sallie,wilkins,blanchard,nan,111,f,w,nl,203 e main st,rose hill,nc,28458,910 289 3320,nc,01/01/1930,2011-12
+00000002,999000027078,nan,john,m,goodson,nan,102,m,w,nl,496 white flash rd,mt olive,nc,28365,910 658 3413,nc,01/01/1930,2011-12
+00000003,990002064270,nan,glenda,ware,battle,nan,56,f,b,nl,15360 pea bridge rd,laurinburg,nc,28352,nan,nan,10/01/1930,2011-10
+00000004,990004004166,nan,michele,koenig,bullock,nan,53,f,w,nl,242 northwood dr,whiteville,nc,28472,nan,pa,10/01/1930,2011-10
+00000005,000000824002,nan,clarence,ervin,hunter,jr,43,m,b,nl,280 pender rd,spring lake,nc,28390,nan,nc,06/03/1930,2011-10
+00000006,990003446015,nan,elva,minnie,wright,nan,81,f,w,nl,1314 tunnel rd,asheville,nc,28805,828 298 5912,nan,03/04/1930,2011-10
+00000007,990002427126,nan,adrienne,christine,franks,nan,28,f,m,nl,111 king richard ct,jacksonville,nc,28546,910 526 8223,va,10/04/1930,2011-10
+00000008,990001151153,nan,paula,nan,buckner,nan,65,f,w,nl,1140 n main st #210,marshall,nc,28753,nan,nc,04/06/1930,2011-10
+00000009,990001475100,nan,bryan,terence,peterson,nan,47,m,w,nl,164 dogwood cir,burnsville,nc,28714,828 682 4054,nc,04/06/1930,2011-10
+00000010,990003080803,nan,doris,smith,bagley,nan,81,f,w,nl,1309 mccarthy blvd #104,new bern,nc,28562,252 638 8502,ri,08/09/1930,2011-10
+00000011,990002190613,nan,rudolf,nan,kleeb,nan,80,m,w,nl,303 windy knoll dr,hendersonville,nc,28739,828 891 9713,nan,11/09/1930,2011-10
+00000012,990003168331,nan,angelique,nicole,ellington,nan,19,f,b,un,901 n 20th st,morehead city,nc,28557,252 269 5257,nj,08/10/1930,2011-10
+00000013,990003281726,nan,helen,chamblee,driver,nan,81,f,w,nl,8778 driver rd,zebulon,nc,27597,252 235 5792,nc,02/13/1930,2011-10
+00000014,990003721530,nan,gregory,dale,hall,nan,49,m,w,nl,3362 penland rd,spruce pine,nc,28777,828 765 6371,nc,03/17/1930,2011-10
+00000015,999000295645,nan,catherine,e,smith,nan,81,f,w,nl,410 brunswick rd,fayetteville,nc,28303,nan,nan,07/17/1930,2011-12
+00000016,999000223416,nan,ruth,bridges,wood,nan,81,f,w,nl,1605 crymes cove rd,waynesville,nc,28786,nan,nc,04/18/1930,2011-12
+00000017,990001380242,nan,kenneth,roland,warren,sr,80,m,w,nl,1371 warren rd,faison,nc,28341,910 267 4491,nc,12/20/1930,2011-10
+00000018,990004077908,nan,clarice,clinard,bryant,nan,81,f,w,nl,3325 groometown rd #c,greensboro,nc,27407,nan,nc,07/21/1930,2011-10
+00000019,999000519866,nan,emily,smith,doty,nan,81,f,w,nl,302 kenwood ave,wilmington,nc,28405,910 762 4243,nc,11/21/1930,2011-12
+00000020,990003767435,nan,agatha,nan,squire,nan,81,f,b,nl,6466 nc hwy 46,garysburg,nc,27831,nan,nc,04/24/1930,2011-10
+00000021,990003798547,nan,mildred,nan,wooten,nan,81,f,w,nl,225 gull ave,east flat rock,nc,28726,nan,nc,04/24/1930,2011-10
+00000022,999001673404,nan,meredith,kae,payne,nan,18,f,w,nl,8 reese rd,asheville,nc,28805,nan,nc,07/24/1930,2013-10
+00000023,990000158728,nan,edward,thomas,hall,nan,79,m,w,nl,88 eds ln,sanford,nc,27332,nan,nc,10/26/1930,2011-10
+00000024,990003521114,nan,kenneth,nan,mccain,nan,81,m,w,nl,2411 thomas ave,new bern,nc,28560,252 638 5283,va,06/27/1930,2011-10
+00000025,999000358369,nan,laura,frances,britt,nan,98,f,w,nl,1104 w 24th st,lumberton,nc,28358,nan,nan,02/28/1930,2011-12
+00000026,990000831519,nan,louise,anderson,johnson,nan,81,f,w,nl,113 gentry st #20,north wilkesboro,nc,28659,nan,nc,05/28/1930,2011-10
+00000027,990002636428,nan,willie,mae,benton,nan,81,f,b,nl,306 woodlake dr,greensboro,nc,27406,nan,nc,03/29/1930,2011-10
+00000028,990002817842,nan,deborah,fouts,jarrell,nan,57,f,w,nl,159 stencil ln,mount airy,nc,27030,336 789 3447,il,07/29/1930,2011-10
+00000029,000009124385,nan,james,hal,spriggs,nan,46,m,b,un,2314 hillford dr,burlington,nc,27217,nan,md,09/29/1930,2011-10
+00000030,990000461226,nan,diane,tilley,tate,nan,45,f,w,nl,5700 seward rd,pfafftown,nc,27040,nan,nc,09/29/1930,2011-10
+00000031,990000703885,nan,thelma,almon,broady,nan,68,f,b,nl,115 s brookwood ave,rockingham,nc,28379,nan,nc,09/29/1930,2011-10
+00000032,990001168111,nan,theady,earl,james,nan,58,m,b,nl,3523 worley st,fayetteville,nc,28311,910 822 6089,nc,09/29/1930,2011-10
+00000033,990002877971,nan,susan,marett,stephenson,nan,42,f,w,nl,202 view st #a,black mountain,nc,28711,828 669 2870,nan,09/29/1930,2011-10
+00000034,990002487024,nan,mildred,irene,schronce,nan,90,f,w,nl,906 bryant dr,sanford,nc,27330,nan,nc,10/29/1930,2011-10
+00000035,000009009911,nan,cecil,lewis,ford,nan,59,m,w,nl,3396 rocky ridge rd,newton,nc,28658,704 462 2445,nc,11/29/1930,2011-10
+00000036,990000950097,nan,gwendolyn,andrea,speller-jacobs,nan,61,f,b,nl,508 mountain st,windsor,nc,27983,252 794 2993,nc,09/30/1930,2011-10
+00000037,999000757117,nan,kimberly,lynne,muller,nan,21,f,w,un,713 indica ct #101,wilmington,nc,28405,336 324 0449,nc,02/01/1931,2012-04
+00000038,990002742877,nan,hazel,waller,knight,nan,80,f,w,nl,350 potts rd,advance,nc,27006,nan,nc,05/01/1931,2011-10
+00000039,999000424351,nan,dempsey,nan,clark,nan,80,m,b,nl,6805 buttermere dr,fayetteville,nc,28314,910 868 3577,ga,01/02/1931,2011-12
+00000040,999001631359,nan,charles,e,tart,nan,81,m,w,nl,8937 ramsey st,linden,nc,28356,910 488 5740,nan,08/03/1931,2013-06
+00000041,999000309134,nan,maurine,taylor,younce,nan,80,f,w,nl,1420 shaire center dr #1,lenoir,nc,28645,nan,nc,08/05/1931,2011-12
+00000042,990003057173,nan,walter,cline,johnson,nan,80,m,w,nl,169 otis brown dr,north wilkesboro,nc,28659,nan,nc,09/05/1931,2011-10
+00000043,990001214271,nan,janice,stone,miller,nan,63,f,w,nl,223 berrymore rd,reidsville,nc,27320,336 342 1577,nc,04/08/1931,2011-10
+00000044,990003966163,nan,doyal,delmer,southerland,nan,79,m,w,nl,7118 ryan st,fayetteville,nc,28314,910 868 2419,ga,11/08/1931,2011-10
+00000045,999000621009,nan,francis,c,keel,nan,80,m,w,nl,205 n pine st,oak city,nc,27857,nan,nan,03/15/1931,2011-12
+00000046,990000488774,nan,nelson,james,alston,nan,80,m,b,nl,9744 nc hwy 4,littleton,nc,27850,252 586 6371,nan,04/16/1931,2011-10
+00000047,990000363950,nan,ralph,nan,quick,nan,60,m,u,un,22700 bunch rd,laurel hill,nc,28351,843 599 0861,nc,12/16/1931,2011-10
+00000048,999000341652,nan,addie,hoggard,garrett,nan,79,f,w,nl,437 hoggard mill rd,windsor,nc,27983,nan,nc,03/17/1931,2011-12
+00000049,990000126523,nan,fonnie,c,joyner,nan,75,f,w,nl,805 colon rd,sanford,nc,27330,nan,nc,04/18/1931,2011-10
+00000050,999000353545,nan,shirley,anne,books,nan,80,f,w,nl,10 ridgebourne way,flat rock,nc,28731,828 891 4342,in,07/18/1931,2011-12
+00000051,999000573508,nan,billy,joe,nelson,nan,79,m,w,nl,217 putnam rd,canton,nc,28716,828 648 6333,nc,12/18/1931,2011-12
+00000052,999000091544,nan,katherine,a,waterman,nan,80,f,w,nl,2717 dogwood rd,durham,nc,27705,nan,ny,07/20/1931,2011-12
+00000053,990000680014,nan,betty,a,chaney,nan,80,f,w,nl,146 lynnwayne cir,havelock,nc,28532,252 447 2284,nc,07/22/1931,2011-10
+00000054,990003833516,nan,billy,gene,hobbs,nan,80,m,w,nl,2813 sikes mill rd,monroe,nc,28110,nan,nan,08/22/1931,2011-10
+00000055,000000444265,nan,rubye,j,mitchell,nan,79,f,w,nl,311 e stack st,st pauls,nc,28384,nan,nan,10/23/1931,2011-10
+00000056,990003019535,nan,gay,hartley,andrews,nan,80,f,w,nl,10085 s nc hwy 18,boomer,nc,28606,nan,nc,08/26/1931,2011-10
+00000057,990000887674,nan,james,e,braswell,sr,80,m,w,nl,6925 glenmoor dr,charlotte,nc,28214,nan,nc,09/27/1931,2011-10
+00000058,999001645638,nan,vivian,v,rhone,nan,113,f,b,nl,216 sunset ave,fayetteville,nc,28301,nan,nan,10/28/1931,2013-06
+00000059,999000359790,nan,betty,nan,thompson,nan,80,f,w,nl,32 buttercup ln,halifax,nc,27839,nan,nan,08/29/1931,2011-12
+00000060,990003533993,nan,robert,marshall,johnson,nan,80,m,w,nl,24 w fairway dr,etowah,nc,28729,828 891 7070,ny,11/29/1931,2011-10
+00000061,990003932405,nan,josephine,parson,haywood,nan,80,f,w,nl,317 chip rd,mt gilead,nc,27306,910 572 2994,nc,04/30/1931,2011-10
+00000062,999000338500,nan,diane,stroupe,smith,nan,63,f,w,nl,1700 hedrick st,newton,nc,28658,nan,nan,07/30/1931,2011-12
+00000063,990000883598,nan,lucile,pogue,townsend,nan,94,f,w,nl,2206 us highway 64 w,mocksville,nc,27028,nan,nan,08/30/1931,2011-10
+00000064,990000267495,nan,kenneth,derrel,mcbride,nan,49,m,w,nl,69 french cv,waynesville,nc,28785,828 926 4197,il,11/30/1931,2011-10
+00000065,990000085212,nan,susan,b,gaskins,nan,99,f,w,nl,10 rural rte 1 rte,coinjock,nc,27923,252 453 2884,nc,01/01/1932,2011-10
+00000066,990001823642,nan,w,colin,doxey,nan,100,m,w,nl,209 doxey ln,knotts island,nc,27950,252 429 3309,nc,01/01/1932,2011-10
+00000067,999000007800,nan,esther,curtiss,cates,nan,104,f,w,nl,207 east main st,faison,nc,28341,910 267 4801,ny,01/01/1932,2011-12
+00000068,999000113157,nan,edna,mccullen,mccolman,nan,100,f,w,nl,139 park cir,faison,nc,28341,nan,nan,01/01/1932,2011-12
+00000069,999000125505,nan,lucille,bowden,baugham,nan,106,f,w,nl,113 east main st,faison,nc,28341,910 267 2531,nc,01/01/1932,2011-12
+00000070,999000184549,nan,carrie,m,grady,nan,104,f,w,nl,776 white flash rd,mt olive,nc,28365,nan,nc,01/01/1932,2011-12
+00000071,999000445927,nan,gracie,h,kelley,nan,101,f,w,nl,229 hanchey rd,wallace,nc,28466,910 285 3622,nc,01/01/1932,2011-12
+00000072,999000517226,nan,nelson,francis,mccolman,nan,101,m,w,nl,139 park cir,faison,nc,28341,nan,nc,01/01/1932,2011-12
+00000073,999000611602,nan,james,patrick,askew,nan,79,m,b,nl,2208 governors rd,windsor,nc,27983,nan,nc,06/01/1932,2011-12
+00000074,990001674779,nan,estella,e,edmonds,nan,79,f,b,nl,4463 nc hwy 561,halifax,nc,27839,nan,nan,05/02/1932,2011-10
+00000075,990001116560,nan,james,william,brafford,jr,48,m,w,nl,4190 rascoe dameron rd,burlington,nc,27217,nan,nc,05/08/1932,2011-10
+00000076,000007645032,nan,leola,w farris,starr,nan,79,u,b,un,4161 gordon dr,gastonia,nc,28056,704 865 0161,nan,05/12/1932,2011-10
+00000077,990004004424,nan,norma,jean sales,plattenberger,nan,79,f,w,nl,2819 s potter rd,waxhaw,nc,28173,nan,nan,07/16/1932,2011-10
+00000078,999000507359,nan,albert,m,cowan,nan,79,m,w,nl,100 parkwood ct,new bern,nc,28562,252 633 5694,ny,01/18/1932,2011-12
+00000079,990000958776,nan,rosetta,nan,simmons,nan,78,f,b,nl,741 southview cir,fayetteville,nc,28311,nan,nc,09/18/1932,2011-10
+00000080,990002204513,nan,hanna,nan,sturman,nan,79,f,w,nl,5112 pinetree ln,new bern,nc,28562,252 633 2733,nan,09/19/1932,2011-10
+00000081,990003159983,nan,willie,p,johnson,jr,79,m,b,nl,104a rhue rd,murfreesboro,nc,27855,nan,nc,10/23/1932,2011-10
+00000082,990001229828,nan,taft,thomas,phillips,nan,79,m,w,nl,1677 n main st,goldston,nc,27252,919 898 2280,nan,10/25/1932,2011-10
+00000083,990001491441,nan,jessie,w,brown,nan,79,m,w,nl,5403 mesa dr,fayetteville,nc,28303,nan,nan,05/26/1932,2011-10
+00000084,990003677164,nan,susan,buckner,gallant,nan,78,f,w,nl,4125 beckford dr,greensboro,nc,27407,nan,nc,11/27/1932,2011-10
+00000085,999000225709,nan,vivian,nan,etheridge,nan,99,f,w,nl,1 pout house ln,shawboro,nc,27973,252 232 2597,nc,04/30/1932,2011-12
+00000086,999000303741,nan,john,t,etheridge,nan,101,m,w,nl,0 pout house ln,shawboro,nc,27973,252 232 2597,nc,04/30/1932,2011-12
+00000087,990003933372,nan,luvoise,chason,landen,nan,90,f,w,nl,152 fire house rd,chinquapin,nc,28521,nan,nc,01/01/1933,2011-10
+00000088,999000636019,nan,lurlene,wallace,cottle,nan,100,f,w,nl,606 n sycamore st,rose hill,nc,28458,nan,nc,01/01/1933,2011-12
+00000089,990001376473,nan,sharon,taylor,chastain,nan,63,f,w,nl,21 horseapple tree ln,otto,nc,28763,nan,ga,01/03/1933,2011-10
+00000090,990000535879,nan,olivia,j,hempstead,nan,111,f,b,nl,2203 lake ave,fayetteville,nc,28301,nan,nan,06/03/1933,2011-10
+00000091,990001549415,nan,ruby,madeline,powell,nan,77,f,w,un,301 fairfield rd,fayetteville,nc,28303,910 864 3630,md,11/03/1933,2011-10
+00000092,990002020144,nan,wilbur,eugene,dees,nan,78,m,w,un,2927 middlesex rd,fayetteville,nc,28306,910 425 1941,nc,06/04/1933,2011-10
+00000093,990002017076,nan,melba,collins,brady,nan,77,f,b,nl,221 pennsylvania ave,fayetteville,nc,28301,910 678 0844,nc,10/10/1933,2011-10
+00000094,990001170509,nan,con,paul,nowakowski,nan,77,m,w,nl,101 east st,waynesville,nc,28786,828 456 9098,oh,10/12/1933,2011-10
+00000095,990001970519,nan,annie,lane,macy,nan,78,f,w,nl,5241 baker rd,east bend,nc,27018,336 699 3366,nc,02/15/1933,2011-10
+00000096,999000116475,nan,edith,hammonds,lowery,nan,78,f,i,nl,5 aaron rd,pembroke,nc,28372,nan,nan,04/15/1933,2011-12
+00000097,999000566889,nan,richard,ernest,mcgrew,nan,77,m,w,nl,503 w church st,pikeville,nc,27863,919 242 7789,oh,12/21/1933,2011-12
+00000098,990000583141,nan,isaac,nan,burton,nan,78,m,b,nl,513 hunter creek rd,maysville,nc,28555,nan,nc,04/25/1933,2011-10
+00000099,999000318683,nan,whitney,hollis,neal,nan,30,f,w,nl,400 cambridge blvd,lumberton,nc,28358,nan,nan,12/29/1933,2011-12
+00000100,990000239167,nan,charles,robert,supin,nan,78,m,w,nl,335 s bald head wynd,bald head island,nc,28461,910 457 4997,ny,01/31/1933,2011-12
+00000101,990000602277,nan,john,d,morrisey,nan,85,m,b,nl,1308 warren rd,faison,nc,28341,910 267 3221,nan,01/01/1934,2011-10
+00000102,999000040562,nan,lena,s,blanchard,nan,97,f,w,nl,241 shortcut rd,barco,nc,27917,252 453 2406,nc,01/01/1934,2011-12
+00000103,999000214247,nan,denver,glen,sholar,sr,97,m,w,nl,325 angola bay rd,wallace,nc,28466,nan,nc,01/01/1934,2011-12
+00000104,999000455679,nan,rommie,nan,bowen,nan,104,m,w,nl,2688 sarecta rd,pink hill,nc,28572,nan,nc,01/01/1934,2011-12
+00000105,999000570406,nan,charles,nan,cayton,nan,98,m,w,nl,2482 tulls creek rd,moyock,nc,27958,252 232 2697,nc,01/01/1934,2011-12
+00000106,990000311123,nan,elmer,mcpherson,butt,nan,77,m,w,nl,327 old swamp rd,south mills,nc,27976,nan,nan,09/06/1934,2011-10
+00000107,999000528361,nan,kathleen,nan,gregory,nan,98,f,w,nl,491 n gregory rd,shawboro,nc,27973,252 336 3552,nc,05/09/1934,2011-12
+00000108,000000667648,nan,joan,harriet,fontaine,nan,77,f,b,nl,2417 pickett rd,durham,nc,27705,nan,ny,07/09/1934,2011-10
+00000109,990001997573,nan,cassie,mcauley,richardson,nan,77,f,b,nl,2309 nc 24-87,cameron,nc,28326,nan,nc,01/11/1934,2011-10
+00000110,990002652001,nan,paul,wade,stroupe,nan,77,m,w,nl,414 howard st,lenoir,nc,28645,nan,nc,04/12/1934,2011-10
+00000111,999000312955,nan,daniel,joe,bryson,nan,72,m,b,nl,262 elm st,sylva,nc,28779,828 586 9176,nc,03/13/1934,2011-12
+00000112,990001988728,nan,thelma,gay,boone,nan,76,f,b,nl,1992 reeses store rd,halifax,nc,27839,252 536 2738,nan,11/14/1934,2011-10
+00000113,999000518990,nan,walter,nan,ferebee,nan,97,m,w,nl,875 shawboro rd,shawboro,nc,27973,252 232 3389,nc,05/16/1934,2011-12
+00000114,990001065554,nan,rufus,h,furr,nan,76,m,w,nl,3360 bethlehem rd,old fort,nc,28762,828 668 9205,nc,10/16/1934,2011-10
+00000115,990002553123,nan,coreen,nan,watson,nan,77,f,b,nl,900 w dolphin st,siler city,nc,27344,nan,nan,05/17/1934,2011-10
+00000116,990002483926,nan,mary,jeanette,macneil,nan,77,f,w,un,20 lochs ln,youngsville,nc,27596,919 562 7302,oc,07/17/1934,2011-10
+00000117,990001322924,nan,frances,e,raeford,nan,77,f,b,nl,4455 s nc hwy 87 hwy,fayetteville,nc,28306,910 483 0926,nc,09/17/1934,2011-10
+00000118,999000273332,nan,george,walter,dixon,nan,77,m,w,nl,345 sunny ln,leasburg,nc,27291,nan,nc,10/18/1934,2011-12
+00000119,990000764239,nan,george,robert,hatcher,sr,76,m,w,nl,3534 a b carter rd,fayetteville,nc,28312,910 483 5896,nc,12/18/1934,2011-10
+00000120,999000177256,nan,david,m,averill,nan,77,m,w,nl,808 b st,bridgeton,nc,28519,252 638 4463,ny,01/19/1934,2011-12
+00000121,999000020040,nan,ann,bacon,hollowell,nan,57,f,w,nl,810 big john store rd,seaboard,nc,27876,nan,nan,09/21/1934,2011-12
+00000122,990001651235,nan,lawrence,c,lombard,nan,77,m,w,nl,1713 po box,cashiers,nc,28717,828 743 9009,nan,03/22/1934,2011-10
+00000123,990003530641,nan,catherine,bunie,hall,nan,81,f,w,nl,325 n cool spring st,fayetteville,nc,28301,910 323 0110,nc,10/23/1934,2011-10
+00000124,999000562404,nan,eartle,d,hammond,nan,77,m,i,nl,227 bouquet dr,st pauls,nc,28384,nan,nan,05/24/1934,2011-12
+00000125,990003394987,nan,gary,claremont,peterson,nan,77,m,w,nl,119 camellia way,hendersonville,nc,28739,914 478 1090,il,08/26/1934,2011-10
+00000126,990004084497,nan,helen,matlock,wike,nan,77,f,w,nl,2580 three forks church rd,taylorsville,nc,28681,nan,nc,01/28/1934,2011-10
+00000127,990002227359,nan,bessie,lou,blanchard,nan,77,f,w,nl,74 pressley creek rd,cullowhee,nc,28723,828 293 3344,nc,07/28/1934,2011-10
+00000128,990003378266,nan,doris,nan,waldrop,nan,76,f,w,un,421 rutledge dr,hendersonville,nc,28739,nan,nc,11/30/1934,2011-10
+00000129,990001172153,nan,evelyn,l,ledbetter,nan,76,f,b,nl,117 ledbetter hailey dr,rockingham,nc,28379,nan,nc,07/01/1935,2011-10
+00000130,990002292390,nan,doris,davis,tripp,nan,75,f,w,nl,269 rest a bit rd,tarboro,nc,27886,252 641 0182,nan,11/01/1935,2011-10
+00000131,990001750197,nan,joseph,t,cox,nan,76,m,w,nl,9 casey rd,new bern,nc,28562,252 000 0000,nc,03/06/1935,2011-10
+00000131,990001750197,nan,joseph,thomas,cox,nan,76,m,w,nl,1108 highland ave #22,new bern,nc,28562,252 288 4763,nc,03/06/1935,2011-12
+00000132,990003484965,nan,william,dale,farmer,nan,76,m,w,nl,5580 big laurel rd,creston,nc,28615,nan,nc,06/07/1935,2011-10
+00000133,990004012580,nan,tex,nan,riddle,nan,63,m,w,nl,192 n main st,marshall,nc,28753,nan,nc,04/10/1935,2011-10
+00000134,990001316263,nan,cleve,hubert,chappell,jr,76,m,w,nl,58 middle swamp rd,gates,nc,27937,nan,nan,05/10/1935,2011-10
+00000135,999000381558,nan,marrow,nan,stovall,nan,97,m,w,nl,4005 wilson town rd,oxford,nc,27565,nan,nc,05/11/1935,2011-12
+00000136,000009072397,nan,bernice,lee,summers,nan,75,m,w,nl,326 meadowbrook dr,burlington,nc,27215,336 228 7758,nc,12/11/1935,2011-10
+00000137,999000606766,nan,duville,wesley,cuthrell,nan,76,m,w,nl,265 roper ln,engelhard,nc,27824,nan,nc,04/13/1935,2011-12
+00000138,990002180006,nan,colleen,hoyle,curtis,nan,76,f,w,nl,104 north main st,granite falls,nc,28630,828 396 8760,nc,06/13/1935,2011-10
+00000139,990002595202,nan,harriett,nan,mansker,nan,76,f,w,nl,5638 junaluska rd,andrews,nc,28901,nan,nc,09/13/1935,2011-10
+00000140,999000076484,nan,william,nan,bird,nan,76,m,i,nl,6601 snowbird rd,robbinsville,nc,28771,nan,nc,10/13/1935,2011-12
+00000141,000000885823,nan,robert,l,shoemaker,nan,75,m,w,nl,4456 back creek church rd,charlotte,nc,28213,nan,ga,11/13/1935,2011-10
+00000142,990000127504,nan,riccardo,fay,chin,nan,76,m,w,nl,547 nc highway 62 e,pleasant garden,nc,27313,nan,nan,08/28/1935,2011-10
+00000143,990001614057,nan,phyllis,loretta,hollowell,nan,76,f,w,nl,10 fort island rd,eure,nc,27935,nan,nan,09/28/1935,2011-10
+00000144,999000358425,nan,john,harold,chapek,nan,76,m,w,nl,1589 country club dr,maggie valley,nc,28751,828 627 2739,nj,04/29/1935,2011-12
+00000145,000099985485,nan,ashley,juanita,scott,nan,23,f,b,un,1315 oakwood ave,raleigh,nc,27610,nan,md,01/01/1936,2011-10
+00000146,990003332307,nan,rachel,frederick,baars,nan,97,f,w,nl,315 e hill st,warsaw,nc,28398,nan,nc,01/01/1936,2011-10
+00000147,990003725153,nan,vernell,quinn,dixon,nan,79,f,b,nl,212 e george st,warsaw,nc,28398,nan,nc,01/01/1936,2011-10
+00000148,999000027312,nan,elizabeth,p,fields,nan,100,f,w,nl,220 n college st,wallace,nc,28466,nan,nc,01/01/1936,2011-12
+00000149,999000055078,nan,nettie,lanier,sloan,nan,98,f,w,nl,1754 s nc 111 hwy,chinquapin,nc,28521,nan,nc,01/01/1936,2011-12
+00000150,999000141181,nan,boyce,best,fussell,nan,96,m,w,nl,1650 w charity rd,rose hill,nc,28458,910 289 3495,nc,01/01/1936,2011-12
+00000151,999000141651,nan,vivian,katzoff,kramer,nan,100,f,w,nl,616 e murphy st,wallace,nc,28466,910 285 2459,sc,01/01/1936,2011-12
+00000152,999000152834,nan,albert,nan,manning,nan,96,m,w,nl,937 back swamp rd,richlands,nc,28574,910 324 4694,nc,01/01/1936,2011-12
+00000153,999000165144,nan,ethel,nan,bowden,nan,104,f,w,nl,522 w goshen st,faison,nc,28341,nan,nan,01/01/1936,2011-12
+00000154,999000283757,nan,paul,w,spry,nan,97,m,w,nl,215 worth guard rd,coinjock,nc,27923,252 453 2525,nc,01/01/1936,2011-12
+00000155,999000498187,nan,james,m,smith,nan,99,m,w,nl,4645 s nc 50 hwy,chinquapin,nc,28521,910 285 3493,nan,01/01/1936,2011-12
+00000156,999000517292,nan,elizabeth,s,grady,nan,98,f,w,nl,133 paul grady ln,albertson,nc,28508,919 568 3313,nc,01/01/1936,2011-12
+00000157,999000584090,nan,thomas,jefferson,outlaw,nan,100,m,w,nl,253 jeff outlaw rd,mt olive,nc,28365,919 658 3708,nc,01/01/1936,2011-12
+00000158,999000599930,nan,mary,elizabeth,lanier,nan,96,f,w,nl,313 w southerland st,wallace,nc,28466,nan,nc,01/01/1936,2011-12
+00000159,999000420852,nan,elsie,woods,coggins,nan,89,f,w,nl,497 martin rd,whittier,nc,28789,828 497 6439,nc,01/02/1936,2011-12
+00000160,999000374921,nan,lorena,s,blinson,nan,111,f,w,nl,917 joyner st,clayton,nc,27520,919 553 7195,nan,05/04/1936,2011-12
+00000161,990002123139,nan,james,joseph,devlin,jr,75,m,w,nl,1038 braemar ct,high point,nc,27265,336 454 2293,nj,03/06/1936,2011-10
+00000162,990000894651,nan,jo-anne,sutton,britt,nan,75,f,w,nl,1921 wilmington hwy,fayetteville,nc,28306,nan,sc,07/08/1936,2011-10
+00000163,990001867859,nan,annie,hall,lawson,nan,72,f,w,nl,603 radar rd,ararat,nc,27007,336 374 5689,nc,04/11/1936,2011-10
+00000164,000001154927,nan,carole,l,kaloz,nan,75,f,w,nl,4813 alexander valley dr #102,charlotte,nc,28270,nan,oh,10/12/1936,2011-10
+00000165,999000352685,nan,john,william,rikard,nan,73,m,w,nl,501 pebble hill ln #22,east flat rock,nc,28726,828 692 2408,nc,10/12/1936,2011-12
+00000166,990002875389,nan,george,thomas,manley,nan,75,m,b,nl,519 w 1st st,weldon,nc,27890,nan,nan,02/15/1936,2011-10
+00000167,999000198880,nan,peggy,bragg,floyd,nan,75,f,w,nl,2844 us hwy 158,jackson,nc,27845,252 536 2668,nc,06/15/1936,2011-12
+00000168,990000441097,nan,franklin,a,fortner,nan,75,m,w,nl,1506 laurel st,new bern,nc,28562,252 636 3681,nc,01/16/1936,2011-10
+00000169,990003459009,nan,edward,nan,roberts,nan,96,m,w,nl,264 n indiantown rd,shawboro,nc,27973,nan,nc,05/16/1936,2011-10
+00000170,990001948060,nan,joann,y,reeves,nan,75,f,w,nl,972 pleasant home church rd,millers creek,nc,28651,nan,nc,09/17/1936,2011-10
+00000171,999000172882,nan,charles,lee,thomas,nan,74,m,w,nl,202 berkshire rd,greenville,nc,27858,nan,wv,10/18/1936,2011-12
+00000172,990002550462,nan,drucilla,garner,miles,nan,75,f,b,nl,169 clanton garner trl,gaston,nc,27832,nan,nan,08/20/1936,2011-10
+00000173,990003670070,nan,leland,d,ray,nan,65,m,w,nl,304 bumpass ln,roxboro,nc,27573,nan,nc,02/22/1936,2011-10
+00000174,990003386556,nan,alice,rickman,cathey,nan,92,f,w,nl,29 riley trull rd,canton,nc,28716,nan,nc,08/23/1936,2011-10
+00000175,999000110242,nan,eula,w,hargett,nan,75,f,w,nl,4504 wentworth ct,new bern,nc,28562,252 637 2451,nc,11/26/1936,2011-12
+00000176,990002773174,nan,alton,lane,godley,nan,54,m,w,nl,4745 old tar rd,winterville,nc,28590,nan,nc,08/28/1936,2011-10
+00000177,999000393067,nan,edmond,l,white,nan,95,m,w,nl,177 cason point rd,knotts island,nc,27950,252 429 3567,nc,01/01/1937,2011-12
+00000178,000066062529,nan,vicky,nan,musselwhite,nan,55,f,w,nl,5605 duncan st,hope mills,nc,28348,nan,nc,02/01/1937,2011-10
+00000179,990003113899,nan,lena,claretta,johnson,nan,73,f,b,nl,1088 graham rd,riegelwood,nc,28456,910 655 4729,nc,09/03/1937,2011-10
+00000180,990001605214,nan,kezzie,ree mrs,stutts,nan,74,f,w,nl,105 fieldstone dr,salisbury,nc,28146,nan,nan,10/05/1937,2011-10
+00000181,990001299711,nan,dorothy,odessa,mckoy,nan,111,f,b,nl,2753 blossom rd,hope mills,nc,28348,nan,nc,02/06/1937,2011-10
+00000182,990002710864,nan,addie,high,alston,nan,73,f,b,nl,204 williams rd,spring hope,nc,27882,nan,nc,04/06/1937,2011-10
+00000183,999000128596,nan,flora,bottoms,parks,nan,94,f,w,nl,216 robbins farm rd,hamptonville,nc,27020,nan,nc,10/06/1937,2011-12
+00000184,990000602178,nan,mary,lee oneal,register,nan,74,f,w,nl,419 henley rd,sanford,nc,27330,nan,nc,08/09/1937,2011-10
+00000185,000000663786,nan,larry,knight,jenkins,nan,73,m,w,nl,3201 appling way,durham,nc,27703,nan,wv,11/09/1937,2011-10
+00000186,990003967021,nan,betty,j,cobb,nan,74,f,w,un,2247 sharp point rd,fountain,nc,27829,252 827 5361,nc,07/13/1937,2011-10
+00000187,990000813760,nan,mary,t,robinson,nan,73,f,w,nl,234 kenneth blvd,havelock,nc,28532,252 447 8213,ma,08/13/1937,2011-10
+00000188,990003673016,nan,annetta,d,wilson,nan,74,f,w,nl,110 apple orchard rd,robbinsville,nc,28771,nan,nc,09/23/1937,2011-10
+00000189,990002699791,nan,marcia,ann,mcvey,nan,74,f,w,nl,105 fir st,hendersonville,nc,28791,828 696 2160,ne,01/24/1937,2011-10
+00000190,990001195181,nan,lee,e,hudson,nan,73,m,w,un,4772 hilton lake rd,kannapolis,nc,28083,704 933 0080,nc,11/25/1937,2011-10
+00000191,990001792056,nan,lillie,cooper,perry,nan,74,f,b,nl,1202 mitchell dr,elizabeth city,nc,27909,nan,nc,03/30/1937,2011-10
+00000192,990000870347,nan,roy,e,merrell,nan,96,m,w,nl,5940 caratoke hwy,poplar branch,nc,27965,nan,nc,01/01/1938,2011-10
+00000193,990001077751,nan,ruby,fields,whitfield,nan,96,f,w,nl,599 garner chapel rd,mt olive,nc,28365,nan,nan,01/01/1938,2011-10
+00000194,990003027494,nan,gladys,nan,rhodes,nan,95,f,w,nl,1795 n nc 111 hwy,pink hill,nc,28572,nan,nc,01/01/1938,2011-10
+00000195,990003568639,nan,annie,dixon,rawls,nan,85,f,b,nl,938 pasture branch rd,rose hill,nc,28458,910 289 3473,nc,01/01/1938,2011-10
+00000196,990003571708,nan,dorothy,nan,rollins,nan,94,f,w,nl,311 walnut st,warsaw,nc,28398,nan,nc,01/01/1938,2011-10
+00000197,990003909520,nan,elma,kornegay,thigpen,nan,99,f,w,nl,361 rones chapel rd,mt olive,nc,28365,919 658 2483,nc,01/01/1938,2011-10
+00000198,999000266596,nan,william,h,browder,nan,94,m,w,nl,651 e southerland st,wallace,nc,28466,nan,nc,01/01/1938,2011-12
+00000199,999000284481,nan,remus,jennings,outlaw,nan,95,m,w,nl,1067 white flash rd,mt olive,nc,28365,919 658 3407,nc,01/01/1938,2011-12
+00000200,999000295080,nan,george,henry,best,nan,94,m,w,nl,609 e chelly st,warsaw,nc,28398,nan,nc,01/01/1938,2011-12
+00000201,999000361436,nan,milton,a,walker,nan,96,m,w,nl,3479 caratoke hwy,maple,nc,27956,252 453 2739,nc,01/01/1938,2011-12
+00000202,999000393048,nan,gladys,m,taylor,nan,95,f,w,nl,157 courthouse rd,currituck,nc,27929,252 232 3019,nc,01/01/1938,2011-12
+00000203,999000477276,nan,grace,horne,carr,nan,96,f,w,nl,216 w main st,rose hill,nc,28458,nan,nan,01/01/1938,2011-12
+00000204,999000548916,nan,o,c,murray,nan,89,m,b,nl,1095 pasture branch rd,rose hill,nc,28458,nan,nc,01/01/1938,2011-12
+00000205,999000579962,nan,verdia,r,thomas,nan,94,f,w,nl,205 lyman rd,beulaville,nc,28518,nan,nc,01/01/1938,2011-12
+00000206,990004088827,nan,mciva,nan,evans,nan,68,f,w,nl,96 fox grape dr,burnsville,nc,28714,nan,nc,04/01/1938,2011-10
+00000207,990002009672,nan,raymond,alexander,vincent,nan,86,m,b,nl,119 solomon dr,henrico,nc,27842,252 537 9522,nan,05/03/1938,2011-10
+00000208,999000420264,nan,virginia,mae,eason,nan,81,f,b,nl,402 olive st,woodland,nc,27897,nan,nc,05/03/1938,2011-12
+00000209,990001634714,nan,shelby,a,reeves,nan,73,f,w,nl,1290 pleasant home church rd,millers creek,nc,28651,nan,nc,05/04/1938,2011-10
+00000210,990001497504,nan,winnie,west,humphries,nan,94,f,w,nl,228 shingle landing rd,moyock,nc,27958,252 435 6250,nc,06/04/1938,2011-10
+00000211,990001040040,nan,shirley,r,worley,nan,73,f,w,nl,109 gilbert rd,leicester,nc,28748,828 683 4460,nan,09/04/1938,2011-10
+00000212,000000668248,nan,kay,johnson,sloan,nan,72,f,w,nl,110 kingsley wood cir,durham,nc,27703,nan,nc,12/04/1938,2011-10
+00000213,999000281092,nan,ernestine,nan,white,nan,98,f,w,nl,200 beauty st,stovall,nc,27582,nan,nc,03/06/1938,2011-12
+00000214,990000123395,nan,robert,francis,edwards,nan,65,m,w,nl,4484 dicks mill rd,mcleansville,nc,27301,nan,nc,09/07/1938,2011-10
+00000215,990001104797,nan,hazel,denise,price,nan,41,f,w,un,748 crusoe island rd,whiteville,nc,28472,910 642 6303,nc,02/08/1938,2011-10
+00000216,999000010455,nan,james,venson,alston,nan,73,m,b,nl,1250 duncan st,fayetteville,nc,28303,nan,nc,05/09/1938,2011-12
+00000217,999000105622,nan,r,d,wilkerson,nan,95,m,w,nl,300 cedar ln,stovall,nc,27582,nan,nc,05/11/1938,2011-12
+00000218,999000118917,nan,mildred,nan,gardner,nan,95,f,w,nl,132 east ridge rd,moyock,nc,27958,nan,nc,10/11/1938,2011-12
+00000219,990001703559,nan,nettie,exum,smith,nan,73,f,w,nl,2635 joel ln,wilson,nc,27896,252 243 9571,nc,06/12/1938,2011-10
+00000220,990000540808,nan,erma,byrd,ford,nan,72,f,w,nl,220 stephens st,roanoke rapids,nc,27870,nan,nan,10/12/1938,2011-10
+00000221,990001017911,nan,florence,nan,weatherman,nan,93,f,w,nl,8769 buckeye hollow rd,jonas ridge,nc,28641,nan,nan,04/13/1938,2011-10
+00000222,000001073096,nan,edward,rudolph,lewis,nan,73,m,w,nl,286 stonehenge dr,dunn,nc,28334,910 897 6906,nc,05/15/1938,2011-10
+00000223,990003548151,nan,maggie,s,gay,nan,96,f,w,nl,403 s main st,seaboard,nc,27876,nan,nc,10/15/1938,2011-10
+00000224,999000228462,nan,howard,nan,vaughan,nan,99,m,w,nl,165 lassiter mill rd,woodland,nc,27897,nan,nan,10/15/1938,2011-12
+00000225,999000289145,nan,mae,nan,collier,nan,94,f,w,nl,104 church st,lasker,nc,27845,nan,nc,10/15/1938,2011-12
+00000226,999000636848,nan,c,b,taylor,nan,102,m,w,nl,1017 horne rd,pendleton,nc,27862,nan,nc,10/15/1938,2011-12
+00000227,999000196331,nan,leroy,clifton,mcswain,nan,96,m,w,nl,1008 lemmond dr,sanford,nc,27330,nan,va,05/17/1938,2011-12
+00000228,990000618305,nan,patricia,j,raybon,nan,78,f,w,nl,7888 n c 39 hwy s,zebulon,nc,27597,nan,nc,04/18/1938,2011-10
+00000229,990001367418,nan,robert,grady,nelon,nan,73,m,w,nl,113 seibert rd,waynesville,nc,28786,828 452 7245,nc,04/18/1938,2011-10
+00000230,990000883944,nan,sallie,sykes,anderson,nan,73,f,w,nl,593 viking pl sw,concord,nc,28025,704 782 4752,nan,06/18/1938,2011-10
+00000231,990002828955,nan,hattie,mae,deloatch,nan,89,f,b,nl,956 fire tower rd,jackson,nc,27845,252 585 1982,nan,10/18/1938,2011-10
+00000232,999000067668,nan,louise,l,taylor,nan,98,f,w,nl,107 w church st,seaboard,nc,27876,nan,nc,10/18/1938,2011-12
+00000233,999000386814,nan,elizabeth,nan,bullock,nan,102,f,w,nl,215 central st,seaboard,nc,27876,nan,nc,10/18/1938,2011-12
+00000234,990000667385,nan,annie,baucom,greene,nan,73,f,w,nl,73 tara ln,nebo,nc,28761,nan,nc,06/19/1938,2011-10
+00000235,000000726150,nan,j,d,kaylor,nan,74,m,w,nl,188 hudson cajah mtn rd,hudson,nc,28638,828 728 8360,nc,10/19/1938,2011-10
+00000236,990003485063,nan,mary,barrow,burgwyn,nan,99,f,w,nl,112 e calhoun st,jackson,nc,27845,252 534 2671,nan,10/19/1938,2011-10
+00000237,990002601910,nan,nell,h,gay,nan,93,f,w,nl,105 n washington st,seaboard,nc,27876,nan,nc,10/19/1938,2011-12
+00000238,999000419022,nan,alma,d,brittle,nan,94,f,w,nl,405 s church st,conway,nc,27820,252 585 0536,nan,10/19/1938,2011-12
+00000239,999000518866,nan,alice,m,warrick,nan,92,f,w,nl,116 e jefferson st,jackson,nc,27845,nan,nc,10/19/1938,2011-12
+00000240,000001564000,nan,wilson,lee,raynor,nan,71,m,w,nl,7712 us 301 hwy s,four oaks,nc,27524,919 963 2772,nan,04/20/1938,2011-10
+00000241,990003236685,nan,annie,thomas,jones,nan,92,f,b,nl,515 ashe st,reidsville,nc,27320,336 349 4517,nc,04/20/1938,2011-10
+00000242,990000065497,nan,w,s,creecy,jr,98,m,b,nl,810 roberts rd,rich square,nc,27869,252 539 2340,nc,10/20/1938,2011-10
+00000243,999000638491,nan,judith,nan,chappell,nan,94,f,w,nl,414 w jackson st,rich square,nc,27869,nan,nc,10/20/1938,2011-12
+00000244,990001514488,nan,sallie,b,futrell,nan,97,f,w,nl,9802 us hwy 258,murfreesboro,nc,27855,252 398 3716,nc,10/21/1938,2011-10
+00000245,999000052282,nan,rea,s,futrell,nan,97,f,w,nl,3384 ashleys grove rd,conway,nc,27820,nan,nan,10/21/1938,2011-12
+00000246,999000147164,nan,doris,s,askew,nan,98,f,w,nl,2827 ashleys grove rd,conway,nc,27820,nan,nan,10/21/1938,2011-12
+00000247,999000256378,nan,herbert,nan,futrell,nan,96,m,w,nl,9802 us hwy 258,murfreesboro,nc,27855,252 398 3716,nc,10/21/1938,2011-12
+00000248,990003087006,nan,rita,s,moskowitz,nan,73,f,w,nl,1902 tennyson dr,greensboro,nc,27410,nan,ny,07/22/1938,2011-10
+00000249,990001125650,nan,lillie,mae,grant,nan,102,f,w,nl,5957 nc hwy 46,garysburg,nc,27831,252 537 5122,nc,10/22/1938,2011-10
+00000250,990003362783,nan,estelle,thompson,clements,nan,99,f,w,nl,705 gaston st,gaston,nc,27832,252 535 1830,nan,10/22/1938,2011-10
+00000251,999000116752,nan,ollie,nan,eure,nan,97,f,w,nl,8487 us hwy 158,seaboard,nc,27876,nan,nc,10/22/1938,2011-12
+00000252,999000274661,nan,grizzie,b,britton,nan,105,f,w,nl,311 tower rd,margarettsville,nc,27853,nan,nan,10/22/1938,2011-12
+00000253,990002317421,nan,patricia,truelove,pemberton,nan,72,f,w,nl,318 traveller ln,sanford,nc,27332,nan,nc,12/23/1938,2011-10
+00000254,990001130932,nan,shirley,mclaurin,ward,nan,72,f,w,nl,2115 leona dr,greensboro,nc,27406,nan,nc,10/24/1938,2011-10
+00000255,990002268265,nan,melvin,r,baird,nan,96,m,w,nl,109 mitchell st,gaston,nc,27832,252 537 2089,nc,10/24/1938,2011-10
+00000256,990002445049,nan,elizabeth,gilliam,parker,nan,94,f,w,nl,6403 us hwy 258,woodland,nc,27897,252 587 3911,nc,10/24/1938,2011-10
+00000257,999000024381,nan,c,l,joyner,nan,93,m,w,nl,207 hill st,garysburg,nc,27831,nan,nan,10/24/1938,2011-12
+00000258,999000051799,nan,dorothy,b,powell,nan,95,f,w,nl,407 spruce st,woodland,nc,27897,nan,nc,10/24/1938,2011-12
+00000259,990000316625,nan,joyce,t,griggs,nan,73,f,w,nl,428 poplar branch rd,poplar branch,nc,27965,252 453 8333,nc,04/25/1938,2011-10
+00000260,990003376318,nan,donald,h,mcrorie,nan,75,m,w,nl,812 basilwild dr,wadesboro,nc,28170,704 694 4825,nc,10/25/1938,2011-10
+00000261,999000305867,nan,nancy,s,timberlake,nan,93,f,w,nl,6188 us hwy 258,woodland,nc,27897,nan,nc,10/25/1938,2011-12
+00000262,999000334451,nan,w,m,taylor,nan,100,m,w,nl,205 maple ave,conway,nc,27820,nan,nan,10/25/1938,2011-12
+00000263,999000140314,nan,philip,l,daniel,nan,97,m,w,nl,1250 bethel church rd,pleasant hill,nc,27866,nan,nc,10/26/1938,2011-12
+00000264,999000234355,nan,charlotte,d,cox,nan,94,f,w,nl,407 conwell rd,pleasant hill,nc,27866,nan,nan,10/26/1938,2011-12
+00000265,999000286328,nan,w,jennings,johnson,nan,97,m,w,nl,11957 us hwy 158,conway,nc,27820,nan,nan,10/26/1938,2011-12
+00000266,999000563069,nan,a,m,futrell,nan,101,m,w,nl,7837 us hwy 258,woodland,nc,27897,nan,nc,10/26/1938,2011-12
+00000267,999000467142,nan,willie,scott,lucas,nan,101,m,b,nl,3276 us hwy 258,rich square,nc,27869,nan,nc,10/27/1938,2011-12
+00000268,990000174254,nan,ella,mae,watson,nan,98,f,w,nl,1405 ashleys grove rd,conway,nc,27820,nan,nan,10/28/1938,2011-10
+00000269,990000125521,nan,arline,nan,bridgers,nan,96,f,w,nl,401 s church st,conway,nc,27820,252 585 1458,nc,10/29/1938,2011-10
+00000270,990001806426,nan,ernest,t,branch,nan,94,m,w,nl,313 pine st,rich square,nc,27869,252 539 2817,nc,10/29/1938,2011-10
+00000271,990003180841,nan,sarah,c,bell,nan,95,f,w,nl,232 shingle landing rd,moyock,nc,27958,252 435 6208,nc,10/29/1938,2011-10
+00000272,990004011781,nan,clyde,fenton,johnson,nan,94,m,w,nl,8944 us hwy 158,conway,nc,27820,nan,nan,10/29/1938,2011-10
+00000273,999000032749,nan,nina,m w,ricks,nan,110,f,w,nl,699 fire tower rd,jackson,nc,27845,252 585 0079,nan,10/29/1938,2011-12
+00000274,999000278542,nan,willie,mabel,davis,nan,97,f,w,nl,1568 dusty hill rd,conway,nc,27820,nan,nc,10/29/1938,2011-12
+00000275,999000476917,nan,inez,glysta,massey,nan,100,f,w,nl,30005 nc hwy 48,gaston,nc,27832,nan,nan,10/29/1938,2011-12
+00000276,999000555753,nan,w,k,gay,nan,96,m,w,nl,110 elm st,seaboard,nc,27876,nan,nc,10/29/1938,2011-12
+00000277,990000003346,nan,robert,dennis,setzer,sr,80,m,w,nl,206 merrywood dr,lenoir,nc,28645,nan,nan,03/30/1938,2011-10
+00000278,990003216658,nan,janet,sue,southern,nan,73,f,w,nl,431 forest oaks dr,dobson,nc,27017,336 386 4104,mi,08/30/1938,2011-10
+00000279,999000072358,nan,leila,gray,flagg,nan,27,u,u,un,201 nc hwy 54 byp #628,carrboro,nc,27510,nan,nan,08/30/1938,2011-12
+00000280,990002804869,nan,margie,louise,cannon,nan,72,f,w,nl,1321 fayetteville rd,rockingham,nc,28379,nan,dc,10/30/1938,2011-10
+00000281,999000118750,nan,hulon,nan,welch,sr,92,m,w,nl,1410 jim latta rd,rougemont,nc,27572,336 364 2454,nc,02/01/1939,2011-12
+00000282,999000292410,nan,james,w,bryant,sr,72,m,b,nl,7755 us hwy 17,pollocksville,nc,28573,nan,nc,03/01/1939,2011-12
+00000283,990004045365,nan,hazel,liles,bridgers,nan,72,f,w,nl,300 hamilton st,roanoke rapids,nc,27870,nan,nan,02/02/1939,2011-10
+00000284,000000709377,nan,patricia,lynn,mason,nan,72,f,w,nl,600 w markham ave,durham,nc,27701,nan,nj,04/04/1939,2011-10
+00000285,990003195216,nan,alice,pauline,steele-lehn,nan,72,f,w,nl,2402 independence trl,morganton,nc,28655,828 438 4809,nc,04/04/1939,2011-10
+00000286,990004049185,nan,sonia,lugo,rodriguez,nan,71,f,u,hl,316 w holt st,burlington,nc,27217,336 327 3712,pr,10/04/1939,2011-10
+00000287,990000770053,nan,earl,h,cissel,jr,72,m,b,nl,753 ashbrook rd,fayetteville,nc,28314,nan,ok,09/05/1939,2011-10
+00000288,999000031249,nan,donald,blain,stewart,sr,72,m,w,nl,2409 lourance blvd,greensboro,nc,27407,nan,nan,10/06/1939,2011-12
+00000289,999000557816,nan,marion,patricia,hudson,nan,72,f,w,nl,1135 hamilton st,roanoke rapids,nc,27870,nan,nan,09/08/1939,2011-12
+00000290,990001249494,nan,bertha,m,denitson,nan,72,u,u,un,3331 marathon ave,castle hayne,nc,28429,910 675 8899,nan,04/09/1939,2011-10
+00000291,990003479952,nan,katherine,pridgen,davis,nan,63,f,w,nl,4837 sapony creek dr,nashville,nc,27856,nan,nan,04/09/1939,2011-10
+00000292,000001230928,nan,matthew,a,hubacher,nan,36,m,w,nl,848 big indian loop,mooresville,nc,28117,nan,wi,07/10/1939,2011-12
+00000293,990001530919,nan,myrtle,luffman,horne,nan,72,f,w,nl,1866 pleasant ridge rd,state road,nc,28676,nan,nc,02/11/1939,2011-10
+00000294,990003711648,nan,jerry,lee,howell,nan,72,m,b,nl,434 clearview ln,taylorsville,nc,28681,nan,nc,06/11/1939,2011-10
+00000295,999000548864,nan,joyce,f,newton,nan,93,f,w,nl,2029 herbert akins rd,fuquay varina,nc,27526,nan,nc,09/13/1939,2011-12
+00000296,999000404170,nan,howard,lee,webb,nan,72,m,b,nl,30005 lebanon church rd,gaston,nc,27832,nan,nan,11/15/1939,2011-12
+00000297,990001721257,nan,charles,linwood,little,nan,72,m,w,nl,109 silo dr,chocowinity,nc,27817,nan,nc,06/16/1939,2011-10
+00000298,990001186087,nan,nellie,lawyer,ferguson,nan,72,f,w,nl,311 diamond city dr,harkers island,nc,28531,252 504 6017,nj,04/17/1939,2011-10
+00000299,990002958839,nan,caroleen,inscore,barker,nan,72,f,w,nl,524 bagley springs rd,ronda,nc,28670,nan,nc,04/17/1939,2011-10
+00000300,999000442369,nan,harold,leslie,craig,jr,72,m,w,nl,806 elm st,eden,nc,27288,336 623 3380,pa,09/19/1939,2011-12
+00000301,990000859957,nan,marshall,clifton,perry,nan,72,m,w,nl,1000 skyway dr,kannapolis,nc,28083,704 786 0206,sc,03/20/1939,2011-10
+00000302,990001248872,nan,linda,lowe,cole,nan,71,f,w,nl,280 hookers gap rd,candler,nc,28715,828 667 1929,nan,10/20/1939,2011-10
+00000303,999000549001,nan,ginger,f,adams,nan,72,f,w,nl,4581 virsalli loop,hope mills,nc,28348,nan,nc,06/22/1939,2011-12
+00000304,990002404476,nan,shelia,wilhoit,lambert,nan,62,f,w,nl,18621 pebble stone cir,locust,nc,28097,nan,nan,10/22/1939,2011-10
+00000305,000000706865,nan,sylvia,karen,novinsky,nan,43,f,w,hl,7114 montibillo pkwy,durham,nc,27713,nan,ny,12/23/1939,2011-10
+00000306,990003342702,nan,ethel,j,cobb,nan,72,f,b,nl,1809 fairfax rd #d,greensboro,nc,27407,nan,nc,09/25/1939,2011-10
+00000307,999001571696,nan,ethel,johnson,cobb,nan,73,f,b,nl,2538 16th st #d,greensboro,nc,27405,nan,nc,09/25/1939,2013-02
+00000308,000009461221,nan,helen,poggemann,meyer,nan,72,f,w,nl,1190 quail hollow rd,kernersville,nc,27284,nan,oh,09/26/1939,2011-10
+00000309,990000394637,nan,amos,mancel,crisp,nan,71,m,w,nl,105 s seventh st,pinetops,nc,27864,nan,nan,12/28/1939,2011-10
+00000310,990003486215,nan,hayden,thomas,bishop,nan,73,m,w,nl,255 monroe herman rd,banner elk,nc,28604,828 898 4095,nan,10/29/1939,2011-10
+00000311,990000175486,nan,margaret,s,strickland,nan,89,f,w,nl,212 meadowbrook ln,warsaw,nc,28398,nan,nan,01/01/1940,2011-10
+00000312,990002016698,nan,elbert,nan,whitman,nan,97,f,w,nl,287 beautancus rd,mt olive,nc,28365,nan,nc,01/01/1940,2011-10
+00000313,990002509007,nan,eveline,nan,dail,nan,89,f,w,nl,3567 fountaintown rd,chinquapin,nc,28521,nan,nc,01/01/1940,2011-10
+00000314,990003250404,nan,lawrence,nan,kelly,nan,92,m,w,un,385 kelly rd,mt olive,nc,28365,919 658 4542,nc,01/01/1940,2011-10
+00000315,990003621088,nan,thelma,k,kornegay,nan,92,f,w,nl,919 woodland church rd,albertson,nc,28508,919 658 3425,nc,01/01/1940,2011-10
+00000316,000099866708,nan,nell,m,aycock,nan,92,f,w,nl,3483 caratoke hwy,maple,nc,27956,252 453 8319,va,01/01/1940,2011-12
+00000317,999000000997,nan,dorothy,fussell,hall,nan,93,f,w,nl,405 e cliff st,wallace,nc,28466,nan,nc,01/01/1940,2011-12
+00000318,999000049162,nan,leighton,nan,hall,nan,88,m,w,nl,289 leighton hall rd,wallace,nc,28466,nan,nc,01/01/1940,2011-12
+00000319,999000057651,nan,james,edward,westbrook,nan,94,m,w,nl,230 woodland church rd,albertson,nc,28508,919 568 4532,nc,01/01/1940,2011-12
+00000320,999000058143,nan,robert,f,boone,nan,99,m,w,nl,213 s cumberland st,wallace,nc,28466,nan,nan,01/01/1940,2011-12
+00000321,999000083904,nan,wilton,franklin,aycock,nan,91,m,w,nl,109 cypress creek rd,chinquapin,nc,28521,910 285 3833,nc,01/01/1940,2011-12
+00000322,999000086040,nan,jimmy,nan,sanderson,nan,74,m,w,nl,237 dill sanderson ln,mt olive,nc,28365,nan,nan,01/01/1940,2011-12
+00000323,999000143572,nan,helen,nan,farrior,nan,92,f,w,nl,301 w main st,wallace,nc,28466,nan,nc,01/01/1940,2011-12
+00000324,999000145267,nan,glendora,nan,lanier,nan,92,f,w,nl,104 eneas lanier rd,chinquapin,nc,28521,nan,nan,01/01/1940,2011-12
+00000325,999000236542,nan,beulah,c,rivenbark,nan,106,f,w,nl,209 beasley st,kenansville,nc,28349,nan,nan,01/01/1940,2011-12
+00000326,999000317139,nan,edward,w,holmes,nan,96,m,w,nl,2289 garner chapel rd,mt olive,nc,28365,919 658 3228,nc,01/01/1940,2011-12
+00000327,999000397394,nan,louise,brinson,brown,nan,111,f,w,nl,163 rainbow rd,warsaw,nc,28398,nan,nc,01/01/1940,2011-12
+00000328,999000428962,nan,percy,elmore,thigpen,jr,93,m,w,nl,409 edwards rd,beulaville,nc,28518,nan,nc,01/01/1940,2011-12
+00000329,999000434637,nan,virginia,cavenaugh,hanchey,nan,93,f,w,nl,416 northeast rd,wallace,nc,28466,910 285 2786,nc,01/01/1940,2011-12
+00000330,999000438626,nan,marjorie,m,west,nan,100,f,w,nl,2658 caratoke hwy,currituck,nc,27929,nan,nc,01/01/1940,2011-12
+00000331,999000528344,nan,dessie,taylor,summerlin,nan,96,f,w,nl,407 washboard ave,mt olive,nc,28365,919 658 9749,nan,01/01/1940,2011-12
+00000332,999000533297,nan,rachel,j,ward,nan,92,f,w,nl,1209 w main st,williamston,nc,27892,nan,nan,01/01/1940,2011-12
+00000333,999000561637,nan,erma,nan,twiford,nan,93,f,w,nl,7678 caratoke hwy,powells point,nc,27966,252 491 2479,nc,01/01/1940,2011-12
+00000334,999000605266,nan,irene,brinson,miller,nan,93,f,w,nl,119 john miller rd,beulaville,nc,28518,910 298 4055,nc,01/01/1940,2011-12
+00000335,999000629183,nan,james,norwood,raynor,nan,95,m,w,nl,503 edmund brinson rd,beulaville,nc,28518,910 298 3745,nc,01/01/1940,2011-12
+00000336,000003082920,nan,r,m,graves,nan,111,m,w,nl,403 gralin st,kernersville,nc,27284,nan,nc,05/01/1940,2011-10
+00000337,000004684600,nan,beulah,sykes,moon,nan,97,f,w,nl,616 n carr st,mebane,nc,27302,563 6688,nc,05/01/1940,2011-10
+00000338,000007307400,nan,opal,vest,wicker,nan,94,f,w,nl,7345 ruralview rd,liberty,nc,27298,000 0000,nc,05/01/1940,2011-10
+00000339,990001069535,nan,george,crawford,amick,nan,95,m,w,nl,4808 forest lake dr,mebane,nc,27302,563 3710,tn,05/01/1940,2011-10
+00000340,990001825993,nan,lee,nan,jones,nan,104,f,w,nl,1734 price rd,williamston,nc,27892,252 792 4482,nan,05/01/1940,2011-10
+00000341,990002016120,nan,vida,h,edmondson,nan,94,f,w,nl,2920 fire dept rd,williamston,nc,27892,nan,nc,05/01/1940,2011-10
+00000342,990002862176,nan,a,woodrow,tayloe,nan,96,m,w,nl,307 s commerce st,aulander,nc,27805,nan,nc,05/01/1940,2011-10
+00000343,990003313059,nan,mary,c,griffin,nan,100,f,w,nl,826 east blvd #27,williamston,nc,27892,252 792 4245,nan,05/01/1940,2011-10
+00000344,990003819951,nan,marjorie,p,hines,nan,89,f,w,nl,4416 harrison phelps rd,la grange,nc,28551,252 566 3253,nc,05/01/1940,2011-10
+00000345,990003865106,nan,lucy,w,billingsley,nan,95,f,w,nl,519 billingsley rd,peachland,nc,28133,704 272 7321,nc,05/01/1940,2011-10
+00000346,999000000077,nan,elizabeth,f,gillam,nan,93,f,w,nl,207 s king st,windsor,nc,27983,252 794 3465,nc,05/01/1940,2011-12
+00000347,999000036875,nan,melissa,nan,roberson,nan,103,f,w,nl,1020 nathan roberson rd,williamston,nc,27892,nan,nan,05/01/1940,2011-12
+00000348,999000049355,nan,myrtle,s,lilley,nan,97,f,w,nl,2302 fire dept rd,williamston,nc,27892,nan,nc,05/01/1940,2011-12
+00000349,999000054473,nan,edith,nan,brown,nan,94,f,w,nl,220 roanoke ave,littleton,nc,27850,nan,nan,05/01/1940,2011-12
+00000350,999000131331,nan,millie,nan,stocks,nan,95,f,w,nl,1141 republican rd,windsor,nc,27983,nan,nc,05/01/1940,2011-12
+00000351,999000167856,nan,louise,m,gurkin,nan,93,f,w,nl,1022 maple grove church rd,williamston,nc,27892,nan,nc,05/01/1940,2011-12
+00000352,999000168031,nan,wilson,nan,jernigan,nan,94,m,w,nl,252 mt olive rd,windsor,nc,27983,nan,nc,05/01/1940,2011-12
+00000353,999000233039,nan,veona,r,griffin,nan,95,f,w,nl,4355 fire dept rd,williamston,nc,27892,nan,nc,05/01/1940,2011-12
+00000354,999000240960,nan,mamie,clyde,griffin,nan,92,f,w,nl,1995 yarrell creek rd,williamston,nc,27892,nan,nc,05/01/1940,2011-12
+00000355,999000326872,nan,oscar,e,roberson,nan,98,m,w,nl,201 s roberson st,robersonville,nc,27871,nan,nan,05/01/1940,2011-12
+00000356,999000386374,nan,erma,nan,tice,nan,96,f,w,nl,1050 piney grove church rd,williamston,nc,27892,nan,nan,05/01/1940,2011-12
+00000357,999000387808,nan,gertrude,n,carstarphen,nan,108,f,w,nl,201 e grace st,williamston,nc,27892,nan,oh,05/01/1940,2011-12
+00000358,999000450658,nan,sarah,s,sutton,nan,96,f,w,nl,402 s king st,windsor,nc,27983,nan,nc,05/01/1940,2011-12
+00000359,999000453118,nan,w,f,askew,nan,95,m,w,nl,3315 us highway 13 n,ahoskie,nc,27910,nan,nc,05/01/1940,2011-12
+00000360,999000608836,nan,daisy,nan,harrington,nan,92,f,w,nl,9150 nc highway 171,williamston,nc,27892,nan,nan,10/01/1940,2011-12
+00000361,990001943592,nan,dorothy,kay,hawk,nan,70,f,w,nl,108 clipper ct,new bern,nc,28562,252 633 6126,dc,12/01/1940,2011-10
+00000362,000002228760,nan,gladys,conrad,doub,nan,103,f,w,nl,5940 glad acres rd,pfafftown,nc,27040,nan,nc,05/02/1940,2011-10
+00000363,000004063200,nan,willie,perman,long,nan,95,m,w,nl,1937 lower hopedale rd,burlington,nc,27217,000 0000,nc,05/02/1940,2011-10
+00000364,990001166601,nan,sadie,m,blackwell,nan,98,f,w,nl,2014 sam blackwell rd,oxford,nc,27565,919 693 8289,nan,05/02/1940,2011-10
+00000365,990003613862,nan,annie,c,matthews,nan,95,f,w,nl,3740 herbert faucette rd,bullock,nc,27507,nan,nc,05/02/1940,2011-10
+00000366,990003896324,nan,clyde,r,davidson,nan,92,m,w,nl,320 n commerce st,aulander,nc,27805,nan,nc,05/02/1940,2011-10
+00000367,999000002080,nan,thurman,c,wynne,nan,93,m,w,nl,2853 everetts rd,williamston,nc,27892,nan,nc,05/02/1940,2011-12
+00000368,999000037692,nan,grace,victoria,ragland,nan,97,f,w,nl,250 hopkins rd #b-7,kernersville,nc,27284,nan,nc,05/02/1940,2011-12
+00000369,999000057094,nan,irene,wright,payne,nan,102,f,w,nl,5401 indiana ave #d-12,winston salem,nc,27106,nan,nc,05/02/1940,2011-12
+00000370,999000089339,nan,minnie,h,everett,nan,93,f,w,nl,201 ayers st,everetts,nc,27825,nan,nan,05/02/1940,2011-12
+00000371,999000147378,nan,melvin,o,crisp,nan,94,m,w,nl,306 w commerce st,oak city,nc,27857,nan,nan,05/02/1940,2011-12
+00000372,999000161302,nan,letha,mae,purvis,nan,99,f,w,nl,301 n railroad st,hamilton,nc,27840,nan,nc,05/02/1940,2011-12
+00000373,999000169340,nan,alma,eakes,yancey,nan,92,f,w,nl,9611 dave winston rd,bullock,nc,27507,nan,nc,05/02/1940,2011-12
+00000374,999000209912,nan,eloise,h,croom,nan,94,f,w,nl,4084 nc hwy 55 w,kinston,nc,28504,252 569 4436,nc,05/02/1940,2011-12
+00000375,999000301636,nan,viola,c,sides,nan,109,f,w,nl,1840 darwick rd,winston salem,nc,27127,nan,nc,05/02/1940,2011-12
+00000376,999000359848,nan,mary,cornelius,phillips,nan,100,f,w,nl,3222 turnberry ct,winston salem,nc,27104,nan,nc,05/02/1940,2011-12
+00000377,999000434102,nan,maude,fogleman,murray,nan,108,f,w,nl,7358 s nc hwy 49,snow camp,nc,27349,000 0000,nc,05/02/1940,2011-12
+00000378,999000594341,nan,j,harmon,linville,nan,111,m,w,nl,311 salisbury st #3,kernersville,nc,27284,nan,nc,05/02/1940,2011-12
+00000379,999000604721,nan,charles,thomas,young,nan,94,m,w,nl,821 burlington ave #8005,gibsonville,nc,27249,nan,nc,05/02/1940,2011-12
+00000380,990002748711,nan,rena,nan,hardy,nan,87,f,w,nl,1011 smith grady rd,seven springs,nc,28578,252 569 5681,nc,08/02/1940,2011-10
+00000381,000007659419,nan,lois,lorraine,wolfe,nan,86,f,w,un,2785 lake front dr,belmont,nc,28012,nan,nan,09/02/1940,2011-10
+00000382,000003419760,mrs,j,h,harris,nan,111,f,w,nl,6131 university pkwy,winston salem,nc,27105,nan,nc,05/03/1940,2011-10
+00000383,000006252960,nan,mary,m,pardue,nan,94,f,w,nl,230 hopkins rd #a110,kernersville,nc,27284,nan,nc,05/03/1940,2011-10
+00000384,990002267385,nan,sarah,w,roberts,nan,92,f,w,nl,324 n indiantown rd,shawboro,nc,27973,252 232 3395,nc,05/03/1940,2011-10
+00000385,990002550725,nan,allie,e,ward,nan,93,f,w,nl,304 s main st,robersonville,nc,27871,nan,nc,05/03/1940,2011-10
+00000386,999000232180,nan,ralph,carmen,foster,nan,105,m,w,nl,500 meadow st #21,gibsonville,nc,27249,000 0000,nc,05/03/1940,2011-12
+00000387,999000319428,nan,alida,nan,tyler,nan,101,f,w,nl,306 s broad st,robersonville,nc,27871,nan,nan,05/03/1940,2011-12
+00000388,999000434555,nan,margaret,page,clayton,nan,108,f,w,un,5075 salemtowne dr,winston salem,nc,27106,nan,nc,05/03/1940,2011-12
+00000389,999000542184,nan,sion,lawrence,boone,nan,99,m,w,nl,2494 ossipee front st,elon,nc,27244,584 8236,nc,05/03/1940,2011-12
+00000390,999000568458,nan,w,c,motsinger,nan,111,m,w,nl,1360 piney grove rd,kernersville,nc,27284,nan,nc,05/03/1940,2011-12
+00000391,999000610124,nan,t,gordon,roberson,nan,95,m,w,nl,306 s main st,robersonville,nc,27871,nan,nan,05/03/1940,2011-12
+00000392,999000615508,nan,oscar,nan,robbins,nan,96,m,w,nl,328 robbins rd,winston salem,nc,27107,nan,nc,05/03/1940,2011-12
+00000393,990001116716,nan,nancy,lee,albright,nan,71,f,w,nl,2 peaceful ln,fletcher,nc,28732,828 684 3976,nc,10/03/1940,2011-10
+00000394,990003284911,nan,wallace,l,kendrick,nan,70,m,w,nl,8819 leasburg rd,leasburg,nc,27291,nan,nc,01/04/1940,2011-10
+00000395,000031280284,nan,robert,charleton,miller,nan,39,m,w,nl,215 wilmot dr,raleigh,nc,27606,nan,il,02/04/1940,2011-10
+00000396,999000329616,nan,elizabeth,fluck,holt,nan,97,f,w,nl,1880 brookwood ave #403,burlington,nc,27215,584 4596,nc,04/04/1940,2011-12
+00000397,999000469201,nan,avic,huffines,greeson,nan,99,f,w,nl,744 burlington ave #a,gibsonville,nc,27249,nan,nc,04/04/1940,2011-12
+00000398,000000565200,nan,c,a,boggs,nan,95,m,w,nl,2110 carolina mill rd,burlington,nc,27217,000 0000,nc,05/04/1940,2011-10
+00000399,000001654080,nan,mildred,conrad,conrad,nan,94,f,w,nl,5197 fleetwood cir,winston salem,nc,27106,nan,nc,05/04/1940,2011-10
+00000400,000001668480,nan,weldon,mrs,conrad,nan,111,f,w,nl,2323 spicewood dr,winston salem,nc,27106,nan,nc,05/04/1940,2011-10
+00000401,000004447920,nan,william,l,jones,nan,111,m,w,nl,207 e clemmonsville rd,winston salem,nc,27107,nan,nc,05/04/1940,2011-10
+00000402,000005169840,nan,howard,nan,macy,nan,111,m,w,nl,904 tulane dr,kernersville,nc,27284,nan,nc,05/04/1940,2011-10
+00000403,000007184500,nan,mary,whitesell,welborn,nan,93,f,w,nl,206 ferris st,haw river,nc,27258,578 1541,nc,05/04/1940,2011-10
+00000404,000008437320,nan,noble,o,tucker,nan,111,m,w,nl,4170 high point rd,winston salem,nc,27107,nan,nc,05/04/1940,2011-10
+00000405,990000098849,nan,gladys,jones,wright,nan,96,f,w,nl,937 gold mine ext,peachland,nc,28133,nan,nc,05/04/1940,2011-10
+00000406,990000315176,nan,joe,worth,guthrie,nan,93,m,w,nl,8351 s nc hwy 87,snow camp,nc,27349,376 3329,nc,05/04/1940,2011-10
+00000407,990000348880,nan,dorine,n,harper,nan,94,f,w,nl,1007 black harper rd,kinston,nc,28504,252 523 1338,nc,05/04/1940,2011-10
+00000408,990000504796,nan,mary,t,parker,nan,92,f,w,nl,107 n main st,kelford,nc,27847,nan,nc,05/04/1940,2011-10
+00000409,990000553380,nan,ella,mae,futrell,nan,94,f,w,nl,12979 us hwy 158,conway,nc,27820,nan,nan,05/04/1940,2011-10
+00000410,990000567067,nan,garland,j,weaver,nan,99,m,w,nl,4984 allensville rd,roxboro,nc,27574,nan,nc,05/04/1940,2011-10
+00000411,990000750712,nan,louise,bass,eason,nan,94,f,w,nl,13 n king st,halifax,nc,27839,nan,nan,05/04/1940,2011-10
+00000412,990000951246,nan,w,e,bach,nan,111,m,w,nl,906 oaklawn ave,winston salem,nc,27104,nan,va,05/04/1940,2011-10
+00000413,990001285309,nan,mary,keel,wynne,nan,93,f,w,nl,119 w academy st,williamston,nc,27892,nan,nc,05/04/1940,2011-10
+00000414,990001567239,nan,joe,fred,kirk,nan,83,m,w,nl,75 old route 74 w,polkton,nc,28135,704 272 7434,nc,05/04/1940,2011-10
+00000415,990001635963,nan,viola,d,martin,nan,92,f,w,nl,4184 nc hwy 35,conway,nc,27820,nan,nc,05/04/1940,2011-10
+00000416,990001674587,nan,p,hoffman,suitt,jr,93,m,w,nl,812 lewis st,oxford,nc,27565,nan,nc,05/04/1940,2011-10
+00000417,990001682952,nan,katie,conner,broadway,nan,92,f,w,nl,2975 grainger station rd,kinston,nc,28501,252 523 4475,nc,05/04/1940,2011-10
+00000418,990001820608,nan,norman,f,perry,nan,92,m,w,nl,512 e river st,colerain,nc,27924,nan,nc,05/04/1940,2011-10
+00000419,990002047749,nan,john,h,sanford,jr,84,m,w,nl,122 maluli dr,oxford,nc,27565,nan,nc,05/04/1940,2011-10
+00000420,990002200378,nan,fleet,nan,foster,nan,97,m,w,nl,3615 mine creek rd,burlington,nc,27217,000 0000,nc,05/04/1940,2011-10
+00000421,990002548145,nan,vivian,edwards,jones,nan,99,f,w,nl,2278 mineral springs ch rd,polkton,nc,28135,nan,nc,05/04/1940,2011-10
+00000422,990002549391,nan,lizzie,nan,currin,nan,98,f,w,nl,4521 nc hwy 96 s,oxford,nc,27565,919 693 7287,nc,05/04/1940,2011-10
+00000423,990002688442,nan,lagray,nan,askew,nan,94,m,w,nl,304 n main st,colerain,nc,27924,nan,nc,05/04/1940,2011-10
+00000424,990002911848,nan,lee,nan,campbell,nan,97,f,w,nl,0 us hwy 15 n,bullock,nc,27507,nan,nc,05/04/1940,2011-10
+00000425,990003060211,nan,virginia,waddell,martin,nan,92,f,w,nl,2097 martin rd,wadesboro,nc,28170,704 826 8202,nc,05/04/1940,2011-10
+00000426,990003168797,nan,carlene,nan,massey,nan,96,f,w,nl,2434 carolina rd,burlington,nc,27217,000 0000,nc,05/04/1940,2011-10
+00000427,990003335494,nan,susie,kythia,vaughn,nan,94,f,w,nl,10404 nc 742 s,morven,nc,28119,nan,nc,05/04/1940,2011-10
+00000428,990003451812,nan,josephine,j,cochran,nan,94,f,w,nl,309 s broad st,robersonville,nc,27871,nan,nc,05/04/1940,2011-10
+00000429,990003508951,nan,rufus,nan,dickens,nan,96,m,w,nl,2382 piney grove church rd,littleton,nc,27850,nan,nan,05/04/1940,2011-10
+00000430,990003534254,mrs,j,e,northcott,nan,100,f,w,nl,210 quebec rd,colerain,nc,27924,nan,nc,05/04/1940,2011-10
+00000431,990003766358,nan,margaret,g,savage,nan,93,f,w,nl,65 woodland dr,polkton,nc,28135,704 272 8587,nc,05/04/1940,2011-10
+00000432,999000003889,nan,glenn,william,welborn,nan,97,m,w,nl,779 woody dr,graham,nc,27253,nan,nc,05/04/1940,2011-12
+00000433,999000010612,nan,louise,martha,buckner,nan,101,f,w,nl,231 s marshall st,graham,nc,27253,226 9183,nc,05/04/1940,2011-12
+00000434,999000030080,nan,albert,ashel,tew,nan,96,m,w,nl,912 douglas rd,haw river,nc,27258,336 578 2786,nc,05/04/1940,2011-12
+00000435,999000030388,nan,charles,wesley,knowles,sr,92,m,w,nl,148 knowles ln,windsor,nc,27983,nan,nc,05/04/1940,2011-12
+00000436,999000038776,nan,joseph,herbert,cullipher,nan,92,m,w,nl,8007 w main st,williamston,nc,27892,nan,nc,05/04/1940,2011-12
+00000437,999000041679,nan,sarah,thompson,rich,nan,97,f,w,nl,302 albright ave,graham,nc,27253,nan,nc,05/04/1940,2011-12
+00000438,999000044046,nan,joan,m,canning,nan,71,f,w,nl,5209 sycamore ln,kitty hawk,nc,27949,nan,nan,05/04/1940,2011-12
+00000439,999000049208,nan,elmer,thomas,sutton,sr,93,m,w,nl,742 tyree rd,kinston,nc,28504,252 523 3452,nc,05/04/1940,2011-12
+00000440,999000055350,nan,barbara,euliss,johnson,nan,98,f,w,nl,6155 kimesville rd,liberty,nc,27298,nan,nc,05/04/1940,2011-12
+00000441,999000059414,nan,william,dowd,staley,nan,94,m,w,nl,1331 burlingate pl,burlington,nc,27215,336 226 9316,nc,05/04/1940,2011-12
+00000442,999000063612,nan,r,g,jenkins,nan,100,m,w,nl,80 us hwy 158,roanoke rapids,nc,27870,nan,nan,05/04/1940,2011-12
+00000443,999000078064,nan,herman,nan,hughes,nan,96,m,w,nl,3003 wakelon rd,colerain,nc,27924,nan,nc,05/04/1940,2011-12
+00000444,999000083864,nan,thelma,m,read,nan,97,f,w,nl,321 king st,halifax,nc,27839,nan,nan,05/04/1940,2011-12
+00000445,999000097807,nan,jesse,m,croom,nan,94,m,w,nl,183 s croom bland rd,kinston,nc,28504,252 569 9516,nc,05/04/1940,2011-12
+00000446,999000106476,nan,roy,nan,blackwell,nan,101,m,w,nl,7505 nc hwy 96,oxford,nc,27565,nan,nc,05/04/1940,2011-12
+00000447,999000109030,nan,mertice,nan,wright,nan,99,f,w,nl,685 us hwy 158 hwy,roanoke rapids,nc,27870,nan,nan,05/04/1940,2011-12
+00000448,999000137691,nan,vera,king,futrell,nan,93,f,w,nl,12569 us hwy 158,conway,nc,27820,nan,nan,05/04/1940,2011-12
+00000449,999000143612,nan,james,worth,rich,nan,100,m,w,nl,302 albright ave,graham,nc,27253,nan,nc,05/04/1940,2011-12
+00000450,999000163745,nan,robert,blain,tucker,nan,96,m,w,nl,4130 high point rd,winston salem,nc,27107,nan,nc,05/04/1940,2011-12
+00000451,999000180777,nan,william,nan,liles,nan,94,m,w,nl,21930 justice branch rd,littleton,nc,27850,nan,nan,05/04/1940,2011-12
+00000452,999000182989,nan,d,m,campbell,nan,92,m,w,nl,366 prussia st,halifax,nc,27839,nan,nan,05/04/1940,2011-12
+00000453,999000185424,nan,josie,guthrie,ivey,nan,103,f,w,nl,1508 darrell dr #5,graham,nc,27253,nan,nc,05/04/1940,2011-12
+00000454,999000267025,nan,viola,m,martin,nan,94,f,w,nl,1793 main st,jamesville,nc,27846,nan,nan,05/04/1940,2011-12
+00000455,999000274101,nan,joe,daniel,hunt,nan,93,m,w,nl,2112 tommie daniel rd,oxford,nc,27565,919 693 6681,nc,05/04/1940,2011-12
+00000456,999000280938,nan,dorothy,webster,faucette,nan,99,f,w,nl,431 edgewood church rd,mebane,nc,27302,919 563 1285,nc,05/04/1940,2011-12
+00000457,999000286408,nan,florence,w,willard,nan,95,f,w,nl,826 east blvd,williamston,nc,27892,nan,nc,05/04/1940,2011-12
+00000458,999000315283,nan,mildred,b,page,nan,111,f,w,nl,219 rural rte 2 rte,halifax,nc,27839,nan,nan,05/04/1940,2011-12
+00000459,999000336400,nan,mildred,harrod,wagoner,nan,95,f,w,nl,715 s williamson ave,elon,nc,27244,584 0422,ms,05/04/1940,2011-12
+00000460,999000369292,nan,hilda,allen,forrester,nan,94,f,w,nl,609 everett st,burlington,nc,27215,nan,nc,05/04/1940,2011-12
+00000461,999000395788,nan,earle,f,bailey,nan,111,m,w,nl,10781 nc hwy 903,halifax,nc,27839,nan,nan,05/04/1940,2011-12
+00000462,999000404430,nan,jeff,davis,pritchett,jr,93,m,w,nl,4107 n nc hwy 119,mebane,nc,27302,000 0000,nc,05/04/1940,2011-12
+00000463,999000428942,nan,helen,brooks,long,nan,98,f,w,nl,3727 wade coble dr,burlington,nc,27215,nan,nc,05/04/1940,2011-12
+00000464,999000448257,nan,albert,ramair,johnson,nan,96,m,w,nl,6155 kimesville rd,liberty,nc,27298,nan,nc,05/04/1940,2011-12
+00000465,999000472894,nan,james,wilson,tatum,nan,98,m,w,un,108 baxter st,kernersville,nc,27284,nan,nc,05/04/1940,2011-12
+00000466,999000479637,nan,annie,nan,loftin,nan,110,f,w,nl,2459 lightwood knot rd,kinston,nc,28504,252 527 1915,nc,05/04/1940,2011-12
+00000467,999000481118,nan,helen,nan,gordon,nan,93,f,w,un,4105 rocky ford ln,winston salem,nc,27101,nan,nc,05/04/1940,2011-12
+00000468,999000518191,nan,mary,edna,edwards,nan,94,f,w,nl,0 hough rd,ansonville,nc,28007,nan,nc,05/04/1940,2011-12
+00000469,999000525606,nan,irene,nan,butts,nan,94,f,w,nl,2185 wayman church rd,littleton,nc,27850,nan,nan,05/04/1940,2011-12
+00000470,999000543351,nan,josie,h,fairless,nan,93,f,w,nl,148 buncomb rd,colerain,nc,27924,nan,nc,05/04/1940,2011-12
+00000471,999000560855,nan,c,s,harkey,nan,97,m,w,nl,1247 northside rd,creedmoor,nc,27522,nan,va,05/04/1940,2011-12
+00000472,999000570181,nan,ruth,nan,rowland,nan,98,f,w,nl,3081 grapevine rd,halifax,nc,27839,nan,nan,05/04/1940,2011-12
+00000473,999000599924,nan,thaddeus,jones,turner,nan,94,m,w,nl,301 n kinston blvd,pink hill,nc,28572,252 568 3551,nc,05/04/1940,2011-12
+00000474,999000617583,nan,ruth,lee,edwards,nan,88,f,w,nl,6000 ansonville polkton rd,wadesboro,nc,28170,704 826 8229,nc,05/04/1940,2011-12
+00000475,990002944210,nan,sherry,king,dula,nan,51,f,b,un,4627 rock barn rd,claremont,nc,28610,828 459 0745,nc,08/04/1940,2011-10
+00000476,000031294773,nan,justin,scott,pusczak,nan,25,m,w,nl,3131 quinley pl,raleigh,nc,27604,nan,nc,10/04/1940,2011-10
+00000477,990001491578,nan,elton,nan,harrison,nan,94,m,w,nl,1028 bull hill rd,windsor,nc,27983,nan,nc,10/04/1940,2011-10
+00000478,999001569005,nan,justin,scott,pusczak,nan,26,m,w,un,10206 padgham ln,cary,nc,27518,nan,il,10/04/1940,2013-02
+00000479,990000562462,nan,rodney,w,kight,nan,56,m,w,nl,4097 caratoke hwy,barco,nc,27917,252 453 8449,nc,04/05/1940,2011-10
+00000480,000006716600,nan,doris,burke,thompson,nan,91,f,w,un,2502 s nc hwy 119,mebane,nc,27302,578 3747,nc,11/05/1940,2011-10
+00000481,999000331044,nan,haywood,l,hamill,nan,111,m,w,nl,25560 nc hwy 561,enfield,nc,27823,nan,nan,11/05/1940,2011-12
+00000482,000000704000,nan,edith,ruth,brannock,nan,93,f,w,nl,4 poplar,elon,nc,27244,584 0515,nc,05/06/1940,2011-10
+00000483,000002192400,nan,mary,hinkle,doby,nan,95,f,w,nl,4213 old lexington rd,winston salem,nc,27107,nan,nc,05/06/1940,2011-10
+00000484,000005636600,nan,odessa,nan,richmond,nan,94,f,w,nl,721 s fifth st,mebane,nc,27302,000 0000,nc,05/06/1940,2011-10
+00000485,000005769120,nan,philip,h,mock,nan,95,m,w,nl,1145 sequoia dr,lewisville,nc,27023,nan,nc,05/06/1940,2011-10
+00000486,000006639000,nan,josephine,walker,terrell,nan,93,f,w,nl,911 w davis st,burlington,nc,27215,226 8183,nc,05/06/1940,2011-10
+00000487,000008410920,nan,nell,nan,trivette,nan,111,f,w,nl,6700 shallowford rd,lewisville,nc,27023,nan,nc,05/06/1940,2011-10
+00000488,990000290931,nan,wincy,lee,meachum,nan,95,f,w,nl,270 mayesville rd,morven,nc,28119,nan,nc,05/06/1940,2011-10
+00000489,990000730894,nan,effie,nan,harper,nan,98,f,w,nl,309 woodlandhurst rd,littleton,nc,27850,nan,nan,05/06/1940,2011-10
+00000490,990002526632,nan,jesse,james,rice,nan,98,m,w,nl,412 n first st,mebane,nc,27302,563 6371,nc,05/06/1940,2011-10
+00000491,990003383613,nan,mary,jane,winfree,nan,88,f,w,nl,2274 pinkston river rd,wadesboro,nc,28170,nan,nc,05/06/1940,2011-10
+00000492,990003519977,mrs,mildred,buck,fulk,nan,111,f,w,nl,150 w highway 65 #bx 14,rural hall,nc,27045,nan,nc,05/06/1940,2011-10
+00000493,999000013104,nan,hazel,madrid,harden,nan,98,f,w,nl,421 n main st,graham,nc,27253,nan,nc,05/06/1940,2011-12
+00000494,999000130680,nan,george,hughey,pritchett,nan,96,m,w,nl,3243 n nc hwy 87,elon,nc,27244,336 584 8501,nc,05/06/1940,2011-12
+00000495,999000140895,nan,kendall,mcbride,rich,nan,96,m,w,nl,100 wade coble dr,burlington,nc,27215,336 538 1400,nc,05/06/1940,2011-12
+00000496,999000220065,nan,hezekiah,k,dowdy,nan,94,m,w,nl,501 manning ave,elon,nc,27244,336 506 2643,nc,05/06/1940,2011-12
+00000497,999000301792,nan,mary,tucker,williard,nan,94,f,w,un,6110 salemtowne dr,winston salem,nc,27106,nan,nc,05/06/1940,2011-12
+00000498,999000388014,nan,j,m,cook,nan,96,m,w,nl,14484 nc hwy 48,littleton,nc,27850,nan,nan,05/06/1940,2011-12
+00000499,999000469807,nan,courtney,nan,patterson,nan,94,m,b,nl,1113 patterson rd,kinston,nc,28504,252 527 5104,nc,05/06/1940,2011-12
+00000500,999000470292,nan,virginia,w,hardison,nan,92,f,w,nl,106 e pitt st,windsor,nc,27983,nan,nc,05/06/1940,2011-12
+00000501,999000488681,nan,alice,mae,bazemore,nan,92,f,w,nl,214 w 10th st,scotland neck,nc,27874,nan,nan,05/06/1940,2011-12
+00000502,999000503100,nan,e,l,stokes,jr,93,m,w,nl,201 w river st,colerain,nc,27924,nan,nc,05/06/1940,2011-12
+00000503,999000516959,nan,zaner,luther,sykes,nan,99,m,w,nl,409 s fifth st,mebane,nc,27302,563 3374,nc,05/06/1940,2011-12
+00000504,999000549360,nan,dorothy,sink,allred,nan,94,f,w,nl,402 n second st,mebane,nc,27302,563 1426,nc,05/06/1940,2011-12
+00000505,999000579429,nan,james,harold,smith,nan,98,m,w,nl,2407 oakwood dr,burlington,nc,27215,584 4202,nc,05/06/1940,2011-12
+00000506,999000598783,nan,george,donald,williard,nan,95,m,w,un,6110 salemtowne dr,winston salem,nc,27106,nan,nc,05/06/1940,2011-12
+00000507,990000345678,nan,martha,s,hardy,nan,87,f,w,nl,4469 davis hardy rd,kinston,nc,28504,252 569 6201,nc,09/06/1940,2011-10
+00000508,000001706640,nan,anna,lena,cooper,nan,91,f,w,nl,3735 clemmons rd,clemmons,nc,27012,nan,nc,05/07/1940,2011-10
+00000509,000002862600,nan,fannie,jane,hayes,nan,97,f,w,nl,902 plaid st,burlington,nc,27215,000 0000,nc,05/07/1940,2011-10
+00000510,000003503760,nan,doris,s,hauser,nan,92,f,w,nl,6670 shallowford rd,lewisville,nc,27023,nan,nc,05/07/1940,2011-10
+00000511,000003741960,nan,a,l,hill,nan,111,m,w,nl,9225 styers ferry rd,clemmons,nc,27012,nan,nc,05/07/1940,2011-10
+00000512,000003759240,nan,lucile,j,hill,nan,97,f,w,nl,9225 styers ferry rd,clemmons,nc,27012,336 945 5168,nc,05/07/1940,2011-10
+00000513,000004539700,nan,ruth,fitch,mebane,nan,100,f,w,nl,1462 mebane oaks rd,mebane,nc,27302,000 0000,nc,05/07/1940,2011-10
+00000514,000005985120,nan,hubert,mrs,myers,nan,111,f,w,nl,3368 transou rd,pfafftown,nc,27040,nan,nc,05/07/1940,2011-10
+00000515,000007979760,nan,maxine,pitts,stewart,nan,92,f,w,un,602 rock garden cir,winston salem,nc,27104,nan,nc,05/07/1940,2011-10
+00000516,000009414960,nan,bessie,l,young,nan,111,f,w,nl,4620 abbotts creek church rd,kernersville,nc,27284,nan,nc,05/07/1940,2011-10
+00000517,990000099818,nan,gertrude,lovett,harrington,nan,93,f,w,nl,877 haileys ferry rd,lilesville,nc,28091,nan,nc,05/07/1940,2011-10
+00000518,990000386851,nan,sudie,mae,bonds,nan,99,f,w,nl,23874 nc highway 125,williamston,nc,27892,252 792 3459,nan,05/07/1940,2011-10
+00000519,990000813582,nan,horace,c,dilday,nan,96,m,w,nl,702 center grove rd,ahoskie,nc,27910,nan,nc,05/07/1940,2011-10
+00000520,990000851581,nan,myrtle,rudd,rimmer,nan,101,f,w,nl,731 s broad st,burlington,nc,27215,000 0000,nc,05/07/1940,2011-10
+00000521,990001570855,nan,doris,suggs,taylor,nan,97,f,w,nl,875 taylor spence rd,kinston,nc,28504,252 527 2742,nc,05/07/1940,2011-10
+00000522,990001754344,nan,bartialette,braxton,thompson,nan,92,f,w,nl,209 w gilbreath st,graham,nc,27253,336 228 8272,nc,05/07/1940,2011-10
+00000523,990001972751,nan,william,dillard,cross,nan,94,m,w,nl,414 piedmont way,burlington,nc,27217,226 5247,nc,05/07/1940,2011-10
+00000524,990002572362,nan,melvin,reaves,stratton,nan,99,m,w,nl,1334 graham st,burlington,nc,27217,226 4719,va,05/07/1940,2011-10
+00000525,990002801531,nan,annie,louise,knotts,nan,83,f,b,nl,4736 us hwy 74 w,polkton,nc,28135,704 694 5229,nc,05/07/1940,2011-10
+00000526,990003440850,nan,frances,nance,allen,nan,95,f,w,nl,2926 boy wood rd,graham,nc,27253,228 8585,nc,05/07/1940,2011-10
+00000527,990003538182,nan,alma,w,cooke,nan,90,f,w,nl,392 nc hwy 481,halifax,nc,27839,nan,nan,05/07/1940,2011-10
+00000528,990003752013,nan,edna,crawford,harden,nan,97,f,w,nl,1880 brookwood ave #211,burlington,nc,27215,336 570 8626,nc,05/07/1940,2011-10
+00000529,999000002937,nan,george,e,loftin,nan,92,m,w,nl,1395 nc hwy 58 s,kinston,nc,28504,252 527 2577,nc,05/07/1940,2011-12
+00000530,999000061676,nan,leila,self,bennett,nan,103,f,w,nl,402 w wade st,wadesboro,nc,28170,704 694 2891,nc,05/07/1940,2011-12
+00000531,999000260102,nan,melvin,boyd,perry,nan,95,m,w,nl,1827 s main st,graham,nc,27253,000 0000,nc,05/07/1940,2011-12
+00000532,999000267868,nan,henry,glenn,wilkins,nan,93,m,w,nl,2151 wilkins rd,burlington,nc,27217,nan,nc,05/07/1940,2011-12
+00000533,999000268468,nan,merle,clayton,king,nan,103,f,w,nl,403 w crawford st,mebane,nc,27302,563 3441,nc,05/07/1940,2011-12
+00000534,999000283451,nan,lorraine,lindley,hornaday,nan,95,m,w,nl,2609 pleasant hill-liberty rd,liberty,nc,27298,000 0000,nc,05/07/1940,2011-12
+00000535,999000297993,nan,margaret,w,clark,nan,102,f,w,nl,105 s broad st,everetts,nc,27825,nan,nan,05/07/1940,2011-12
+00000536,999000348825,nan,iva,sloan,hart,nan,93,f,w,nl,615 grace ave,burlington,nc,27217,nan,nc,05/07/1940,2011-12
+00000537,999000353379,nan,stella,nan,wilson,nan,94,f,w,nl,1336 weavers chapel rd,littleton,nc,27850,nan,nan,05/07/1940,2011-12
+00000538,999000362408,nan,florin,evron,daffron,nan,100,m,w,nl,2912 timber ridge lake rd,liberty,nc,27298,565 4508,nc,05/07/1940,2011-12
+00000539,999000365749,nan,dale,nan,idol,nan,93,m,w,nl,1705 bunker hill sandy ridge rd,kernersville,nc,27284,336 993 3583,nc,05/07/1940,2011-12
+00000540,999000380054,nan,helen,claude,transou,nan,105,f,w,un,3238 reynolda rd,winston salem,nc,27106,nan,nc,05/07/1940,2011-12
+00000541,999000385216,nan,lucy,lee,ross,nan,96,f,w,nl,205 ross wright rd,polkton,nc,28135,nan,nc,05/07/1940,2011-12
+00000542,999000404376,nan,grace,albright,pike,nan,101,f,w,nl,416 green st,graham,nc,27253,336 226 4570,nc,05/07/1940,2011-12
+00000543,999000446643,nan,j,dodd,linker,sr,111,m,w,nl,3765 clemmons rd,clemmons,nc,27012,nan,nc,05/07/1940,2011-12
+00000544,999000487300,nan,george,t,britton,nan,94,m,w,nl,107 pierce st,lewiston woodville,nc,27849,nan,nc,05/07/1940,2011-12
+00000545,999000490114,nan,lillian,v,beroth,nan,97,f,w,nl,6601 yadkinville rd,pfafftown,nc,27040,nan,nc,05/07/1940,2011-12
+00000546,999000493525,nan,agnes,fogleman,smith,nan,94,f,w,un,3949 s nc hwy 62,burlington,nc,27215,336 228 1936,nc,05/07/1940,2011-12
+00000547,999000497792,nan,daisy,m,barber,nan,110,f,w,nl,3011 barber rd,jamesville,nc,27846,nan,nan,05/07/1940,2011-12
+00000548,999000524982,nan,marie,g,cobb,nan,92,f,w,nl,1060 dixie trl,williamston,nc,27892,nan,nan,05/07/1940,2011-12
+00000549,999000534226,nan,clayton,nan,crofton,nan,95,m,w,nl,24427 nc highway 125,williamston,nc,27892,nan,nc,05/07/1940,2011-12
+00000550,999000552386,nan,pauline,jones,macomson,nan,95,f,w,nl,1531 sherwood dr,burlington,nc,27215,226 0787,nc,05/07/1940,2011-12
+00000551,999000569519,nan,ellen,clore,martin,nan,94,f,w,nl,3812 forrestgate dr #202,winston salem,nc,27103,nan,nc,05/07/1940,2011-12
+00000552,999000571654,nan,pauline,staley,loy,nan,93,f,w,nl,1206 durham st,burlington,nc,27217,nan,nc,05/07/1940,2011-12
+00000553,999000626828,nan,hazel,c,johnson,nan,97,f,w,nl,20029 nc highway 903,robersonville,nc,27871,nan,nc,05/07/1940,2011-12
+00000554,990001683064,nan,raymond,alvin,hayes,nan,69,m,w,nl,130 spruce pine ln,north wilkesboro,nc,28659,nan,va,04/08/1940,2011-10
+00000555,000003296400,nan,eunice,lee,ingle,nan,95,f,w,nl,519 laurel hill dr,burlington,nc,27215,227 3795,nc,05/08/1940,2011-10
+00000556,000003975625,nan,zelma,wiggins,lewis,nan,93,f,w,nl,2110 wiggins st,burlington,nc,27215,000 0000,nc,05/08/1940,2011-10
+00000557,990000148425,nan,louise,m,reynolds,nan,111,f,w,nl,203 sonata dr,lewisville,nc,27023,nan,nc,05/08/1940,2011-10
+00000558,990000307251,nan,flora,nelle,johnson,nan,94,f,w,nl,464 mclendon rd,morven,nc,28119,704 851 3180,sc,05/08/1940,2011-10
+00000559,990000816539,nan,joe,idaho,carpenter,nan,93,m,w,nl,687 jacks branch rd,wadesboro,nc,28170,nan,nc,05/08/1940,2011-10
+00000560,990001251233,nan,naomi,nan,harris,nan,96,f,w,nl,342 kyle rd,littleton,nc,27850,nan,nan,05/08/1940,2011-10
+00000561,990001599287,nan,evelyn,f,daniels,nan,100,f,w,nl,504 s haughton st,williamston,nc,27892,nan,nan,05/08/1940,2011-10
+00000562,990002175893,mrs,j,c,burton,nan,111,f,w,nl,5856 old rural hall rd,winston salem,nc,27105,nan,nc,05/08/1940,2011-10
+00000563,990002688529,nan,george,houston,hildreth,jr,91,m,w,nl,32 old us 52 w,wadesboro,nc,28170,704 826 8217,nc,05/08/1940,2011-10
+00000564,990003805500,nan,florentine,nan,cook,nan,105,f,w,nl,0 gardner dr,gaston,nc,27832,nan,nc,05/08/1940,2011-10
+00000565,990003908990,nan,lofton,d,sharpe,nan,93,m,w,nl,6362 mt hermon-rock creek rd,snow camp,nc,27349,376 6831,nc,05/08/1940,2011-10
+00000566,990003953556,nan,ruth,catherine,clark,nan,87,f,b,nl,310 godfrey ave,ansonville,nc,28007,nan,nc,05/08/1940,2011-10
+00000567,999000035624,nan,l,e,masten,nan,97,m,w,nl,2718 country club rd,winston salem,nc,27104,nan,nc,05/08/1940,2011-12
+00000568,999000053121,nan,gertrude,h,daniel,nan,95,f,w,nl,1216 satterwhite rd,oxford,nc,27565,nan,nc,05/08/1940,2011-12
+00000569,999000057341,nan,eugenia,r,rook,nan,94,f,w,nl,2593 thelma rd,roanoke rapids,nc,27870,nan,nan,05/08/1940,2011-12
+00000570,999000102902,nan,estelle,jordan,thompson,nan,97,f,w,nl,2405 trail five,burlington,nc,27215,226 1717,nc,05/08/1940,2011-12
+00000571,999000133383,nan,charles,brantley,mayse,nan,100,m,w,nl,0 parson grove church rd,lilesville,nc,28091,nan,nc,05/08/1940,2011-12
+00000572,999000196421,nan,jim,jackson,hanna,nan,102,m,w,nl,0 hannah rd,wadesboro,nc,28170,nan,nc,05/08/1940,2011-12
+00000573,999000198738,nan,mildred,davis,turner,nan,95,f,w,nl,300 w broadway st,pink hill,nc,28572,nan,nc,05/08/1940,2011-12
+00000574,999000221914,nan,lyda,lee,miller,nan,99,f,w,nl,1880 brookwood ave,burlington,nc,27215,336 570 8546,nc,05/08/1940,2011-12
+00000575,999000262108,nan,forrest,nan,rook,nan,95,m,w,nl,1416 thelma rd,roanoke rapids,nc,27870,nan,nan,05/08/1940,2011-12
+00000576,999000285080,nan,jessie,c,milton,nan,98,f,w,nl,6101 old roxboro rd,oxford,nc,27565,nan,nc,05/08/1940,2011-12
+00000577,999000359176,nan,ruth,b,albright,nan,93,f,w,nl,231 s marshall st,graham,nc,27253,226 6060,nc,05/08/1940,2011-12
+00000578,999000450163,nan,annie,brown,cook,nan,100,f,w,nl,108 green st,elon,nc,27244,nan,nc,05/08/1940,2011-12
+00000579,999000519341,nan,eugene,a,moore,nan,95,m,w,nl,22290 nc hwy 125 hwy,scotland neck,nc,27874,nan,nan,05/08/1940,2011-12
+00000580,999000543732,nan,opal,marlette,snipes,nan,94,f,w,nl,2309 swepsonville rd,graham,nc,27253,000 0000,nc,05/08/1940,2011-12
+00000581,999000556281,nan,edna,j,robinson,nan,93,f,w,nl,301 n railroad st,hamilton,nc,27840,nan,nan,05/08/1940,2011-12
+00000582,999000560005,nan,wesley,austin,faulkner,nan,96,m,w,nl,650 upper white store rd,peachland,nc,28133,nan,sc,05/08/1940,2011-12
+00000583,999000598683,nan,janice,saunders,jilcott,nan,99,f,w,nl,207 main st,lewiston woodville,nc,27849,nan,nc,05/08/1940,2011-12
+00000584,999000604437,nan,pattie,elizabeth,transou,nan,108,f,w,un,3238 reynolda rd,winston salem,nc,27106,nan,nc,05/08/1940,2011-12
+00000585,999000620952,nan,sue,c,stem,nan,94,f,w,nl,117 eighth st,oxford,nc,27565,919 603 0541,nc,05/08/1940,2011-12
+00000586,990003085606,nan,paul,gregory,drake,nan,26,m,w,un,3318 arthur minnis rd,hillsborough,nc,27278,nan,tn,08/08/1940,2011-10
+00000587,999000125961,nan,martha,mcgee,hagar,nan,71,f,w,nl,1706 greene park ter,new bern,nc,28560,252 638 3499,nc,04/09/1940,2011-12
+00000588,000000689640,nan,norris,l,bodenhamer,nan,95,m,w,un,6207 salemtowne dr,winston salem,nc,27106,nan,nc,05/09/1940,2011-10
+00000589,000003778560,mrs,e,n,hine,nan,111,f,w,nl,3060 ridgewood rd,winston salem,nc,27107,nan,nc,05/09/1940,2011-10
+00000590,000003787680,mrs,p,p,hines,nan,111,f,w,nl,3411 country club rd,winston salem,nc,27104,nan,nc,05/09/1940,2011-10
+00000591,000004374960,nan,clifton,nan,jones,nan,94,m,w,nl,2475 union cross rd,winston salem,nc,27107,nan,nc,05/09/1940,2011-10
+00000592,000004641600,nan,s,e,kinnaman,nan,111,m,w,nl,1253 teague rd,winston salem,nc,27107,nan,nc,05/09/1940,2011-10
+00000593,000004920480,mrs,n,h,lewis,nan,111,f,w,nl,7376 belews creek rd,belews creek,nc,27009,nan,nc,05/09/1940,2011-10
+00000594,000005813520,nan,gray,mrs,moore,nan,111,f,w,nl,9255 moore rd,tobaccoville,nc,27050,nan,nc,05/09/1940,2011-10
+00000595,000008693880,mrs,j r,mrs,wall,nan,95,f,w,nl,3364 country club rd,winston salem,nc,27104,nan,nc,05/09/1940,2011-10
+00000596,000008722920,nan,terry,l,walser,nan,96,m,w,nl,161 hartley st,winston salem,nc,27107,nan,nc,05/09/1940,2011-10
+00000597,990000129189,nan,beryl,mcpherson,moser,nan,100,f,w,nl,1724 bellemont-alamance rd,burlington,nc,27215,228 9730,nc,05/09/1940,2011-10
+00000598,990000179025,nan,david,r,blackwell,nan,92,m,w,nl,8136 dick blackwell rd,oxford,nc,27565,nan,nan,05/09/1940,2011-10
+00000599,990000452201,nan,mary,coble,sharpe,nan,95,f,w,nl,3129 bellemont-mt hermon rd,burlington,nc,27215,000 0000,nc,05/09/1940,2011-10
+00000600,990000457710,nan,mildred,f,grizzard,nan,102,f,w,nl,507 downing dr,scotland neck,nc,27874,nan,nan,05/09/1940,2011-10
+00000601,990000476893,nan,marion,nan,rouse,nan,92,m,w,nl,4275 rouse loop rd,la grange,nc,28551,252 566 3580,nc,05/09/1940,2011-10
+00000602,990001150827,nan,killian,efird,tucker,nan,90,m,w,nl,2539 nc 218,polkton,nc,28135,704 272 7815,nc,05/09/1940,2011-10
+00000603,990001222363,nan,leamon,nan,taylor,nan,110,m,w,nl,2675 joe mobley rd,williamston,nc,27892,nan,nan,05/09/1940,2011-10
+00000604,990001756497,nan,christine,c,davenport,nan,92,f,w,nl,1710 matthews rd,robersonville,nc,27871,nan,nc,05/09/1940,2011-10
+00000605,990001877380,nan,catherine,m,overton,nan,94,f,w,nl,108 w tally ho rd,stem,nc,27581,919 528 1100,nc,05/09/1940,2011-10
+00000606,990002047649,nan,jimmy,nichols,martin,nan,92,f,w,nl,507 e main st,woodland,nc,27897,nan,nan,05/09/1940,2011-10
+00000607,990002280327,nan,alethia,j,green,nan,97,f,w,nl,1739 main st,scotland neck,nc,27874,nan,nan,05/09/1940,2011-10
+00000608,990002665713,nan,louise,heavener,previtte,nan,98,f,w,nl,909 n green st,wadesboro,nc,28170,nan,nc,05/09/1940,2011-10
+00000609,990003048156,nan,k,f,woolard,nan,104,m,w,nl,1102 n east ave,hassell,nc,27841,nan,nan,05/09/1940,2011-10
+00000610,990003139908,nan,s,e,miller,nan,97,m,w,nl,1305 meadow rd,colerain,nc,27924,nan,nc,05/09/1940,2011-10
+00000611,990003377910,nan,lessie,d,strother,nan,100,f,w,nl,3548 nc hwy 56 e,creedmoor,nc,27522,nan,nc,05/09/1940,2011-10
+00000612,999000039198,nan,odessa,stanley,teer,nan,96,f,w,un,2502 s nc hwy 119,mebane,nc,27302,nan,va,05/09/1940,2011-12
+00000613,999000054584,nan,lena,b,snyder,nan,103,f,w,nl,4000 hampton rd,clemmons,nc,27012,nan,nc,05/09/1940,2011-12
+00000614,999000083988,nan,evelyn,s,perkins,nan,93,f,w,nl,103 w second st,robersonville,nc,27871,nan,nan,05/09/1940,2011-12
+00000615,999000084383,nan,j,e,davenport,nan,95,m,w,nl,1710 matthews rd,robersonville,nc,27871,nan,nc,05/09/1940,2011-12
+00000616,999000103144,nan,betty,reavis,house,nan,93,f,w,nl,4341 nc hwy 54,graham,nc,27253,000 0000,nc,05/09/1940,2011-12
+00000617,999000109100,nan,wilhelmina,nan,whicker,nan,104,f,w,nl,4524 old winston rd,kernersville,nc,27284,nan,nc,05/09/1940,2011-12
+00000618,999000122180,nan,burgess,u,griffin,jr,61,m,w,nl,602 s main st,lewiston woodville,nc,27849,nan,nc,05/09/1940,2011-12
+00000619,999000134924,nan,veronia,p,robertson,nan,93,f,w,nl,304 n biggs st,williamston,nc,27892,nan,nan,05/09/1940,2011-12
+00000620,999000161835,nan,jack,calvin,caudle,nan,90,m,w,nl,717 high st,polkton,nc,28135,704 272 8422,nc,05/09/1940,2011-12
+00000621,999000171421,nan,e,l,preddy,nan,99,m,w,nl,2507 grove hill rd,franklinton,nc,27525,nan,nc,05/09/1940,2011-12
+00000622,999000224909,nan,dallie,ursal,boswell,nan,94,f,w,un,2502 s nc hwy 119,mebane,nc,27302,nan,nc,05/09/1940,2011-12
+00000623,999000277220,nan,w,clyde,griffin,nan,98,m,w,nl,301 railroad st,hamilton,nc,27840,nan,nan,05/09/1940,2011-12
+00000624,999000346586,nan,jessie,morris,andrews,nan,100,m,w,nl,624 oak st,burlington,nc,27215,226 8633,nc,05/09/1940,2011-12
+00000625,999000470483,nan,brice,rankin,whitesell,nan,95,m,w,nl,4825 whitesell brothers rd,elon,nc,27244,584 8562,nc,05/09/1940,2011-12
+00000626,999000499779,nan,laura,nan,miller,nan,109,f,w,nl,501 bill smith rd,kinston,nc,28501,252 523 9939,nc,05/09/1940,2011-12
+00000627,999000174845,nan,james,r,morris,nan,92,m,w,nl,4373 oxford rd,roxboro,nc,27574,336 597 2221,nc,03/10/1940,2011-12
+00000628,000002213520,nan,lois,c,dorsett,nan,92,f,w,un,4268 thomasville rd,winston salem,nc,27107,nan,nc,05/10/1940,2011-10
+00000629,000003184000,nan,alton,brown,howle,nan,93,m,w,nl,4304 hickory nut pt,burlington,nc,27217,000 0000,nc,05/10/1940,2011-10
+00000630,000004676400,nan,margie,marshall,montgomery,nan,97,f,w,nl,3615 s mebane st #18,burlington,nc,27215,226 4083,nc,05/10/1940,2011-10
+00000631,990000288404,nan,lenorma,nan,waters,nan,82,f,w,nl,104 w byrd st,windsor,nc,27983,nan,nc,05/10/1940,2011-10
+00000632,990000325466,nan,patricia,nan,rhodes,nan,94,f,w,nl,706 bertie ave,windsor,nc,27983,nan,nc,05/10/1940,2011-10
+00000633,990000403335,nan,lester,nan,harrell,jr,93,m,w,nl,3564 david brown rd,oak city,nc,27857,nan,nan,05/10/1940,2011-10
+00000634,990001272307,nan,corrie,rowena,odom,nan,86,f,w,nl,214 wheeler st,wadesboro,nc,28170,nan,sc,05/10/1940,2011-10
+00000635,990001286070,nan,martha,r,gillam,nan,82,f,w,nl,203 s king st,windsor,nc,27983,nan,nc,05/10/1940,2011-10
+00000636,990001817390,nan,marina,nan,perry,nan,95,f,w,nl,28980 us highway 64,jamesville,nc,27846,nan,nan,05/10/1940,2011-10
+00000637,990001817526,nan,leslie,herman,collier,nan,93,m,w,nl,718 warner bridge rd,garysburg,nc,27831,252 537 9347,nan,05/10/1940,2011-10
+00000638,990001863589,nan,arthur,conwell,harrell,nan,95,m,w,nl,1354 meadow rd,colerain,nc,27924,nan,nc,05/10/1940,2011-10
+00000639,990002381093,nan,charlie,edward,hall,nan,95,m,w,nl,704 burlington ave #7502,gibsonville,nc,27249,000 0000,nc,05/10/1940,2011-10
+00000640,990002495702,mrs,celia,lassiter,congleton,nan,94,f,w,un,505 harmon st,aulander,nc,27805,252 345 8151,nc,05/10/1940,2011-10
+00000641,990002617449,nan,clyde,c,harden,jr,86,m,w,nl,701 pecan st,windsor,nc,27983,nan,nc,05/10/1940,2011-10
+00000642,990002726312,nan,g,t,davis,jr,90,m,w,nl,706 winwood dr,windsor,nc,27983,nan,nc,05/10/1940,2011-10
+00000643,990002784385,nan,minnie,daniel,frazier,nan,105,f,w,nl,2153 mountain creek rd,oxford,nc,27565,919 693 7275,nc,05/10/1940,2011-10
+00000644,990002849957,nan,dewey,nan,johnson,nan,87,m,w,nl,5099 ansonville polkton rd,ansonville,nc,28007,704 272 7153,nc,05/10/1940,2011-10
+00000645,990002910939,nan,john,ernest,garrison,nan,96,m,w,nl,4133 burch bridge rd,burlington,nc,27217,584 8239,nc,05/10/1940,2011-10
+00000646,990002989539,nan,raymond,nan,spence,nan,97,m,w,nl,313 sherry dr,kinston,nc,28504,252 523 6317,nc,05/10/1940,2011-10
+00000647,990003053058,nan,elsie,nan,pittard,nan,93,f,w,nl,7123 nc hwy 903,roanoke rapids,nc,27870,nan,nan,05/10/1940,2011-10
+00000648,990003470315,nan,edgar,nan,harris,nan,98,m,w,nl,101 e carroll st,windsor,nc,27983,nan,nc,05/10/1940,2011-10
+00000649,990003558978,nan,j,r,adkins,nan,111,m,w,nl,88 kyle rd,littleton,nc,27850,nan,nan,05/10/1940,2011-10
+00000650,990003778171,nan,nannie,j,newby,nan,94,f,w,nl,9005 us hwy 15 n,bullock,nc,27507,nan,va,05/10/1940,2011-10
+00000651,990003782782,nan,viola,p,diggs,nan,93,f,w,nl,0 goldmine rd,wadesboro,nc,28170,nan,nc,05/10/1940,2011-10
+00000652,990004003727,nan,joseph,alexander,albright,jr,96,m,w,nl,824 indian valley dr,burlington,nc,27217,584 9875,nc,05/10/1940,2011-10
+00000653,999000014874,nan,lina,copeland,white,nan,101,f,w,nl,127 e askewville st,windsor,nc,27983,nan,nc,05/10/1940,2011-12
+00000654,999000028197,nan,edith,nan,moore,nan,95,f,w,nl,403 winston ln,windsor,nc,27983,nan,al,05/10/1940,2011-12
+00000655,999000043643,nan,ethel,york,kiker,nan,93,f,w,nl,620 west ave,wadesboro,nc,28170,nan,nc,05/10/1940,2011-12
+00000656,999000097765,nan,william,linwood,albright,nan,93,m,w,nl,2041 s nc hwy 119,mebane,nc,27302,000 0000,nc,05/10/1940,2011-12
+00000657,999000164721,nan,essie,nan,warren,nan,109,f,w,nl,105 south st,lasker,nc,27845,252 539 2866,nan,05/10/1940,2011-12
+00000658,999000192137,nan,lee,nan,marshall,nan,111,m,w,nl,719 carter st,kernersville,nc,27284,nan,va,05/10/1940,2011-12
+00000659,999000194911,nan,helen,clark,hobgood,nan,100,f,w,nl,1248 us hwy 158 w,oxford,nc,27565,919 693 5885,nc,05/10/1940,2011-12
+00000660,999000220330,nan,maxine,sharpe,parrish,nan,94,f,w,nl,118 alamance rd,burlington,nc,27215,336 226 3151,va,05/10/1940,2011-12
+00000661,999000226283,nan,rembert,nan,malloy,nan,98,m,b,nl,2020 new walkertown rd,winston salem,nc,27101,nan,va,05/10/1940,2011-12
+00000662,999000354995,nan,aubrey,williams,turner,nan,92,m,w,nl,100 w lynwood ave,pink hill,nc,28572,252 568 3590,nc,05/10/1940,2011-12
+00000663,999000408842,nan,marguerite,l,gatling,nan,100,f,w,nl,202 e water st,windsor,nc,27983,nan,nc,05/10/1940,2011-12
+00000664,999000428842,nan,rufus,nan,james,nan,95,m,w,nl,1579 s highway 66,kernersville,nc,27284,nan,nc,05/10/1940,2011-12
+00000665,999000487602,nan,mamie,t,slade,nan,92,f,w,nl,100 woodlawn dr,williamston,nc,27892,nan,nan,05/10/1940,2011-12
+00000666,999000529044,nan,nannie,turner,bradshaw,nan,98,f,b,nl,1987 hilton rd,burlington,nc,27217,584 8001,nc,05/10/1940,2011-12
+00000667,999000562607,nan,floyd,vernon,thompson,nan,96,m,w,nl,2405 trail five,burlington,nc,27215,226 1717,nc,05/10/1940,2011-12
+00000668,999000580202,nan,agnes,clark,parrish,nan,111,f,w,un,250 hopkins rd #a-10,kernersville,nc,27284,nan,nc,05/10/1940,2011-12
+00000669,999000596836,nan,mary,virginia,gillam,nan,96,f,w,nl,212 w gray st,windsor,nc,27983,nan,nc,05/10/1940,2011-12
+00000670,999000626557,nan,myrtle,foushee,wilson,nan,100,f,w,un,1840 brookwood ave #236,burlington,nc,27215,336 570 8380,nc,05/10/1940,2011-12
+00000671,999000627987,nan,william,mcgregor,bell,nan,94,m,w,nl,127 n shore dr,merry hill,nc,27957,nan,nc,05/10/1940,2011-12
+00000672,990000174074,nan,edward,nan,green,nan,90,f,w,nl,901 ridge rd,roxboro,nc,27573,nan,nan,08/10/1940,2011-10
+00000673,999000179837,nan,gladys,nan,laws,nan,95,f,w,nl,812 n main st,roxboro,nc,27573,nan,nc,08/10/1940,2011-12
+00000674,999000248695,nan,geneva,nan,owen,nan,93,f,w,nl,812 n main st,roxboro,nc,27573,nan,nc,08/10/1940,2011-12
+00000675,999000436334,nan,w,henry,davis,nan,96,m,w,nl,5921 nc hwy 55 w,kinston,nc,28504,252 569 3751,nc,08/10/1940,2011-12
+00000676,990002685581,nan,margaret,louise,nogy,nan,70,f,w,nl,6107 trevor simpson dr,indian trail,nc,28079,nan,nan,10/10/1940,2011-10
+00000677,999000001890,nan,eula belle,faulkner,caudle,nan,98,f,w,nl,10309 us hwy 74 w,peachland,nc,28133,nan,sc,04/11/1940,2011-12
+00000678,000000543960,nan,virgil,nan,beroth,nan,95,m,w,nl,3565 beroth cir,pfafftown,nc,27040,nan,nc,05/11/1940,2011-10
+00000679,000001928640,nan,mabel,smith,culler,nan,111,f,w,nl,2151 s hawthorne rd,winston salem,nc,27103,nan,nc,05/11/1940,2011-10
+00000680,000001957800,nan,lillian,wells,euliss,nan,97,f,w,nl,3732 timber ridge lake rd,liberty,nc,27298,565 4559,nc,05/11/1940,2011-10
+00000681,000002836600,nan,nell,marie,harviel,nan,92,f,w,nl,1880 brookwood ave #119,burlington,nc,27215,336 570 8519,nc,05/11/1940,2011-10
+00000682,000002954400,nan,christine,phillips,hicks,nan,99,f,w,nl,1153 e main st,graham,nc,27253,000 0000,nc,05/11/1940,2011-10
+00000683,000003692640,nan,john,m,hester,jr,111,m,w,nl,6450 belews creek rd,belews creek,nc,27009,nan,nc,05/11/1940,2011-10
+00000684,000003718000,nan,kyle,clifton,kimball,nan,93,m,w,nl,7913 sylvan rd,liberty,nc,27298,000 0000,nc,05/11/1940,2011-10
+00000685,000004064500,nan,annie,lee,longest,nan,94,f,w,nl,1118 rogers rd,graham,nc,27253,000 0000,nc,05/11/1940,2011-10
+00000686,000004116360,nan,j,clarence,idol,nan,111,m,w,nl,665 walkertown guthrie rd,winston salem,nc,27101,nan,nc,05/11/1940,2011-10
+00000687,000005735125,nan,margaret,caudle,robinson,nan,93,f,w,nl,2510 russell-mcpherson rd,burlington,nc,27215,000 0000,nc,05/11/1940,2011-10
+00000688,000006176600,nan,clarence,edward,smith,nan,96,m,w,nl,5533 kimesville rd,liberty,nc,27298,227 4602,nc,05/11/1940,2011-10
+00000689,000006722520,mrs,frank,e,raper,nan,96,f,w,nl,208 aldersgate dr,winston salem,nc,27104,nan,nc,05/11/1940,2011-10
+00000690,000007338500,nan,annie,mae gill,wilkinson,nan,93,f,w,nl,113 n sixth st,mebane,nc,27302,563 3380,nc,05/11/1940,2011-10
+00000691,000007440600,mrs,r,l,shutt,nan,111,f,w,nl,917 w clemmonsville rd,winston salem,nc,27127,nan,nc,05/11/1940,2011-10
+00000692,000007454400,nan,roscoe,nan,sides,nan,92,m,w,nl,2240 w clemmonsville rd,winston salem,nc,27127,nan,nc,05/11/1940,2011-10
+00000693,000007691520,mrs,c,h,smitherman,nan,111,f,w,nl,8181 reynolda rd,pfafftown,nc,27040,nan,nc,05/11/1940,2011-10
+00000694,000007775640,nan,ruth,t,spach,nan,94,f,w,nl,1510 jonestown rd,winston salem,nc,27103,336 765 1969,nc,05/11/1940,2011-10
+00000695,000008028240,nan,alene,nan,stonestreet,nan,95,f,w,un,2118 konnoak dr,winston salem,nc,27127,nan,nc,05/11/1940,2011-10
+00000696,000008765160,nan,pauline,mrs,warren,nan,111,f,w,nl,116 nelson st,kernersville,nc,27284,nan,nc,05/11/1940,2011-10
+00000697,990000021793,nan,tamara,palce,green,nan,46,f,w,nl,3081 e thollie green rd,stem,nc,27581,919 528 2954,tx,05/11/1940,2011-10
+00000698,990000144573,nan,mae,powell,yancey,nan,93,f,w,nl,2663 golf course rd,oxford,nc,27565,nan,nc,05/11/1940,2011-10
+00000699,990000277995,nan,mattie,lou,horne,nan,92,f,w,nl,1528 lower white store rd,polkton,nc,28135,704 272 8433,nc,05/11/1940,2011-10
+00000700,990000342327,nan,katharine,morrow,woody,nan,97,f,w,nl,6553 stockard rd,graham,nc,27253,376 3464,nc,05/11/1940,2011-10
+00000701,990000390559,nan,betty,parker,davidson,nan,98,f,w,nl,917 central ave,burlington,nc,27215,nan,va,05/11/1940,2011-10
+00000702,990000421990,nan,nell,mrs,marshall,nan,111,f,w,nl,719 carter st,kernersville,nc,27284,nan,nc,05/11/1940,2011-10
+00000703,990000691752,nan,alene,euliss,dorsett,nan,97,f,w,nl,3531 euliss rd,burlington,nc,27215,227 0947,nc,05/11/1940,2011-10
+00000704,990000816540,nan,william,stanley,alston,nan,93,m,w,nl,144 pollocks rd,windsor,nc,27983,252 794 4531,nc,05/11/1940,2011-10
+00000705,990000884555,nan,evelyn,m,howell,nan,90,f,w,nl,208 lee st,williamston,nc,27892,nan,nan,05/11/1940,2011-10
+00000706,990000940341,nan,bertha,nan,allen,nan,96,f,w,nl,522 us hwy 158,roanoke rapids,nc,27870,nan,nan,05/11/1940,2011-10
+00000707,990000954950,nan,bertha,starling,clayton,nan,94,f,w,nl,225 graham rd,graham,nc,27253,578 0139,nc,05/11/1940,2011-10
+00000708,990001228212,mrs,m,h,holcomb,nan,111,f,w,nl,117 wedgefield ave,winston salem,nc,27106,nan,nc,05/11/1940,2011-10
+00000709,990001263770,nan,vera,nan,walker,nan,94,f,w,nl,4712 roper springs rd,littleton,nc,27850,nan,nan,05/11/1940,2011-10
+00000710,990001265045,nan,j,b,smithwick,nan,92,m,w,nl,622 avoca farm rd,merry hill,nc,27957,nan,nc,05/11/1940,2011-10
+00000711,990001486193,nan,ann,moody,shepherd,nan,94,f,w,nl,1421 tarleton ave,burlington,nc,27215,nan,nc,05/11/1940,2011-10
+00000712,990001544588,nan,naomi,gilliam,sadler,nan,93,f,w,nl,3767 wade coble dr #202a,burlington,nc,27215,584 4821,nc,05/11/1940,2011-10
+00000713,990001556099,nan,mitchell,jeffreys,allen,nan,91,m,w,nl,2527 us hwy 15 s,creedmoor,nc,27522,nan,nc,05/11/1940,2011-10
+00000714,990001843900,nan,e,r,baker,nan,94,m,w,nl,608 bakertown rd,windsor,nc,27983,nan,nc,05/11/1940,2011-10
+00000715,990001865306,nan,faye,nan,fields,nan,94,f,w,nl,1452 hugo rd,kinston,nc,28501,252 523 9937,nc,05/11/1940,2011-10
+00000716,990001883146,nan,marion,b,morris,nan,102,f,b,nl,203 oak dr,murfreesboro,nc,27855,nan,nan,05/11/1940,2011-10
+00000717,990001947522,nan,ida,webster,cheek,nan,96,f,w,nl,1731 e webb ave,burlington,nc,27217,226 4848,nc,05/11/1940,2011-10
+00000718,990001974765,nan,sallie,b,gaines,nan,95,f,w,nl,1038 saint andrews st,jamesville,nc,27846,nan,nan,05/11/1940,2011-10
+00000719,990002029973,nan,christine,mary,tucker,nan,94,f,w,nl,7343 us hwy 74 e,lilesville,nc,28091,nan,nc,05/11/1940,2011-10
+00000720,990002259448,nan,robert,edward,boone,nan,98,m,w,nl,124 rolling rd,burlington,nc,27217,228 8872,nc,05/11/1940,2011-10
+00000721,990002462334,nan,bertha,nan,barnacascel,nan,103,f,w,nl,1927 cooper hill rd,windsor,nc,27983,nan,nc,05/11/1940,2011-10
+00000722,990002487103,nan,joseph,r,norris,nan,97,m,w,nl,384 walnut grove church rd,hurdle mills,nc,27541,nan,nc,05/11/1940,2011-10
+00000723,990002497622,nan,laura,frances,brower,nan,92,f,w,nl,370 nc 742 s,wadesboro,nc,28170,nan,nc,05/11/1940,2011-10
+00000724,990002549531,nan,william,alexander,garris,nan,95,m,w,nl,477 diggs rd,wadesboro,nc,28170,nan,nc,05/11/1940,2011-10
+00000725,990002563660,nan,lila,griffith,morris,nan,94,f,w,nl,500 w jefferson st,jackson,nc,27845,252 534 3951,nan,05/11/1940,2011-10
+00000726,990002831118,nan,julia,d,aiken,nan,101,f,w,nl,607 pine st,creedmoor,nc,27522,nan,nc,05/11/1940,2011-10
+00000727,990002943417,nan,helen,mcdaniel,joyner,nan,97,f,w,nl,201 n linden st,woodland,nc,27897,nan,nc,05/11/1940,2011-10
+00000728,990003008324,nan,georgie,anna,ricketts,nan,97,f,w,nl,2344 mcrae ave,wadesboro,nc,28170,nan,nc,05/11/1940,2011-10
+00000729,990003028089,nan,louise,g,adcock,nan,94,f,w,nl,200 coventry dr,oxford,nc,27565,919 693 3662,nc,05/11/1940,2011-10
+00000730,990003182813,nan,beverly,lineberry,andrews,nan,95,f,w,nl,815 tillman st,burlington,nc,27217,000 0000,nc,05/11/1940,2011-10
+00000731,990003188321,nan,alene,thomas,garrison,nan,94,f,w,nl,858 stoney creek church rd,burlington,nc,27217,000 0000,nc,05/11/1940,2011-10
+00000732,990003225902,nan,sam,sidney,anderson,nan,94,m,w,nl,1809 n nc hwy 49,green level,nc,27217,000 0000,nc,05/11/1940,2011-10
+00000733,990003287899,nan,p,w,longmire,nan,111,f,w,nl,4036 gray rock rd,kittrell,nc,27544,nan,nc,05/11/1940,2011-10
+00000734,990003507867,nan,christine,boone,fonville,nan,96,f,w,nl,1308 w davis st,burlington,nc,27215,226 6268,nc,05/11/1940,2011-10
+00000735,990003548439,nan,j,p,spencer,jr,93,m,w,nl,418 s main st,seaboard,nc,27876,nan,nc,05/11/1940,2011-10
+00000736,990003564927,nan,ethel,barrow,loftin,nan,89,f,w,nl,841 westminister ln,kinston,nc,28501,252 527 2667,nc,05/11/1940,2011-10
+00000737,990003676032,nan,bessie,matkins,gilliam,nan,100,f,w,nl,402 chapel hill rd,burlington,nc,27215,336 226 1385,nc,05/11/1940,2011-10
+00000738,990003896066,nan,william,carey,horne,nan,94,m,w,nl,1528 lower white store rd,polkton,nc,28135,704 272 8433,nc,05/11/1940,2011-10
+00000739,990003910476,nan,betty,t hicks,bragg,nan,101,f,w,nl,3538 cannady mill rd,kittrell,nc,27544,919 693 5875,nc,05/11/1940,2011-10
+00000740,990004038988,nan,allie,v,clark,nan,97,f,w,nl,109 hancock st,lewiston woodville,nc,27849,nan,nc,05/11/1940,2011-10
+00000741,000100033163,nan,lottie,l,cullipher,nan,95,f,w,nl,2324 nc highway 45 n,colerain,nc,27924,nan,nc,05/11/1940,2011-12
+00000742,999000020127,nan,marie,r,fleming,nan,99,f,w,nl,103 mangum st,creedmoor,nc,27522,nan,nc,05/11/1940,2011-12
+00000743,999000043346,nan,howard,t,suitt,nan,100,m,w,nl,716 n durham ave,creedmoor,nc,27522,nan,nc,05/11/1940,2011-12
+00000744,999000049165,nan,robert,e,brewer,nan,111,m,w,nl,4290 hampton rd,clemmons,nc,27012,nan,nc,05/11/1940,2011-12
+00000745,999000049481,nan,james,everett,brown,nan,92,m,w,nl,2276 nc hwy 305,rich square,nc,27869,nan,nan,05/11/1940,2011-12
+00000746,999000051388,nan,d,clyde,pfaff,nan,111,m,w,nl,1119 n peace haven rd,winston salem,nc,27104,nan,nc,05/11/1940,2011-12
+00000747,999000060707,nan,max,(nmn),euliss,nan,92,m,w,nl,8207 charlie euliss rd,snow camp,nc,27349,nan,nc,05/11/1940,2011-12
+00000748,999000061636,nan,d,g,fleming,nan,102,m,w,nl,103 mangum st,creedmoor,nc,27522,nan,nc,05/11/1940,2011-12
+00000749,999000064040,nan,frances,nan,blowe,nan,94,f,w,nl,801 us hwy 158 hwy,roanoke rapids,nc,27870,nan,nan,05/11/1940,2011-12
+00000750,999000073154,nan,lila,nan,piper,nan,97,f,w,nl,4316 old nc 75,oxford,nc,27565,919 693 5286,nc,05/11/1940,2011-12
+00000751,999000073767,nan,christine,roberson,hurst,nan,92,f,w,nl,106 w purvis st,robersonville,nc,27871,252 795 3373,nc,05/11/1940,2011-12
+00000752,999000084606,nan,grant,asa,danieley,nan,95,m,w,nl,1925 robin hood dr,burlington,nc,27217,000 0000,nc,05/11/1940,2011-12
+00000753,999000092459,nan,elizabeth,thompson,burke,nan,99,f,w,nl,300 e elm st,graham,nc,27253,226 9540,nc,05/11/1940,2011-12
+00000754,999000099647,nan,alda,smith,tatum,nan,98,f,w,nl,108 baxter st,kernersville,nc,27284,nan,nc,05/11/1940,2011-12
+00000755,999000112422,nan,effie,davis,massey,nan,92,f,w,nl,1626 morningside dr #h-52,burlington,nc,27217,336 226 8544,nc,05/11/1940,2011-12
+00000756,999000112596,nan,james,ernest,crabtree,nan,95,f,w,nl,5433 mt hermon-rock creek rd,burlington,nc,27215,376 9882,nc,05/11/1940,2011-12
+00000757,999000114785,nan,robert,olin,beauchamp,nan,93,m,w,nl,331 beauchamp rd,winston salem,nc,27106,nan,nc,05/11/1940,2011-12
+00000758,999000118287,nan,orene,thomas,caudle,nan,100,f,w,nl,877 cappadocia church rd,peachland,nc,28133,nan,nc,05/11/1940,2011-12
+00000759,999000148512,nan,john,atwood,bowden,jr,94,m,w,nl,1123 edgewood ave,burlington,nc,27215,336 226 7001,nc,05/11/1940,2011-12
+00000760,999000154680,nan,edna,mrs,hine,nan,111,f,w,nl,4811 high point rd,kernersville,nc,27284,nan,nc,05/11/1940,2011-12
+00000761,999000157648,nan,p,l,woodlief,nan,95,m,w,nl,2542 nc hwy 96,franklinton,nc,27525,nan,nc,05/11/1940,2011-12
+00000762,999000175466,nan,alta,c,harrington,nan,93,f,w,nl,118 n watts st,williamston,nc,27892,nan,nc,05/11/1940,2011-12
+00000763,999000182064,nan,edward,kerr,freshwater,nan,93,m,w,nl,1837 kimrey rd,haw river,nc,27258,000 0000,nc,05/11/1940,2011-12
+00000764,999000188890,nan,gwyn,m,jennings,nan,104,m,w,nl,171 lewisville vienna rd,lewisville,nc,27023,nan,va,05/11/1940,2011-12
+00000765,999000207355,nan,mary,rosa,fleming,nan,92,f,w,nl,1662 turner rd,mebane,nc,27302,nan,nc,05/11/1940,2011-12
+00000766,999000207999,nan,margaret,holt,brown,nan,103,f,w,nl,118 alamance rd #218,burlington,nc,27215,336 222 1717,nc,05/11/1940,2011-12
+00000767,999000212370,nan,odice,lee,curlee,nan,92,m,w,nl,680 curlee rd,polkton,nc,28135,nan,nc,05/11/1940,2011-12
+00000768,999000219345,nan,luther,whitmell,powell,nan,93,m,w,nl,203 hofler st,windsor,nc,27983,nan,nc,05/11/1940,2011-12
+00000769,999000248270,nan,thomas,w,griffin,jr,93,m,w,nl,606 jack branch rd,lewiston woodville,nc,27849,nan,nc,05/11/1940,2011-12
+00000770,999000251787,nan,d,g,chance,nan,105,m,b,nl,305 n outerbridge st,robersonville,nc,27871,nan,nc,05/11/1940,2011-12
+00000771,999000262084,mrs,r,w,needham,nan,98,f,w,nl,4314 reidsville rd,winston salem,nc,27101,nan,ga,05/11/1940,2011-12
+00000772,999000279310,nan,mildred,gattis,allen,nan,92,f,w,nl,108 roxboro st,haw river,nc,27258,578 0876,nc,05/11/1940,2011-12
+00000773,999000284917,nan,allie,mae,hester,nan,93,f,w,nl,1001 kilby st,burlington,nc,27215,nan,nc,05/11/1940,2011-12
+00000774,999000293624,nan,f,aldine,ebert,nan,96,m,w,nl,4108 salemtowne dr,winston salem,nc,27106,nan,nc,05/11/1940,2011-12
+00000775,999000294870,nan,sara,rogers,compton,nan,98,f,w,nl,1232 rogers rd,graham,nc,27253,336 226 6229,nc,05/11/1940,2011-12
+00000776,999000309277,nan,maletha,g,clark,nan,111,m,b,nl,1215 n main st,scotland neck,nc,27874,nan,nan,05/11/1940,2011-12
+00000777,999000312873,nan,janie,page,wilson,nan,94,f,w,nl,440 e harden st,graham,nc,27253,000 0000,nc,05/11/1940,2011-12
+00000778,999000325958,nan,virginia,moore,king,nan,95,f,w,nl,209 pinecrest st,burlington,nc,27215,226 2530,nc,05/11/1940,2011-12
+00000779,999000328541,nan,van,thomas,wood,nan,97,m,w,nl,218 lawrenceville rd,gaston,nc,27832,nan,nan,05/11/1940,2011-12
+00000780,999000336417,nan,harry,mason,clark,nan,93,m,w,nl,3727 wade coble dr #212,burlington,nc,27215,nan,sc,05/11/1940,2011-12
+00000781,999000339810,nan,john,h,gurganus,nan,95,m,w,nl,306 e liberty st,williamston,nc,27892,nan,nc,05/11/1940,2011-12
+00000782,999000342977,nan,robert,pinkey,smith,nan,94,m,w,nl,203 roma rd,haw river,nc,27258,578 1691,nc,05/11/1940,2011-12
+00000783,999000346276,nan,annette,preslar,parker,nan,95,f,w,nl,956 olive branch rd,polkton,nc,28135,nan,nc,05/11/1940,2011-12
+00000784,999000354865,nan,james,hubert,kiker,nan,94,m,w,nl,7 hwy 742 n,polkton,nc,28135,704 272 7730,nc,05/11/1940,2011-12
+00000785,999000365161,nan,t,j,culler,jr,93,m,w,un,2151 s hawthorne rd,winston salem,nc,27103,nan,nc,05/11/1940,2011-12
+00000786,999000369059,nan,g,s,coltrane,nan,97,m,w,un,1323 union cross rd,kernersville,nc,27284,nan,nc,05/11/1940,2011-12
+00000787,999000370779,nan,sam,t.,brown,nan,111,m,w,nl,583 thelma rd,roanoke rapids,nc,27870,nan,nan,05/11/1940,2011-12
+00000788,999000372759,nan,dorothea,s,beroth,nan,93,f,w,nl,3565 beroth cir,pfafftown,nc,27040,nan,nc,05/11/1940,2011-12
+00000789,999000399166,nan,lonnie,eugene,thompson,nan,94,m,w,nl,2733 s nc hwy 87,graham,nc,27253,000 0000,nc,05/11/1940,2011-12
+00000790,999000403684,nan,lonnie,b,green,nan,98,m,w,nl,2190 lonnie b green rd,roanoke rapids,nc,27870,nan,nan,05/11/1940,2011-12
+00000791,999000403755,nan,tom,bennett,collins,nan,94,m,w,nl,308 e fifth st,burlington,nc,27215,nan,sc,05/11/1940,2011-12
+00000792,999000412156,nan,margaret,e,harrison,nan,99,f,w,nl,116 n haughton st,williamston,nc,27892,nan,nc,05/11/1940,2011-12
+00000793,999000414126,nan,frances,kiser,bunn,nan,92,f,w,nl,3812 forrestgate dr #111,winston salem,nc,27103,nan,nc,05/11/1940,2011-12
+00000794,999000417787,nan,doris,glosson,davis,nan,94,f,w,nl,1716 n mebane st,burlington,nc,27217,nan,nc,05/11/1940,2011-12
+00000795,999000428498,nan,mabel,richardson,cheek,nan,92,f,w,nl,1736 maple ave,burlington,nc,27215,nan,nc,05/11/1940,2011-12
+00000796,999000433530,nan,ruby,sykes,davis,nan,99,f,w,nl,2285 davis rd,haw river,nc,27258,000 0000,nc,05/11/1940,2011-12
+00000797,999000434562,nan,t,r,smith,nan,93,m,w,nl,604 salisbury st,kernersville,nc,27284,nan,nc,05/11/1940,2011-12
+00000798,999000435027,nan,mozelle,baker,mcpherson,nan,98,f,w,nl,632 roxboro st,haw river,nc,27258,578 0208,nc,05/11/1940,2011-12
+00000799,999000435486,nan,goldie,f,wade,nan,100,f,w,nl,3277 nc hwy 35,woodland,nc,27897,nan,nc,05/11/1940,2011-12
+00000800,999000435747,nan,samuel,durant,faucette,nan,94,m,w,nl,2541 us hwy 70,mebane,nc,27302,919 563 3844,nc,05/11/1940,2011-12
+00000801,999000444896,nan,nellie,nan,elmore,nan,93,f,w,nl,1036 elmore farms rd,kinston,nc,28501,252 527 9493,nc,05/11/1940,2011-12
+00000802,999000448264,nan,myrtle,williams,huffman,nan,98,f,w,nl,2932 midway church rd,elon,nc,27244,000 0000,nc,05/11/1940,2011-12
+00000803,999000450149,nan,clara,nan,inscoe,nan,96,f,w,nl,1140 inscoe rd,littleton,nc,27850,nan,nan,05/11/1940,2011-12
+00000804,999000453218,nan,nannie,fields,hall,nan,103,f,w,nl,3459 harold hall rd,kinston,nc,28501,252 523 1339,nc,05/11/1940,2011-12
+00000805,999000459879,nan,eva,nan,miller,nan,93,f,w,nl,522 farless rd,merry hill,nc,27957,nan,nc,05/11/1940,2011-12
+00000806,999000467594,nan,charles,ernest,york,jr,93,m,w,nl,9275 s nc hwy 49,liberty,nc,27298,565 4509,nc,05/11/1940,2011-12
+00000807,999000502596,nan,robert,gilmore,carpenter,nan,96,m,w,nl,6543 ansonville polkton rd,polkton,nc,28135,704 272 7192,nc,05/11/1940,2011-12
+00000808,999000505764,nan,marie,d,ingram,nan,96,f,w,nl,326 lake ridge dr,kernersville,nc,27284,nan,nc,05/11/1940,2011-12
+00000809,999000508980,nan,ann,nan,meads,nan,92,f,w,nl,164 meads rd,shawboro,nc,27973,252 232 2160,nc,05/11/1940,2011-12
+00000810,999000509906,nan,henry,bright,glosson,jr,94,m,w,nl,521 tarleton ave,burlington,nc,27215,nan,nc,05/11/1940,2011-12
+00000811,999000509925,nan,willard,nan,grady,nan,93,m,w,nl,4373 nc hwy 11 s,deep run,nc,28525,252 568 4189,nc,05/11/1940,2011-12
+00000812,999000511625,nan,mary,elizabeth,harrison,nan,93,f,w,nl,211 ferris st,haw river,nc,27258,336 578 0032,va,05/11/1940,2011-12
+00000813,999000515293,nan,gilbert,nan,stanley,nan,94,m,w,nl,2511 stanley rd,deep run,nc,28525,252 527 4874,nc,05/11/1940,2011-12
+00000814,999000516915,nan,j,c,white,nan,93,m,w,nl,100 w liberty st,williamston,nc,27892,nan,nan,05/11/1940,2011-12
+00000815,999000522678,nan,clyde,attwood,whittemore,jr,93,m,w,nl,961 whittemore rd,graham,nc,27253,000 0000,nc,05/11/1940,2011-12
+00000816,999000528601,nan,c,r,warren,nan,111,m,w,nl,116 nelson st,kernersville,nc,27284,nan,nc,05/11/1940,2011-12
+00000817,999000533897,nan,fincher,baxter,kiker,nan,93,m,w,nl,1159 hopewell church rd,peachland,nc,28133,nan,nc,05/11/1940,2011-12
+00000818,999000535675,nan,bessie,garrison,rollins,nan,96,f,w,nl,2465 carolina rd,burlington,nc,27217,nan,nc,05/11/1940,2011-12
+00000819,999000538839,nan,hazeline,patton,tickle,nan,94,f,w,nl,3570 bason rd,mebane,nc,27302,000 0000,nc,05/11/1940,2011-12
+00000820,999000539238,nan,ralph,e,zimmerman,nan,111,m,w,nl,4236 sabrina lake rd,winston salem,nc,27127,nan,nc,05/11/1940,2011-12
+00000821,999000542684,nan,irene,p,hairston,nan,98,f,b,nl,6895 yadkinville rd,pfafftown,nc,27040,nan,nc,05/11/1940,2011-12
+00000822,999000544358,nan,marvin,morrow,newlin,nan,96,m,w,nl,5249 thom rd,mebane,nc,27302,000 0000,nc,05/11/1940,2011-12
+00000823,999000577777,nan,earl,allen,edwards,sr,95,m,w,nl,91 marsh ave,wadesboro,nc,28170,nan,nc,05/11/1940,2011-12
+00000824,999000592778,nan,l,m,petty,nan,96,m,w,nl,518 oakland dr,burlington,nc,27215,584 9117,nc,05/11/1940,2011-12
+00000825,999000614654,nan,f,l,wilson,nan,90,m,w,nl,512 w lake rd,creedmoor,nc,27522,nan,nc,05/11/1940,2011-12
+00000826,999000623022,nan,george,w,alkins,nan,91,m,w,nl,1459 country club rd,roxboro,nc,27574,nan,nc,05/11/1940,2011-12
+00000827,999000636424,nan,dorothy,nan,brewer,nan,93,f,w,nl,4290 hampton rd,clemmons,nc,27012,nan,nc,05/11/1940,2011-12
+00000828,999000642412,nan,agnes,threadgill,horne,nan,98,f,w,nl,110 lowery st,peachland,nc,28133,704 272 9309,nc,05/11/1940,2011-12
+00000829,999000642810,nan,grace,burch,fuqua,nan,101,f,w,nl,703 s beaumont ave,burlington,nc,27217,226 1425,sc,05/11/1940,2011-12
+00000830,999000642924,nan,myrtle,nan,white,nan,96,f,w,nl,910 n king st,windsor,nc,27983,nan,nc,05/11/1940,2011-12
+00000831,999000661847,nan,claude,d,inscoe,nan,112,m,w,nl,1140 inscoe rd,littleton,nc,27850,nan,nan,05/11/1940,2012-02
+00000832,999000680152,nan,charles,nan,motsinger,nan,112,m,w,nl,3955 idlewild rd,kernersville,nc,27284,nan,nc,05/11/1940,2012-02
+00000833,999000701191,nan,nell,nan,marshall,nan,112,f,u,nl,1731 tredegar rd,kernersville,nc,27284,336 992 7811,nc,05/11/1940,2012-04
+00000834,990001762146,nan,marianne,m,burris,nan,71,f,w,nl,44 weeping willow ln,canton,nc,28716,nan,oc,03/12/1940,2011-10
+00000835,990003019927,nan,hattie,mae,mizelle,nan,89,f,w,nl,547 elm grove rd,colerain,nc,27924,nan,nc,05/12/1940,2011-10
+00000836,999000279688,nan,j,m,robinson,nan,92,m,w,nl,3989 valley ct #c,winston salem,nc,27106,nan,nc,05/12/1940,2011-12
+00000837,999000569578,nan,aubrey,l,mizelle,nan,87,m,w,nl,547 elm grove rd,colerain,nc,27924,nan,nc,05/12/1940,2011-12
+00000838,000005767920,nan,lizzie,s,mock,nan,35,f,w,nl,6426 shallowford rd,lewisville,nc,27023,nan,nc,10/12/1940,2011-10
+00000839,000008020920,nan,c,a,stone,nan,111,m,w,nl,500 salisbury st,kernersville,nc,27284,nan,nc,10/12/1940,2011-10
+00000840,990000673731,nan,h,s,overton,nan,92,m,w,nl,912 hexlena rd,ahoskie,nc,27910,nan,nc,10/12/1940,2011-10
+00000841,990001111079,nan,waddell,w,breeze,nan,92,m,w,nl,9900 hurdle mills rd,hurdle mills,nc,27541,nan,nc,10/12/1940,2011-10
+00000842,990001243811,nan,carrie,l,phelps,nan,98,f,w,nl,1615 w main st,williamston,nc,27892,nan,nan,10/12/1940,2011-10
+00000843,990001709577,nan,inez,beach,mcrae,nan,101,f,w,nl,177 n clinton ave,peachland,nc,28133,704 272 8353,nc,10/12/1940,2011-10
+00000844,990003606783,nan,g,alvis,allen,nan,96,m,w,nl,2091 nc hwy 96,creedmoor,nc,27522,nan,nc,10/12/1940,2011-10
+00000845,999000044678,nan,josie,loy,huey,nan,104,f,w,nl,1750 power line rd,elon,nc,27244,000 0000,nc,10/12/1940,2011-12
+00000846,999000639447,mrs,s,b,byerly,nan,111,f,w,nl,4364 northampton dr,winston salem,nc,27105,nan,nc,10/12/1940,2011-12
+00000847,990003970139,nan,grace,dawson,newman,nan,93,f,w,nl,6161 nc hwy 55 w,kinston,nc,28504,252 569 1361,nc,03/13/1940,2011-12
+00000848,990000311301,nan,dorothy,k,britton,nan,96,f,w,nl,105 mitchell st,lewiston woodville,nc,27849,nan,nc,05/13/1940,2011-10
+00000849,990002206723,nan,rachel,a,wynne,nan,89,f,w,nl,2161 five cent rd,williamston,nc,27892,nan,nc,05/13/1940,2011-10
+00000850,999000644690,nan,henry,louis,jordan,nan,92,m,w,nl,1255 oak grove church rd,gaston,nc,27832,252 537 5360,nan,05/13/1940,2011-12
+00000851,999000323140,nan,violet,allen,jordan,nan,87,f,w,nl,1255 oak grove church rd,gaston,nc,27832,nan,va,10/13/1940,2011-12
+00000852,999000038296,nan,braxton,nan,newman,nan,96,m,w,nl,6161 nc hwy 55 w,kinston,nc,28504,252 569 1361,nc,04/14/1940,2011-12
+00000853,990003603743,nan,robert,l,sinclair,nan,98,m,w,nl,4147 red hill mt vernon rd,wadesboro,nc,28170,nan,nc,05/15/1940,2011-10
+00000854,000000773870,nan,richard,nelson,craft,nan,97,m,w,nl,849 baxter rd,cherryville,nc,28021,nan,nc,02/16/1940,2011-10
+00000855,990000380465,nan,joseph,l,hester,nan,71,m,w,nl,1081 mill inn rd,williamston,nc,27892,nan,nc,05/16/1940,2011-10
+00000856,990003310462,nan,matdnell,thomas,edwards,nan,92,f,w,nl,1524 thomas rd,polkton,nc,28135,nan,nc,05/16/1940,2011-10
+00000857,990003638044,nan,ada,taylor,wright,nan,92,f,w,nl,446 george wright rd,polkton,nc,28135,nan,nc,05/16/1940,2011-10
+00000858,999000030888,nan,jake,nan,herring,jr,90,m,w,nl,5320 pauls path rd,la grange,nc,28551,252 566 3624,nc,05/16/1940,2011-12
+00000859,999000405601,nan,pauline,w,woody,nan,93,f,w,nl,5569 virgilina rd,roxboro,nc,27574,nan,nan,05/16/1940,2011-12
+00000860,999000413321,nan,jasper,wyatt,bowman,nan,97,m,w,nl,3068 pond rd,burlington,nc,27215,226 7279,nc,05/16/1940,2011-12
+00000861,990001651352,nan,diane,viola,craig,nan,63,f,b,nl,519 n main st,mt gilead,nc,27306,nan,ny,09/16/1940,2011-10
+00000862,990000494282,nan,louise,watson,shepherd,nan,92,f,w,nl,2242 gulledge rd,wadesboro,nc,28170,704 851 9981,nc,05/17/1940,2011-10
+00000863,000000876689,nan,wayne,a,andersen,nan,71,m,w,nl,5200 weaver mill ln,charlotte,nc,28226,nan,il,09/17/1940,2011-10
+00000864,990000035194,nan,madge,hargrove,braxton,nan,96,f,w,nl,7519b lindley mill rd,graham,nc,27253,376 3216,nc,10/17/1940,2011-10
+00000865,999000466220,nan,herndon,nan,newman,nan,94,m,w,nl,502 hardy bridge rd,kinston,nc,28504,252 569 3501,nc,10/17/1940,2011-12
+00000866,999000582694,nan,h,gerard,hardy,nan,98,m,w,nl,4506 davis hardy rd,seven springs,nc,28578,252 569 4761,nc,12/17/1940,2011-12
+00000867,990000928270,nan,cindy,elliott,poovey,nan,61,f,w,nl,1541 williams st,claremont,nc,28610,nan,nan,10/18/1940,2011-10
+00000868,990001924615,nan,vernell,nan,byrum,nan,85,f,w,nl,809 bethany church rd,colerain,nc,27924,nan,nc,10/18/1940,2011-10
+00000869,999000370444,nan,fannie,baber,howle,nan,93,f,w,nl,4304 hickory nut pt,burlington,nc,27217,000 0000,nc,10/18/1940,2011-12
+00000870,999000572581,nan,drudie,cook,porter,nan,99,f,w,nl,5079 silas creek rd,winston salem,nc,27103,nan,nc,10/18/1940,2011-12
+00000871,999000623780,nan,lelia,w,stutz,nan,98,f,w,nl,429 w jackson st,rich square,nc,27869,nan,nc,10/18/1940,2011-12
+00000872,990002627209,nan,lillie,mae,askew,nan,98,f,w,nl,2359 horne rd,pendleton,nc,27862,nan,nc,05/19/1940,2011-10
+00000873,999000132413,nan,dora,lee,colston,nan,92,f,w,nl,230 roanoke rapids rd,gaston,nc,27832,nan,nc,05/19/1940,2011-12
+00000874,999000133501,nan,cecil,nan,jones,nan,88,m,w,nl,545 charlie herring rd,kinston,nc,28504,252 569 3171,nc,06/19/1940,2011-12
+00000875,000002754600,nan,homer,sharpe,hargis,nan,96,m,w,nl,3962 bellemont-mt hermon rd,burlington,nc,27215,226 9906,nc,10/19/1940,2011-10
+00000876,000004114080,nan,mary,f,idol,nan,93,f,w,nl,1705 bunker hill sandy ridge rd,kernersville,nc,27284,336 993 3583,nc,10/19/1940,2011-10
+00000877,000004423900,nan,dorothy,may,mcdaries,nan,98,f,w,nl,1987 hilton rd,burlington,nc,27217,000 0000,nc,10/19/1940,2011-10
+00000878,000007438080,nan,fannie,maude,shutt,nan,98,f,w,nl,339 weisner st,winston salem,nc,27127,nan,nc,10/19/1940,2011-10
+00000879,000007775520,nan,roy,nan,spach,nan,111,m,w,nl,1510 jonestown rd,winston salem,nc,27103,nan,nc,10/19/1940,2011-10
+00000880,990000687989,mrs,minnie,c,nelson,nan,111,f,w,nl,505 w mountain st,kernersville,nc,27284,nan,nc,10/19/1940,2011-10
+00000881,990001853797,nan,lynwood,o,hockaday,nan,94,m,w,nl,3586 horseshoe rd,creedmoor,nc,27522,nan,nc,10/19/1940,2011-10
+00000882,990003163088,nan,kathleen,nan,robinson,nan,101,f,w,nl,779 woody dr,graham,nc,27253,nan,nc,10/19/1940,2011-10
+00000883,990000970666,nan,norman,bobbie,lambe,nan,92,m,w,nl,10543 s nc hwy 49,liberty,nc,27298,000 0000,nc,10/19/1940,2011-12
+00000884,999000007882,nan,b,j,martin,jr,92,m,w,nl,4184 nc hwy 35,conway,nc,27820,nan,nc,10/19/1940,2011-12
+00000885,999000168735,nan,opal,b,wilson,nan,97,f,w,nl,3750 harper rd,clemmons,nc,27012,nan,nc,10/19/1940,2011-12
+00000886,999000168928,nan,hazel,moore,hargis,nan,94,f,w,nl,3962 bellemont-mt hermon rd,burlington,nc,27215,336 226 9906,nc,10/19/1940,2011-12
+00000887,999000549627,nan,roy,nan,hopkins,nan,94,m,w,nl,120 tally ho rd,stem,nc,27581,nan,nc,10/19/1940,2011-12
+00000888,999000577671,nan,h,l,terry,nan,94,m,w,nl,605 broad st,aulander,nc,27805,nan,nc,10/19/1940,2011-12
+00000889,999000595690,mrs,r,h,midyette,nan,111,f,w,nl,3747 konnoak dr,winston salem,nc,27127,nan,nc,10/19/1940,2011-12
+00000890,999000624684,mrs,r,f,thompson,nan,111,f,w,nl,2371 westfield ave,winston salem,nc,27103,nan,nc,10/19/1940,2011-12
+00000891,000002668320,mrs,r,e,foltz,nan,111,f,w,nl,136 lawndale dr,winston salem,nc,27104,nan,nan,08/20/1940,2011-10
+00000892,990000207321,nan,phyllis,sears,brock,nan,43,f,w,un,1952 memorial church rd,fremont,nc,27830,919 242 8894,al,10/20/1940,2011-10
+00000893,990001255898,nan,carole,yvonne,mcintyre,nan,71,f,w,un,519 worth st,randleman,nc,27317,nan,wv,04/21/1940,2011-10
+00000894,990000894658,nan,doris,e,roebuck,nan,95,f,w,nl,103 s outterbridge st,robersonville,nc,27871,nan,nan,05/21/1940,2011-10
+00000895,999000503125,nan,mildred,f,gurganus,nan,92,f,w,nl,114 marshall ave,williamston,nc,27892,nan,nan,05/21/1940,2011-12
+00000896,999000144269,nan,ralph,morgan,loy,nan,95,m,w,nl,791 boone station dr,burlington,nc,27215,336 584 9516,nc,09/21/1940,2011-12
+00000897,000005293000,nan,cleodora,nan,phillips,nan,103,m,w,nl,321 cedar st,graham,nc,27253,226 1620,nc,10/21/1940,2011-10
+00000898,990001311231,nan,horace,nan,davis,nan,93,m,w,nl,720 bland howell rd,kinston,nc,28504,nan,nc,10/21/1940,2011-10
+00000899,999000492191,nan,george,conrad,parker,nan,99,m,w,nl,6403 us hwy 258,woodland,nc,27897,nan,nc,10/21/1940,2011-12
+00000900,999000545735,nan,harvey,nan,shoffner,nan,93,m,w,nl,412 shoffner st,graham,nc,27253,336 227 4921,nc,10/21/1940,2011-12
+00000901,999000377705,nan,earl,nan,barwick,nan,93,m,w,nl,5621 liddell rd,seven springs,nc,28578,252 569 2511,nc,02/22/1940,2011-12
+00000902,000006064975,nan,mildred,whitesell,shoffner,nan,95,f,w,nl,1408 st mark's church rd,burlington,nc,27215,000 0000,nc,10/22/1940,2011-10
+00000903,990000237416,nan,ellen,nan,cooke,nan,111,f,w,un,311 salisbury st #1,kernersville,nc,27284,nan,nc,10/22/1940,2011-10
+00000904,990002364359,nan,richard,lamar,ledford,nan,70,m,w,nl,54 wooten holw,andrews,nc,28901,nan,nc,10/22/1940,2011-10
+00000905,000001602400,nan,margaret,whitesell,curtis,nan,97,f,w,nl,815 e joyner st #2311,gibsonville,nc,27249,000 0000,nc,10/23/1940,2011-10
+00000906,000007350600,nan,avery,william,williams,nan,96,m,w,nl,2466k barber rd,elon,nc,27244,000 0000,nc,10/23/1940,2011-10
+00000907,990001047549,nan,louise,lowery,williams,nan,97,f,w,nl,2024 us hwy 258 s,kinston,nc,28504,252 523 5061,nc,10/23/1940,2011-10
+00000908,990001058115,nan,ross,lee,smith,nan,93,m,w,nl,4944 pagetown rd,burlington,nc,27217,584 8413,nc,10/23/1940,2011-10
+00000909,999000139290,nan,grover,mrs,fishel,nan,111,f,w,nl,3703 konnoak dr,winston salem,nc,27127,nan,nc,10/23/1940,2011-12
+00000910,999000170180,nan,clifford,nan,krites,nan,98,m,w,nl,740 w clemmonsville rd,winston salem,nc,27127,nan,nc,10/23/1940,2011-12
+00000911,999000342973,nan,bernice,n,woodard,nan,97,f,w,nl,425 e main st,conway,nc,27820,nan,nan,10/23/1940,2011-12
+00000912,999000540494,nan,w,g,nail,nan,111,m,w,nl,4559 country club rd,winston salem,nc,27104,nan,nc,10/23/1940,2011-12
+00000913,999000616963,nan,mildred,best,cates,nan,94,f,w,nl,533 e main st,haw river,nc,27258,578 1660,nc,10/23/1940,2011-12
+00000914,999000645119,nan,francis,sam,long,nan,92,m,w,nl,275 fishel rd,winston salem,nc,27127,nan,nc,10/23/1940,2011-12
+00000915,999000628637,nan,albert,nan,johnson,nan,94,m,w,nl,381 nc hwy 58 s,kinston,nc,28504,252 523 9443,nc,04/24/1940,2011-12
+00000916,000004384400,nan,evelyn,robertson,mccall,nan,100,f,w,nl,501 manning ave,elon,nc,27244,nan,nc,10/24/1940,2011-10
+00000917,000004890720,nan,mary,southern,leonard,nan,94,f,w,un,2709 pilgrim ct,winston salem,nc,27106,nan,nc,10/24/1940,2011-10
+00000918,000005942400,mrs,r,h,mullis,nan,111,f,w,nl,3151 old salisbury rd,winston salem,nc,27127,nan,ga,10/24/1940,2011-10
+00000919,000007390920,nan,carl,mrs,shore,nan,111,f,w,nl,333 e devonshire st,winston salem,nc,27127,nan,nc,10/24/1940,2011-10
+00000920,990001906598,nan,dorice,nan,bradford,nan,72,m,w,nl,470 j r pate rd,burnsville,nc,28714,nan,nc,10/24/1940,2011-10
+00000921,990003266889,nan,mary,ann,edwards,nan,64,f,w,nl,2055 hardscrabble rd,burnsville,nc,28714,nan,nc,10/24/1940,2011-10
+00000922,999000170729,nan,woodrow,edison,smith,nan,94,m,w,nl,922 e haggard ave,elon,nc,27244,336 584 7447,nc,10/24/1940,2011-12
+00000923,999000512421,nan,annie,e,pearson,nan,71,f,b,nl,265 n windsor dr,fayetteville,nc,28301,nan,nan,10/24/1940,2011-12
+00000924,999000326060,nan,glenn,d,burch,nan,95,m,w,nl,206 paynes tavern rd,roxboro,nc,27574,nan,nc,05/25/1940,2011-12
+00000925,999000196006,nan,frederick,james,stephenson,sr,105,m,w,nl,314 s ireland st,burlington,nc,27217,226 2671,ri,09/25/1940,2011-12
+00000926,000003457080,mrs,j,f,hartgrove,nan,111,f,w,nl,5000 hauser dr,pfafftown,nc,27040,nan,nc,10/25/1940,2011-10
+00000927,000003926200,nan,irene,gerringer,lee,nan,95,f,w,nl,3448 hub mill rd,elon,nc,27244,000 0000,nc,10/25/1940,2011-10
+00000928,000004997280,nan,carmel,nan,livengood,nan,93,f,w,nl,2101 homestead hills dr #320,winston salem,nc,27103,336 760 1622,nc,10/25/1940,2011-10
+00000929,999000006044,nan,elery,odell,copeland,nan,93,m,w,nl,3111 viewmont dr,graham,nc,27253,000 0000,nc,10/25/1940,2011-12
+00000930,999000207318,nan,helen,boone,lanier,nan,92,f,w,nl,1111 nchs east rd,conway,nc,27820,252 585 0830,nan,10/25/1940,2011-12
+00000931,999000508220,mrs,treva,r,kimball,nan,97,f,w,nl,1204 neva ln,winston salem,nc,27107,nan,nc,10/25/1940,2011-12
+00000932,999000634046,nan,nell,mustin,coley,nan,92,f,w,un,1240 arbor rd #411,winston salem,nc,27104,nan,nc,10/25/1940,2011-12
+00000933,999000474159,nan,alice,w,jenkins,nan,93,f,w,nl,503 e main st,aulander,nc,27805,nan,nc,05/26/1940,2011-12
+00000934,000001132800,nan,john,c,burton,nan,111,m,w,nl,5856 old rural hall rd,winston salem,nc,27105,nan,nc,10/26/1940,2011-10
+00000935,000002780160,mrs,w,s,frye,nan,111,f,w,nl,3666 hege st,winston salem,nc,27127,nan,nc,10/26/1940,2011-10
+00000936,000002988000,nan,willis,mccoy,gobble,nan,92,m,w,nl,2345 griffith rd,winston salem,nc,27103,nan,nc,10/26/1940,2011-10
+00000937,000003393120,nan,margaret,marie,harper,nan,69,f,w,nl,7572 bullard rd,clemmons,nc,27012,nan,nc,10/26/1940,2011-10
+00000938,000003827100,nan,helen,allred,lamar,nan,89,f,w,nl,2129 wrenn st,burlington,nc,27215,000 0000,nc,10/26/1940,2011-10
+00000939,000004210920,nan,novella,nan,james,nan,111,f,w,nl,175 woodland trl,kernersville,nc,27284,nan,nc,10/26/1940,2011-10
+00000940,000004377800,nan,mamie,reed,mcbride,nan,99,f,w,nl,107 roma rd,haw river,nc,27258,578 1453,nc,10/26/1940,2011-10
+00000941,000004416720,nan,mamie,p,jones,nan,98,f,w,un,120 reid acres ln,lewisville,nc,27023,nan,nc,10/26/1940,2011-10
+00000942,000004711440,nan,v,c,krites,nan,111,m,w,nl,902 w clemmonsville rd,winston salem,nc,27127,nan,nc,10/26/1940,2011-10
+00000943,000005514000,mrs,addie,d,mckaughan,nan,111,f,w,nl,600 salisbury st,kernersville,nc,27284,nan,nc,10/26/1940,2011-10
+00000944,000006936840,nan,era,mrs,roberson,nan,111,f,w,nl,4106 old hollow rd,kernersville,nc,27284,nan,nc,10/26/1940,2011-10
+00000945,000007015440,nan,nell,rose,rogers,nan,111,f,w,nl,425 n peace haven rd,winston salem,nc,27104,nan,nc,10/26/1940,2011-10
+00000946,000007729080,nan,f,g,snyder,nan,111,m,w,nl,3733 old lexington rd,winston salem,nc,27107,nan,nc,10/26/1940,2011-10
+00000947,000008236850,nan,esther,faw,tesh,nan,111,f,w,nl,4377 farris rd,winston salem,nc,27127,nan,nc,10/26/1940,2011-10
+00000948,000008564160,nan,cora,mrs,veach,nan,111,f,w,nl,4805 old hollow rd,kernersville,nc,27284,nan,nc,10/26/1940,2011-10
+00000949,000008923440,nan,t,b,westmoreland,nan,111,m,w,nl,4835 old belews creek rd,winston salem,nc,27101,nan,nc,10/26/1940,2011-10
+00000950,990000625009,nan,hazel,r,evans,nan,92,f,w,nl,1853 claude green rd,robersonville,nc,27871,nan,nc,10/26/1940,2011-10
+00000951,990000715406,nan,raymond,r,robbins,nan,111,m,w,nl,1028 pisgah view dr,kernersville,nc,27284,nan,nc,10/26/1940,2011-10
+00000952,990000927145,nan,margaret,nan,snuggs,nan,108,f,w,nl,2145 bellemont-alamance rd,burlington,nc,27215,000 0000,nc,10/26/1940,2011-10
+00000953,990000949368,mrs,w,j,lakey,nan,111,f,w,nl,1450 fairfield dr,winston salem,nc,27127,nan,nc,10/26/1940,2011-10
+00000954,990000964358,nan,rachel,virginia,griffith,nan,93,f,w,un,1244 arbor rd #509,winston salem,nc,27104,nan,nc,10/26/1940,2011-10
+00000955,990001003064,nan,betty,nan,coulbourn,nan,93,f,w,nl,606 taylor st,windsor,nc,27983,nan,va,10/26/1940,2011-10
+00000956,990001042923,nan,sarah,albright,adams,nan,93,f,w,nl,211 s marshall st,graham,nc,27253,226 6934,nc,10/26/1940,2011-10
+00000957,990001124597,mrs,d,e,wall,nan,111,f,w,nl,310 buick st,winston salem,nc,27101,nan,nc,10/26/1940,2011-10
+00000958,990001261625,nan,nell,thompson,ray,nan,94,f,w,nl,210 ferris st,haw river,nc,27258,578 3193,nc,10/26/1940,2011-10
+00000959,990001553566,nan,mary,nan,joyner,nan,90,f,w,nl,207 hill st,garysburg,nc,27831,nan,nan,10/26/1940,2011-10
+00000960,990001997797,nan,charles,robert,helsabeck,jr,95,m,w,un,1199 hayes forest dr,winston salem,nc,27106,nan,nc,10/26/1940,2011-10
+00000961,990002269477,nan,dare,nan,griffin,nan,95,f,w,nl,410 spruce st,woodland,nc,27897,nan,nc,10/26/1940,2011-10
+00000962,990002315987,nan,margaret,plonk,isley,nan,98,f,w,un,1880 brookwood ave #102,burlington,nc,27215,336 226 3774,nc,10/26/1940,2011-10
+00000963,990002560376,nan,thelma,modlin,bright,nan,93,f,w,nl,953 w old glencoe rd,burlington,nc,27217,227 3759,nc,10/26/1940,2011-10
+00000964,990002893520,nan,george,allen,turner,jr,92,m,w,nl,2491 durham st ext,burlington,nc,27217,226 3474,nc,10/26/1940,2011-10
+00000965,990003307474,nan,elizabeth,nan,phelps,nan,97,f,w,nl,2006 us highway 17 n,merry hill,nc,27957,nan,nc,10/26/1940,2011-10
+00000966,990003729508,nan,james,vernon,myers,nan,84,m,w,nl,1821 doc wyatt rd,lilesville,nc,28091,704 848 9078,nc,10/26/1940,2011-10
+00000967,990003939498,nan,robert,jenkins,graham,nan,92,m,w,nl,216 graham rd,graham,nc,27253,578 1894,nc,10/26/1940,2011-10
+00000968,999000028632,nan,phoebe,roach,pike,nan,104,f,w,nl,1119 e willowbrook dr,burlington,nc,27215,000 0000,nc,10/26/1940,2011-12
+00000969,999000033285,nan,u,f,coulbourn,nan,95,m,w,nl,606 taylor st,windsor,nc,27983,nan,va,10/26/1940,2011-12
+00000970,999000046167,nan,helen,nan,oakley,nan,93,f,w,nl,404 e forest st,mebane,nc,27302,563 3283,va,10/26/1940,2011-12
+00000971,999000090919,nan,walter,alvin,taylor,nan,98,m,w,nl,1115 bowers rd,peachland,nc,28133,704 272 8454,nc,10/26/1940,2011-12
+00000972,999000100724,nan,john,haskin,smith,nan,97,m,w,un,2502 s nc hwy 119,mebane,nc,27302,nan,nc,10/26/1940,2011-12
+00000973,999000103896,nan,c,e,dixon,nan,111,m,w,nl,2809 reynolds dr,winston salem,nc,27104,nan,nc,10/26/1940,2011-12
+00000974,999000129445,nan,ruth,webster,allen,nan,93,f,w,nl,107 w greensboro-chapel hill rd,snow camp,nc,27349,000 0000,nc,10/26/1940,2011-12
+00000975,999000149084,nan,charlie,brady,hauser,nan,94,m,b,nl,2072 k court ave,winston salem,nc,27105,336 722 8708,nc,10/26/1940,2011-12
+00000976,999000209948,nan,lewis,nan,carter,nan,102,m,b,nl,752 woodard rd,windsor,nc,27983,nan,nc,10/26/1940,2011-12
+00000977,999000228683,nan,hope,surratt,fox,nan,97,f,w,nl,321 hillcrest ave,burlington,nc,27215,226 0671,nc,10/26/1940,2011-12
+00000978,999000234503,nan,mozelle,albright,vincent,nan,95,f,w,nl,1938 long dairy rd,graham,nc,27253,nan,nc,10/26/1940,2011-12
+00000979,999000249654,nan,george,w,barnes,nan,97,m,w,nl,535 barnes rd,winston salem,nc,27107,nan,nc,10/26/1940,2011-12
+00000980,999000254232,nan,evola,mrs,hepler,nan,111,f,w,nl,1932 harper rd,clemmons,nc,27012,nan,nc,10/26/1940,2011-12
+00000981,999000257309,nan,mary,h,williard,nan,95,f,w,nl,2401 old salisbury rd,winston salem,nc,27127,nan,nc,10/26/1940,2011-12
+00000982,999000303544,nan,grace,t,whitfield,nan,95,f,w,nl,319 north nc 125,oak city,nc,27857,nan,nan,10/26/1940,2011-12
+00000983,999000305180,nan,maida,mrs,waggoner,nan,111,f,w,nl,2335 union cross rd,winston salem,nc,27107,nan,nc,10/26/1940,2011-12
+00000984,999000354171,nan,broadie,graham,riley,nan,92,m,w,nl,718 hopedale rd,burlington,nc,27217,578 1042,nc,10/26/1940,2011-12
+00000985,999000404481,nan,nell,campbell,isley,nan,100,f,w,nl,1011 n church st,burlington,nc,27217,000 0000,nc,10/26/1940,2011-12
+00000986,999000405135,nan,ethel,ened,guye,nan,97,f,b,un,779 woody dr,graham,nc,27253,336 584 7116,nc,10/26/1940,2011-12
+00000987,999000424361,nan,ruth,smith,coyner,nan,97,f,w,nl,216 baxter st,kernersville,nc,27284,nan,nc,10/26/1940,2011-12
+00000988,999000424989,mrs,mary,s,snyder,nan,111,f,w,nl,3733 old lexington rd,winston salem,nc,27107,nan,nc,10/26/1940,2011-12
+00000989,999000468362,nan,mary,griffith,tesh,nan,93,f,w,nl,3750 harper rd,clemmons,nc,27012,nan,nc,10/26/1940,2011-12
+00000990,999000475755,nan,lillian,russell,henderson,nan,97,f,w,nl,1829 swepsonville rd,graham,nc,27253,nan,nc,10/26/1940,2011-12
+00000991,999000484071,nan,edwin,turner,bowland,sr,93,m,w,nl,5951 n nc hwy 62,burlington,nc,27217,226 3592,nc,10/26/1940,2011-12
+00000992,999000499188,nan,lena,terry,russell,nan,98,f,w,nl,823 wildwood st,wadesboro,nc,28170,704 694 3463,nc,10/26/1940,2011-12
+00000993,999000521884,nan,joseph,julian,harrington,nan,92,m,w,nl,211 e church st,lewiston woodville,nc,27849,nan,nc,10/26/1940,2011-12
+00000994,999000546314,nan,edith,dixon,pender,nan,97,f,w,nl,202 n seventh st,mebane,nc,27302,nan,nc,10/26/1940,2011-12
+00000995,999000560430,nan,ruth,e,todd,nan,95,f,w,nl,1309 jonestown rd,winston salem,nc,27103,nan,nc,10/26/1940,2011-12
+00000996,999000587730,nan,james,wilson,dunn,nan,98,m,w,nl,3639 spangenberg ave #4a,clemmons,nc,27012,nan,nc,10/26/1940,2011-12
+00000997,999000608537,nan,josephine,smith,cox,nan,97,f,w,nl,512 boundary st,haw river,nc,27258,578 0024,nc,10/26/1940,2011-12
+00000998,999000618857,nan,everett,mrs,james,nan,94,f,w,nl,2263 w clemmonsville rd,winston salem,nc,27127,nan,nc,10/26/1940,2011-12

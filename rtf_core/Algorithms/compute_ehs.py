@@ -31,7 +31,14 @@ def collect_data(dataset, attrs, filename):
     return boundary_edges, internal_edges, boundary_cells, hypergraph
 
 print(collect_data(ee.airport_constraints, ee.airport_attributes, 'airport_exps_data.csv'))
+"""1. #dependencies (hyper-edges)
+2. #cells instantiated
+3. #cells deleted
+4. Length of longest path (depth)
+5. End to end time to delete
+ Please be careful of the scale you use for each axis.
 
+"""
 # def collect_time_based_data(dataset, attrs, filename):
 #     boundary_edges, internal_edges, boundary_cells = ee.build_graph_data(dataset)
 #     hypergraph = compute_random_for_num_edges(internal_edges)
