@@ -121,6 +121,10 @@ initalized_rule = {'iso_country': 'US', 'elevation_ft': 237}
 target = {'type': 'small_airport'}
 dataset_name = 'airport'
 print(calculate_entropy_from_sql(dataset_name, initalized_rule, target))
+
+initalized_rule_tax = {'city': 'CUPERTINO', 'state': 'CA', 'gender': 'F'}
+target_tax = {'salary': 65000}
+print(calculate_entropy_from_sql("tax", initalized_rule_tax, target_tax))
 # ============================================================================
 # EXECUTION BLOCK
 # ============================================================================

@@ -62,7 +62,7 @@ def RTF_algorithm(dataset):
         target_info = {'key': random.randint(1, 2), 'attribute': 'type'}  # Try key=1 instead of 2
         algorithm = RTFMultiLevelAlgorithm(target_info, dataset, 0.8)
         cellss = algorithm.run_complete_algorithm()
-        #print(type(cellss))
+        print(cellss)
         print(algorithm.init_manager.current_deletion_set)
         constraint_data.append(len(algorithm.init_manager.target_denial_constraints))
         constraints_whole.append(algorithm.init_manager.target_denial_constraints)
