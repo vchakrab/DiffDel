@@ -27,11 +27,17 @@ def calculate_minimum_entropy(joint_probs):
             min_entropy = curr_entropy
     return min_entropy
 
+def calculate_single_attribute_entropy(joint_probs, marginal_probs):
+    conditional_p = joint_probs[0]/marginal_probs[0]
+    c_entropy = -1*conditional_p*math.log(conditional_p)
+    entropy = -1*marginal_probs[1]*math.log(marginal_probs[1])
+    return 1 - c_entropy/entropy
+
 def calculate_naive_bayes_entropy(joint_probs, marginal_probs):
-    entropy = -1 * marginal_probs[0] * np.log(marginal_probs[0])
+    entropy = -1 * marginal_probs[len(marginal_probs)-1] * np.log(marginal_probs[len(marginal_probs)-1])
     total_mi = 0
     for i in range(1, len(joint_probs)):
-        total_mi += joint_probs[i] * math.log(joint_probs[i]/(marginal_probs[0]*marginal_probs[i]))
+        total_mi += joint_probs[i] * math.log(joint_probs[i]/(marginal_probs[len(marginal_probs)-1]*marginal_probs[i]))
     return entropy - total_mi
 
 def calculate_entropy_from_sql(dataset_name: str, rule: dict, target_attribute: dict):
@@ -98,7 +104,12 @@ def calculate_entropy_from_sql(dataset_name: str, rule: dict, target_attribute: 
 
         if count_target_m:
             marginal_probs.append(count_target_m[0] / total_records)
-        return calculate_minimum_entropy(joint_probs), calculate_naive_bayes_entropy(joint_probs, marginal_probs)
+
+        if(len(rule) > 1):
+            return calculate_naive_bayes_entropy(joint_probs, marginal_probs)
+        else:
+            return calculate_single_attribute_entropy(joint_probs, marginal_probs)
+        
 
     except Error as e:
         print(f"\n[FATAL ERROR] MySQL Error: {e}")

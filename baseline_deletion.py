@@ -27,7 +27,7 @@ def baseline_deletion(target: str, key: int, dataset, threshold):
     try:
         # 1. Get Configuration and Query Details
         db_details = config.get_database_config(dataset)
-        primary_table = config.get_primary_table(dataset)
+        primary_table = "airport_copy_data"
 
         print(f"--- 🔌 Connecting to DB: {db_details['database']} ---")
 
@@ -66,4 +66,6 @@ def baseline_deletion(target: str, key: int, dataset, threshold):
         if conn:
             conn.close()
 # DO NOT RUN AS IT WILL ACTUALLY DELETE
-# baseline_deletion("type", 3, "airport", 0.8)
+baseline_deletion("type", 3, "airport", 0.8)
+#def baseline_deletion_1(target: str, key: int, dataset, threshold):
+
