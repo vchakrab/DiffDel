@@ -18,7 +18,9 @@ from InferenceGraph.differential_deletion import (
     enumerate_minimal_hitting_sets,
     compute_leakage,
     compute_utility,
-    exponential_mechanism_sample
+    exponential_mechanism_sample,
+    sample_gumbel,
+    compute_marginal_gain
 )
 from InferenceGraph.build_hypergraph import GraphNode
 
@@ -238,6 +240,121 @@ def test_exponential_mechanism(hitting_sets, paths, weights):
     print("✓ Exponential mechanism test passed!")
 
 
+def test_gumbel_sampling():
+    """Test Gumbel noise sampling."""
+    print("\n" + "="*70)
+    print("TEST 7: Gumbel Noise Sampling")
+    print("="*70)
+
+    # Sample multiple times and check distribution
+    num_samples = 1000
+    samples = [sample_gumbel() for _ in range(num_samples)]
+
+    mean = sum(samples) / len(samples)
+    print(f"Sampled {num_samples} Gumbel(0,1) values")
+    print(f"  Mean: {mean:.3f} (theoretical: 0.577)")
+    print(f"  Min: {min(samples):.3f}")
+    print(f"  Max: {max(samples):.3f}")
+
+    # Mean should be close to Euler-Mascheroni constant ≈ 0.577
+    assert abs(mean - 0.577) < 0.1, f"Mean {mean} too far from expected 0.577"
+
+    print("✓ Gumbel sampling test passed!")
+
+
+def test_marginal_gain(paths, weights):
+    """Test marginal gain computation."""
+    print("\n" + "="*70)
+    print("TEST 8: Marginal Gain Computation")
+    print("="*70)
+
+    alpha = 1.0
+    beta = 0.5
+    mask = set()
+
+    # Test marginal gain for different cells
+    for path in paths[:1]:  # Use first path
+        for cell in path.cells[1:]:  # Skip root (target)
+            gain = compute_marginal_gain(
+                cell,
+                mask,
+                paths,
+                weights,
+                alpha,
+                beta
+            )
+            print(f"  Marginal gain for {cell.attribute.col}: {gain:.3f}")
+
+    print("✓ Marginal gain computation test passed!")
+
+
+def test_gumbel_deletion_algorithm(paths, weights):
+    """Test the Gumbel deletion algorithm."""
+    print("\n" + "="*70)
+    print("TEST 9: Gumbel Deletion Algorithm")
+    print("="*70)
+
+    alpha = 1.0
+    beta = 0.5
+    epsilon = 1.0
+
+    # Initialize mask
+    mask = set()
+
+    # Get candidate cells (all cells except target)
+    inference_zone = set()
+    for path in paths:
+        inference_zone.update(path.cells)
+
+    target_cell = paths[0].cells[0]
+    candidate_cells = inference_zone - {target_cell}
+
+    print(f"Starting Gumbel deletion with {len(candidate_cells)} candidate cells")
+
+    # Simulate one iteration of Gumbel deletion
+    iteration = 0
+    while True:
+        # Check if any path is still active
+        active_paths = [p for p in paths if not p.is_blocked_by(mask)]
+
+        if not active_paths:
+            print(f"All paths blocked after {iteration} iterations")
+            break
+
+        available_cells = candidate_cells - mask
+        if not available_cells:
+            print(f"No more attributes to delete after {iteration} iterations")
+            break
+
+        iteration += 1
+        print(f"\nIteration {iteration}: {len(active_paths)} active paths")
+
+        # Compute scores for all available cells
+        scores = {}
+        for cell in available_cells:
+            delta_u = compute_marginal_gain(
+                cell, mask, paths, weights, alpha, beta
+            )
+            g_A = sample_gumbel()
+            s_A = (epsilon / (2 * alpha)) * delta_u + g_A
+            scores[cell] = s_A
+
+        # Select best cell
+        best_cell = max(scores.items(), key=lambda x: x[1])[0]
+        print(f"  Selected: {best_cell.attribute.col} (score={scores[best_cell]:.3f})")
+
+        # Update mask
+        mask.add(best_cell)
+
+        # Limit iterations for testing
+        if iteration >= 3:
+            print("  (Stopping after 3 iterations for test)")
+            break
+
+    print(f"\nFinal mask size: {len(mask)}")
+    print("✓ Gumbel deletion algorithm test passed!")
+
+
 def test_complete_algorithm():
     """Test the complete algorithm end-to-end."""
     print("\n" + "="*70)
@@ -312,6 +429,11 @@ def main():
         test_leakage_computation(paths, weights)
         test_utility_computation(paths, weights)
         test_exponential_mechanism(hitting_sets, paths, weights)
+
+        # Gumbel deletion tests
+        test_gumbel_sampling()
+        test_marginal_gain(paths, weights)
+        test_gumbel_deletion_algorithm(paths, weights)
 
         # Integration test
         test_complete_algorithm()
