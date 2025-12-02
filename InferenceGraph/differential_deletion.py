@@ -1,16 +1,27 @@
 #!/usr/bin/env python3
 """
-Differential Deletion Mechanism (Algorithm 1)
-==============================================
+Differential Deletion Mechanisms
+==================================
 
-Implements the exponential deletion mechanism for privacy-preserving
-database sanitization with differential privacy guarantees.
+Implements two variants of the differential deletion mechanism for privacy-preserving
+database sanitization with differential privacy guarantees:
+
+1. Algorithm 1 (Exponential Deletion): Uses the exponential mechanism to sample
+   from a set of candidate hitting sets.
+
+2. Algorithm 2 (Gumbel Deletion): Uses the Gumbel trick for greedy sequential
+   attribute selection with differential privacy.
 
 Usage:
     from differential_deletion import DifferentialDeletion
 
     dd = DifferentialDeletion(dataset='adult', alpha=1.0, beta=0.5, epsilon=1.0, tau=0.1)
-    mask = dd.exponential_deletion(row, key, target_attr)
+
+    # Algorithm 1: Exponential mechanism
+    mask1 = dd.exponential_deletion(row, key, target_attr)
+
+    # Algorithm 2: Gumbel trick
+    mask2 = dd.gumbel_deletion(row, key, target_attr)
 """
 
 import sys
@@ -421,12 +432,77 @@ def exponential_mechanism_sample(
 
 
 # ==============================================================================
+# Gumbel Trick Utilities
+# ==============================================================================
+
+def sample_gumbel(size=1):
+    """
+    Sample from standard Gumbel(0, 1) distribution.
+
+    Using the inverse CDF method: G = -log(-log(U)) where U ~ Uniform(0, 1)
+
+    Args:
+        size: Number of samples (default: 1)
+
+    Returns:
+        Gumbel sample(s) - scalar if size=1, array otherwise
+    """
+    u = np.random.uniform(0, 1, size)
+    result = -np.log(-np.log(u))
+    return result.item() if size == 1 else result
+
+
+def compute_marginal_gain(
+    attribute_cell: Cell,
+    current_mask: Set[Cell],
+    paths: List[InferencePath],
+    hyperedge_weights: Dict[FrozenSet[Cell], float],
+    alpha: float,
+    beta: float
+) -> float:
+    """
+    Compute marginal gain Δu(A | M) for adding attribute A to mask M.
+
+    Δu(A | M) = α · (L_curr - L_new) - β
+
+    where:
+    - L_curr = L(M, c_t): current leakage
+    - L_new = L(M ∪ {A}, c_t): new leakage after adding A
+
+    Args:
+        attribute_cell: Cell to add (attribute A)
+        current_mask: Current deletion mask M
+        paths: High-strength inference paths
+        hyperedge_weights: Hyperedge weight mapping
+        alpha: Leakage penalty weight
+        beta: Deletion cost weight
+
+    Returns:
+        Marginal gain value
+    """
+    # Compute current leakage L(M, c_t)
+    L_curr = compute_leakage(current_mask, paths, hyperedge_weights)
+
+    # Compute new leakage L(M ∪ {A}, c_t)
+    new_mask = current_mask | {attribute_cell}
+    L_new = compute_leakage(new_mask, paths, hyperedge_weights)
+
+    # Δu(A | M) = α · (L_curr - L_new) - β
+    marginal_gain = alpha * (L_curr - L_new) - beta
+
+    return marginal_gain
+
+
+# ==============================================================================
 # Main Algorithm
 # ==============================================================================
 
 class DifferentialDeletion:
     """
-    Differential Deletion Mechanism implementing Algorithm 1.
+    Differential Deletion Mechanisms.
+
+    Implements both Algorithm 1 (Exponential Deletion) and Algorithm 2 (Gumbel Deletion)
+    for privacy-preserving database sanitization.
     """
 
     def __init__(
@@ -579,15 +655,136 @@ class DifferentialDeletion:
         # Step 10: return M
         return selected_mask
 
+    def gumbel_deletion(
+        self,
+        row: Dict[str, Any],
+        key: Any,
+        target_attr: str
+    ) -> Set[Cell]:
+        """
+        Execute the Gumbel deletion mechanism (Algorithm 2).
+
+        This variant uses the Gumbel trick for greedy sequential selection.
+
+        Args:
+            row: Database row (tuple) as dictionary
+            key: Row identifier
+            target_attr: Target attribute to protect
+
+        Returns:
+            Deletion mask M (set of cells to delete)
+        """
+        # Step 1: Compute inference zone I(c_t) from hypergraph H
+        primary_table = self.builder.primary_table
+        inference_zone = {
+            Cell(Attribute(primary_table, attr), key, val)
+            for attr, val in row.items()
+        }
+
+        # Create target cell
+        target_cell = Cell(
+            Attribute(primary_table, target_attr),
+            key,
+            row[target_attr]
+        )
+
+        # Step 2: Identify known attributes S ← {A : t[A] ≠ ⊥, A ≠ A_t}
+        known_attrs = {
+            attr for attr, val in row.items()
+            if val is not None and attr != target_attr
+        }
+
+        # Build hypergraph
+        hyperedge_map = self.builder.build_hyperedge_map(row, key, target_attr)
+        root = build_hypergraph_tree(row, key, target_attr, hyperedge_map)
+
+        # Compute hyperedge weights
+        hyperedge_weights = self._compute_hyperedge_weights(hyperedge_map)
+
+        # Step 3: Extract high-strength paths Π ← FindInferencePaths(S, A_t, H, τ)
+        high_strength_paths = find_inference_paths(
+            known_attrs,
+            target_attr,
+            root,
+            hyperedge_weights,
+            self.tau
+        )
+
+        print(f"Found {len(high_strength_paths)} high-strength paths (τ={self.tau})")
+
+        # Step 4: Initialize M ← ∅
+        mask = set()
+
+        # Remove target cell from inference zone (can't delete target)
+        candidate_cells = inference_zone - {target_cell}
+
+        # Step 5: while ∃π ∈ Π that is active (not blocked by M) do
+        iteration = 0
+        while True:
+            # Check if any path is still active
+            active_paths = [p for p in high_strength_paths if not p.is_blocked_by(mask)]
+
+            if not active_paths:
+                print(f"All paths blocked after {iteration} iterations")
+                break
+
+            # Get available attributes: I(c_t) \ M
+            available_cells = candidate_cells - mask
+
+            if not available_cells:
+                print(f"No more attributes to delete after {iteration} iterations")
+                break
+
+            iteration += 1
+            print(f"\nIteration {iteration}: {len(active_paths)} active paths, {len(available_cells)} available attributes")
+
+            # Step 6: for each attribute A ∈ I(c_t) \ M do
+            scores = {}
+            marginal_gains = {}
+
+            for cell in available_cells:
+                # Step 7-9: Compute marginal gain Δu(A | M)
+                delta_u = compute_marginal_gain(
+                    cell,
+                    mask,
+                    high_strength_paths,
+                    hyperedge_weights,
+                    self.alpha,
+                    self.beta
+                )
+                marginal_gains[cell] = delta_u
+
+                # Step 10: Sample Gumbel noise: g_A ~ Gumbel(0, 1)
+                g_A = sample_gumbel()
+
+                # Step 11: Compute score: s_A ← (ε/(2α)) · Δu(A | M) + g_A
+                s_A = (self.epsilon / (2 * self.alpha)) * delta_u + g_A
+                scores[cell] = s_A
+
+            # Step 12: Select: A* ← arg max_A s_A
+            best_cell = max(scores.items(), key=lambda x: x[1])[0]
+            best_score = scores[best_cell]
+            best_gain = marginal_gains[best_cell]
+
+            print(f"  Selected: {best_cell.attribute.col} (score={best_score:.4f}, Δu={best_gain:.4f})")
+
+            # Step 13: Update mask: M ← M ∪ {A*}
+            mask.add(best_cell)
+
+            # Step 14: Update active paths (implicit in next iteration's check)
+
+        # Step 15: return M
+        return mask
+
 
 # ==============================================================================
 # Testing and Validation
 # ==============================================================================
 
 def main():
-    """Test the differential deletion mechanism."""
+    """Test both differential deletion mechanisms."""
     print("=" * 70)
-    print("Differential Deletion Mechanism Test")
+    print("Differential Deletion Mechanisms Test")
     print("=" * 70)
 
     # Test parameters
@@ -612,24 +809,76 @@ def main():
         tau=0.1
     )
 
-    # Run exponential deletion
+    # ============================================================================
+    # Algorithm 1: Exponential Deletion
+    # ============================================================================
     print(f"\n{'='*70}")
-    print("Running Exponential Deletion Mechanism...")
+    print("Algorithm 1: Exponential Deletion Mechanism")
     print(f"{'='*70}")
 
-    mask = dd.exponential_deletion(row, key, target_attr)
+    mask_exponential = dd.exponential_deletion(row, key, target_attr)
 
     # Display results
     print(f"\n{'='*70}")
-    print("Results")
+    print("Algorithm 1 Results")
     print(f"{'='*70}")
-    print(f"Deletion mask size: {len(mask)}")
+    print(f"Deletion mask size: {len(mask_exponential)}")
     print(f"Cells to delete:")
-    for cell in sorted(mask, key=lambda c: c.attribute.col):
+    for cell in sorted(mask_exponential, key=lambda c: c.attribute.col):
         print(f"  - {cell}")
 
-    if not mask:
+    if not mask_exponential:
         print("  (No cells deleted - empty mask)")
+
+    # ============================================================================
+    # Algorithm 2: Gumbel Deletion
+    # ============================================================================
+    print(f"\n{'='*70}")
+    print("Algorithm 2: Gumbel Deletion Mechanism")
+    print(f"{'='*70}")
+
+    mask_gumbel = dd.gumbel_deletion(row, key, target_attr)
+
+    # Display results
+    print(f"\n{'='*70}")
+    print("Algorithm 2 Results")
+    print(f"{'='*70}")
+    print(f"Deletion mask size: {len(mask_gumbel)}")
+    print(f"Cells to delete:")
+    for cell in sorted(mask_gumbel, key=lambda c: c.attribute.col):
+        print(f"  - {cell}")
+
+    if not mask_gumbel:
+        print("  (No cells deleted - empty mask)")
+
+    # ============================================================================
+    # Comparison
+    # ============================================================================
+    print(f"\n{'='*70}")
+    print("Comparison")
+    print(f"{'='*70}")
+    print(f"Exponential deletion mask size: {len(mask_exponential)}")
+    print(f"Gumbel deletion mask size: {len(mask_gumbel)}")
+
+    # Find overlap
+    overlap = mask_exponential & mask_gumbel
+    only_exponential = mask_exponential - mask_gumbel
+    only_gumbel = mask_gumbel - mask_exponential
+
+    print(f"\nOverlap: {len(overlap)} cells")
+    if overlap:
+        for cell in sorted(overlap, key=lambda c: c.attribute.col):
+            print(f"  - {cell.attribute.col}")
+
+    print(f"\nOnly in exponential: {len(only_exponential)} cells")
+    if only_exponential:
+        for cell in sorted(only_exponential, key=lambda c: c.attribute.col):
+            print(f"  - {cell.attribute.col}")
+
+    print(f"\nOnly in Gumbel: {len(only_gumbel)} cells")
+    if only_gumbel:
+        for cell in sorted(only_gumbel, key=lambda c: c.attribute.col):
+            print(f"  - {cell.attribute.col}")
 
     print(f"\n{'='*70}")
     print("Test completed successfully!")
