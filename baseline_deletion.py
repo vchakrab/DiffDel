@@ -2,7 +2,14 @@ from rtf_core import initialization_phase
 import mysql.connector
 from mysql.connector import Error
 import config
-def baseline_deletion(target: str, key: int, dataset, threshold):
+import random
+
+DELETION_QUERY = """
+            UPDATE {table_name}
+            SET {column_name} = NULL
+            WHERE id = {key};
+            """
+def baseline_deletion_delete_all(target: str, key: int, dataset, threshold):
     init_manager = initialization_phase.InitializationManager({"key": key, "attribute": target}, dataset, threshold)
     init_manager.initialize()
     cleaned_content = str(init_manager.constraint_cells).strip('{}')
@@ -27,7 +34,7 @@ def baseline_deletion(target: str, key: int, dataset, threshold):
     try:
         # 1. Get Configuration and Query Details
         db_details = config.get_database_config(dataset)
-        primary_table = "airport_copy_data"
+        primary_table = dataset + "_copy_data"
 
         print(f"--- 🔌 Connecting to DB: {db_details['database']} ---")
 
@@ -45,18 +52,8 @@ def baseline_deletion(target: str, key: int, dataset, threshold):
             return 0.0
         cursor = conn.cursor()
         for constraint_cell in constraint_cells_stripped:
-            QUERY = """
-            UPDATE {table_name}
-            SET {column_name} = NULL
-            WHERE id = {key};
-            """
-            cursor.execute(QUERY.format(table_name=primary_table, column_name = constraint_cell, key=key))
-        TARGET_CELL_QUERY = """
-        UPDATE {table_name}
-            SET {column_name} = NULL
-            WHERE id = {key};
-        """
-        cursor.execute(QUERY.format(table_name = primary_table, column_name = target, key = key))
+            cursor.execute(DELETION_QUERY.format(table_name=primary_table, column_name = constraint_cell, key=key))
+        cursor.execute(DELETION_QUERY.format(table_name = primary_table, column_name = target, key = key))
         conn.commit()
     except Error as e:
         print(e)
@@ -65,7 +62,57 @@ def baseline_deletion(target: str, key: int, dataset, threshold):
             cursor.close()
         if conn:
             conn.close()
-# DO NOT RUN AS IT WILL ACTUALLY DELETE
-baseline_deletion("type", 3, "airport", 0.8)
-#def baseline_deletion_1(target: str, key: int, dataset, threshold):
 
+    return len(constraint_cells_stripped) +1
+# DO NOT RUN AS IT WILL ACTUALLY DELETE
+baseline_deletion_delete_all("type", 3, "airport", 0.8)
+#def baseline_deletion_1(target: str, key: int, dataset, threshold):
+def baseline_deletion_delete_1_from_constraints(target: str, key: int, dataset, threshold):
+    init_manager = initialization_phase.InitializationManager({"key": key, "attribute": target}, dataset, threshold)
+    target_denial_constraints = []
+    total_cells_deleted = 0
+    try:
+        # 1. Get Configuration and Query Details
+        db_details = config.get_database_config(dataset)
+        primary_table = dataset + "_copy_data"
+
+        print(f"--- 🔌 Connecting to DB: {db_details['database']} ---")
+
+        # 2. Establish Connection
+        conn = mysql.connector.connect(
+            host = db_details['host'],
+            user = db_details['user'],
+            password = db_details['password'],
+            database = db_details['database'],
+            ssl_disabled = db_details['ssl_disabled']
+        )
+
+        if not conn.is_connected():
+            print("Connection failed.")
+            return 0.0
+        cursor = conn.cursor()
+    except Error as e:
+        print(e)
+    finally:
+        if cursor:
+            cursor.close()
+
+    for dc in init_manager.denial_constraints:
+        attrs_in_dc = set(pred.split('.')[-1] for pred in
+                          [p[0] for p in dc] + [p[2] for p in dc if isinstance(p[2], str)])
+        if target in attrs_in_dc:
+            target_denial_constraints.append(dc)
+    for dc in target_denial_constraints:
+        while True:
+            cell_chosen = random.choice(dc)
+            if target == cell_chosen:
+                continue
+            else:
+                total_cells_deleted += 1
+                cursor.execute(
+                    DELETION_QUERY.format(table_name = primary_table, column_name = cell_chosen,
+                                 key = key))
+    total_cells_deleted +=1
+    cursor.execute(DELETION_QUERY.format(table_name = primary_table, column_name = target, key = key))
+    conn.commit()
+    return

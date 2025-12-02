@@ -109,7 +109,7 @@ def calculate_entropy_from_sql(dataset_name: str, rule: dict, target_attribute: 
             return calculate_naive_bayes_entropy(joint_probs, marginal_probs)
         else:
             return calculate_single_attribute_entropy(joint_probs, marginal_probs)
-        
+
 
     except Error as e:
         print(f"\n[FATAL ERROR] MySQL Error: {e}")
