@@ -18,7 +18,6 @@ from typing import Dict, Any
 
 # Add project root for config import
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
 from config import get_database_config, get_dataset_info
 
 
@@ -47,8 +46,8 @@ class RTFDatabaseManager:
     
     def fetch_row(self, target_key: int) -> Dict[str, Any]:
         """Fetch target tuple."""
-        #change here asw
-        query = f"SELECT * FROM airports WHERE {self.dataset_info['key_column']} = %s LIMIT 1"
+        #change here asw airports wont fly
+        query = f"SELECT * FROM {self.dataset_info["primary_table"]} WHERE {self.dataset_info['key_column']} = %s LIMIT 1"
         self.cursor.execute(query, (target_key,))
         row = self.cursor.fetchone()
         

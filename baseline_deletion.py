@@ -6,7 +6,7 @@ import random
 
 DELETION_QUERY = """
             UPDATE {table_name}
-            SET {column_name} = NULL
+            SET `{column_name}` = NULL
             WHERE id = {key};
             """
 def baseline_deletion_delete_all(target: str, key: int, dataset, threshold):
@@ -36,8 +36,6 @@ def baseline_deletion_delete_all(target: str, key: int, dataset, threshold):
         db_details = config.get_database_config(dataset)
         primary_table = dataset + "_copy_data"
 
-        print(f"--- 🔌 Connecting to DB: {db_details['database']} ---")
-
         # 2. Establish Connection
         conn = mysql.connector.connect(
             host = db_details['host'],
@@ -48,7 +46,6 @@ def baseline_deletion_delete_all(target: str, key: int, dataset, threshold):
         )
 
         if not conn.is_connected():
-            print("Connection failed.")
             return 0.0
         cursor = conn.cursor()
         for constraint_cell in constraint_cells_stripped:
@@ -63,7 +60,7 @@ def baseline_deletion_delete_all(target: str, key: int, dataset, threshold):
         if conn:
             conn.close()
 
-    return len(constraint_cells_stripped) +1
+    return len(constraint_cells_stripped) + 1
 # DO NOT RUN AS IT WILL ACTUALLY DELETE
 baseline_deletion_delete_all("type", 3, "airport", 0.8)
 #def baseline_deletion_1(target: str, key: int, dataset, threshold):
@@ -74,9 +71,7 @@ def baseline_deletion_delete_1_from_constraints(target: str, key: int, dataset, 
     try:
         # 1. Get Configuration and Query Details
         db_details = config.get_database_config(dataset)
-        primary_table = dataset + "_copy_data"
-
-        print(f"--- 🔌 Connecting to DB: {db_details['database']} ---")
+        primary_table = dataset + "_copy_data_2"
 
         # 2. Establish Connection
         conn = mysql.connector.connect(
@@ -91,28 +86,34 @@ def baseline_deletion_delete_1_from_constraints(target: str, key: int, dataset, 
             print("Connection failed.")
             return 0.0
         cursor = conn.cursor()
+        for dc in init_manager.denial_constraints:
+            attrs_in_dc = set(pred.split('.')[-1] for pred in
+                              [p[0] for p in dc] + [p[2] for p in dc if isinstance(p[2], str)])
+            if target in attrs_in_dc:
+                target_denial_constraints.append(dc)
+        for dc in target_denial_constraints:
+            while True:
+                cell_chosen = random.choice(dc)[0].split('.')[1]
+                if target == cell_chosen:
+                    if(len(target_denial_constraints) == 1):
+                        break
+                    continue
+
+                else:
+                    total_cells_deleted += 1
+                    cursor.execute(
+                        DELETION_QUERY.format(table_name = primary_table, column_name = cell_chosen,
+                                              key = key))
+                    break
+        total_cells_deleted += 1
+        cursor.execute(
+            DELETION_QUERY.format(table_name = primary_table, column_name = target, key = key))
+        conn.commit()
     except Error as e:
         print(e)
     finally:
         if cursor:
             cursor.close()
 
-    for dc in init_manager.denial_constraints:
-        attrs_in_dc = set(pred.split('.')[-1] for pred in
-                          [p[0] for p in dc] + [p[2] for p in dc if isinstance(p[2], str)])
-        if target in attrs_in_dc:
-            target_denial_constraints.append(dc)
-    for dc in target_denial_constraints:
-        while True:
-            cell_chosen = random.choice(dc)
-            if target == cell_chosen:
-                continue
-            else:
-                total_cells_deleted += 1
-                cursor.execute(
-                    DELETION_QUERY.format(table_name = primary_table, column_name = cell_chosen,
-                                 key = key))
-    total_cells_deleted +=1
-    cursor.execute(DELETION_QUERY.format(table_name = primary_table, column_name = target, key = key))
-    conn.commit()
-    return
+    return total_cells_deleted
+# this works idk why it struggles on data collection

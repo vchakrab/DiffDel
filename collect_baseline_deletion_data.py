@@ -206,41 +206,35 @@ ncvoter_attributes = [
 airport_attributes = ['ident', 'type', 'name', 'latitude_deg', 'longitude_deg', 'elevation_ft',
                     'iso_country', 'iso_region', 'municipality', 'scheduled_service']
 
-sizes = {"airport": 45000, "hospital": 50000, "tax": 1000, "ncvoter": 50000}
-def collect_baseline_1_data_for_all_dbs():
-    data_file_name = "baseline_deletion_1_data.csv"
-    for dataset, attrs, in zip(["airport", "hospital", "tax", "ncvoter"], [airport_attributes, hospital_attributes, tax_attributes, ncvoter_attributes]):
-            with open(data_file_name, mode = 'a', newline = '') as csv_file:
-                writer = csv.writer(csv_file)
-                writer.writerow(f"-----{dataset}-----")
-                writer.writerow("attribute,time,row,cells")
-            for i in range(100):
-                chosen_row = random.randint(0, sizes[dataset])
-                chosen_attr = random.choice(attrs)
-                start_time = time.time()
-                cells_deleted = baseline_deletion.baseline_deletion_delete_all(chosen_attr, chosen_row, dataset, 0.8)
-                end_time = time.time() - start_time
-                with open(data_file_name, mode = 'a', newline = '') as csv_file:
-                    writer = csv.writer(csv_file)
-                    writer.writerow(f"{chosen_attr},{end_time},{chosen_row},{cells_deleted}")
-collect_baseline_1_data_for_all_dbs()
+sizes = {"airport": 45037, "hospital": 114920, "tax": 99905, "ncvoter": 1001}
+# def collect_baseline_1_data_for_all_dbs():
+#     data_file_name = "baseline_deletion_1_data.csv"
+#     for dataset, attrs, in zip(["airport", "hospital", "ncvoter", "tax"], [airport_attributes, hospital_attributes, ncvoter_attributes, tax_attributes]):
+#             with open(data_file_name, mode = 'a') as csv_file:
+#                 csv_file.write(f"-----{dataset}-----\n")
+#                 csv_file.write("attribute,time,row,cells\n")
+#             for i in range(100):
+#                 chosen_row = random.randint(1, sizes[dataset])
+#                 chosen_attr = random.choice(attrs)
+#                 start_time = time.time()
+#                 cells_deleted = baseline_deletion.baseline_deletion_delete_all(chosen_attr, chosen_row, dataset, 0.8)
+#                 end_time = time.time() - start_time
+#                 with open(data_file_name, mode = 'a') as csv_file:
+#                     csv_file.write(f"{chosen_attr},{end_time},{chosen_row},{cells_deleted}\n")
+# collect_baseline_1_data_for_all_dbs()
 def collect_baseline_2_data_for_all_dbs():
     data_file_name = "baseline_deletion_2_data.csv"
-    for dataset, attrs, in zip(["airport", "hospital", "tax", "ncvoter"], [airport_attributes, hospital_attributes, tax_attributes, ncvoter_attributes]):
-            with open(data_file_name, mode = 'a', newline = '') as csv_file:
-                writer = csv.writer(csv_file)
-                writer.writerow(f"-----{dataset}-----")
-                writer.writerow("attribute,time,row,cells")
+
+    for dataset, attrs, in zip(["hospital", "tax", "ncvoter"], [hospital_attributes, tax_attributes, ncvoter_attributes]):
+            with open(data_file_name, mode = 'a') as csv_file:
+                csv_file.write(f"-----{dataset}-----\n")
+                csv_file.write("attribute,time,row,cells\n")
             for i in range(100):
                 chosen_row = random.randint(0, sizes[dataset])
                 chosen_attr = random.choice(attrs)
                 start_time = time.time()
                 cells_deleted = baseline_deletion.baseline_deletion_delete_1_from_constraints(chosen_attr, chosen_row, dataset, 0.8)
                 end_time = time.time() - start_time
-                with open(data_file_name, mode = 'a', newline = '') as csv_file:
-                    writer = csv.writer(csv_file)
-                    writer.writerow(f"{chosen_attr},{end_time},{chosen_row},{cells_deleted}")
+                with open(data_file_name, mode = 'a') as csv_file:
+                    csv_file.write(f"{chosen_attr},{end_time},{chosen_row},{cells_deleted}\n")
 collect_baseline_2_data_for_all_dbs()
-
-
-

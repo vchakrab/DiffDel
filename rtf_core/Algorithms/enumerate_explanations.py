@@ -218,7 +218,7 @@ def set_edge_weight(hypergraph_list, weights = None):
 
     if weights is None:
         for edge_set in hypergraph_list:
-            weighted_hypergraph_dict[frozenset(edge_set)] = 2.0
+            weighted_hypergraph_dict[frozenset(edge_set)] = 1.0
     else:
         for edge_set, weight in zip(hypergraph_list, weights):
             weighted_hypergraph_dict[frozenset(edge_set)] = float(weight)
@@ -244,61 +244,135 @@ def build_graph_data(denial_constraints):
 
     return boundary_edges, internal_edges, boundary_cells
 
-def find_all_weighted_explanations_weighted(weighted_hypergraph_dict, target_node, boundary_nodes,
+def build_rules_from_hyperedges(weighted_hypergraph_dict):
+    """
+    Convert hyperedges to rules for forward chaining (Algorithm 1 style).
+    Each hyperedge {A, B, C} creates rules: for each cell as head, rest as tail.
+    Returns: rules_map[cell] = [(tail_set, head_cell, weight), ...]
+    """
+    rules_map = {}
+    
+    for hyperedge, weight in weighted_hypergraph_dict.items():
+        edge_list = list(hyperedge)
+        # For each cell in the edge as head, create a rule with rest as tail
+        for head_cell in edge_list:
+            tail_set = frozenset(edge_list) - {head_cell}
+            if head_cell not in rules_map:
+                rules_map[head_cell] = []
+            rules_map[head_cell].append((tail_set, head_cell, weight))
+    
+    return rules_map
+
+
+def is_subset_minimal(premise_set, all_explanations):
+    """Check if premise_set is subset-minimal (no proper subset is an explanation)"""
+    premise_frozen = frozenset(premise_set)
+    for exp_nodes, _, _ in all_explanations:
+        if frozenset(exp_nodes) < premise_frozen:  # proper subset
+            return False
+    return True
+
+
+def find_all_weighted_explanations(weighted_hypergraph_dict, target_node, boundary_nodes,
                                             theta):
+    """
+    Algorithm 1: Forward chaining enumeration with weights preserved.
+    Implements: EnumerateExplanations(H_u^(θ), c_t, B_u, depth ≤ θ)
+    
+    For each hyperedge (set of cells), we form rules: for any cell as head,
+    the other cells form the tail. When at cell x, we find rules where x is in tail.
+    """
     boundary_set = set(boundary_nodes)
-    hyperedges = list(weighted_hypergraph_dict.keys())
+    
+    # Q = queue of (x, P, d, weight) where:
+    #   x = current cell
+    #   P = accumulated premise set (union of all tail sets T(r) for rules used)
+    #   d = derivation depth  
+    #   weight = accumulated weight (sum of rule weights)
     queue = deque()
     explanations = []
-
-    for edge in hyperedges:
-        if target_node in edge:
-            weight = weighted_hypergraph_dict[edge]
-            queue.append((edge, [edge], 1, weight))
-
+    visited = set()  # Track visited states (x, P_frozen) to avoid cycles and duplicates
+    
+    # Initialize: start from target node with premise set containing target
+    # Algorithm 1: Q = {(c_t, {c_t}, 0)}
+    initial_P = frozenset({target_node})
+    queue.append((target_node, initial_P, 0, 0.0))
+    visited.add((target_node, initial_P))
+    
     while queue:
-        curr_edge, path_of_edges, depth, curr_weight = queue.popleft()
-
-        if depth >= theta:
-            continue
-
-        for next_edge in hyperedges:
-            if next_edge == curr_edge or next_edge in path_of_edges:
-                continue
-
-            if not curr_edge.isdisjoint(next_edge):
-                next_weight = weighted_hypergraph_dict[next_edge]
-
-                new_path_weight = curr_weight + next_weight
-                new_path = path_of_edges + [next_edge]
-                new_depth = depth + 1
-
-                if not boundary_set.isdisjoint(next_edge):
-                    if new_depth <= theta:
-                        union_nodes = set()
-                        for edge in new_path:
-                            union_nodes.update(edge)
-                        explanations.append((union_nodes, new_path_weight, new_depth))
-
-                if new_depth < theta:
-                    queue.append((next_edge, new_path, new_depth, new_path_weight))
-
-    for edge in hyperedges:
-        if target_node in edge and not boundary_set.isdisjoint(edge):
-            edge_weight = weighted_hypergraph_dict[edge]
-            if 1 <= theta:
-                node_set = set(edge)
-                # Keep the check for duplicates if the same explanation was generated through the queue (though unlikely here)
-                if not any(frozenset(exp[0]) == frozenset(node_set) and exp[1] == edge_weight for exp in explanations):
-                    explanations.append((node_set, edge_weight, 1))
-    #deduplication
-    unique_explanations = {}
+        x, P, d, curr_weight = queue.popleft()
+        
+        # Algorithm 1 Line 4-5: If x is boundary, add explanation and continue
+        # BUT: allow exploration from target even if it's a boundary (only stop after exploring)
+        is_target_at_start = (d == 0 and P == {target_node} and x == target_node)
+        
+        if x in boundary_set and not is_target_at_start:
+            # Add subset-minimal P to explanations
+            explanations.append((set(P), curr_weight, d))
+            continue  # Don't explore further from boundary cells
+        
+        # Algorithm 1 Line 6: If d < θ, explore rules
+        if d < theta:
+            # Algorithm 1 Line 7: For each rule r where x ∈ T(r)
+            # For hyperedges: when at cell x, find hyperedges containing x
+            # These represent rules where x can be part of the premises
+            for hyperedge, weight in weighted_hypergraph_dict.items():
+                if x in hyperedge:
+                    # For this hyperedge, create a rule where:
+                    # T(r) = hyperedge (all cells in the edge are premises)
+                    # H(r) = other cells in hyperedge (we can derive any other cell)
+                    # BUT: we can only apply if all of T(r) are in P or we're building P
+                    # Actually, for forward chaining: if we're at x and x ∈ hyperedge,
+                    # we can derive other cells in the hyperedge
+                    other_cells = hyperedge - {x}
+                    for head_cell in other_cells:
+                        # Algorithm 1: new state is (h, P ∪ T(r), d+1)
+                        # where T(r) = hyperedge (all cells in the edge)
+                        new_P = P.union(hyperedge)  # P ∪ T(r)
+                        state_key = (head_cell, frozenset(new_P))
+                        
+                        # Only add if we haven't visited this state before
+                        if state_key not in visited:
+                            visited.add(state_key)
+                            new_weight = curr_weight + weight
+                            queue.append((head_cell, new_P, d + 1, new_weight))
+    
+    # Post-process: deduplicate and ensure subset-minimal explanations
+    # First deduplicate by exact node set
+    unique_by_nodes = {}
     for node_set, weight, depth in explanations:
-        key = (frozenset(node_set), weight, depth)
-        if key not in unique_explanations:
-            unique_explanations[key] = (node_set, weight, depth)
-    return list(unique_explanations.values())
+        node_frozen = frozenset(node_set)
+        # Keep the one with minimum weight (or first one if weights equal)
+        if node_frozen not in unique_by_nodes:
+            unique_by_nodes[node_frozen] = (node_set, weight, depth)
+        else:
+            existing_weight = unique_by_nodes[node_frozen][1]
+            if weight < existing_weight:
+                unique_by_nodes[node_frozen] = (node_set, weight, depth)
+    
+    # Now filter for subset-minimal: remove any explanation that has a proper subset as explanation
+    deduped = list(unique_by_nodes.values())
+    sorted_explanations = sorted(deduped, key=lambda x: (len(x[0]), x[2]))  # by size, then depth
+    
+    minimal_explanations = []
+    for node_set, weight, depth in sorted_explanations:
+        node_frozen = frozenset(node_set)
+        # Check if any existing explanation is a proper subset of this one
+        has_proper_subset = False
+        for existing_set, _, _ in minimal_explanations:
+            if frozenset(existing_set) < node_frozen:
+                has_proper_subset = True
+                break
+        
+        if not has_proper_subset:
+            # Remove any existing explanations that are proper supersets of this one
+            minimal_explanations = [
+                (existing_set, w, dep) for existing_set, w, dep in minimal_explanations
+                if not (node_frozen < frozenset(existing_set))
+            ]
+            minimal_explanations.append((node_set, weight, depth))
+    
+    return minimal_explanations
 
 b_edges, i_edges, b_cells = build_graph_data(dc)
-exps = find_all_weighted_explanations_weighted(set_edge_weight(i_edges), "t1.type", b_cells, 5)
-print(exps)#
+#exps = find_all_weighted_explanations_weighted(set_edge_weight(i_edges), "t1.type", b_cells, 5)
