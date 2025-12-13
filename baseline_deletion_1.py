@@ -1,3 +1,5 @@
+import time
+
 from rtf_core import initialization_phase
 import mysql.connector
 from mysql.connector import Error
@@ -70,11 +72,13 @@ def delete_all_dependent_cells(target: str, key: int, dataset, threshold):
 
     """
     memory = 0
+    initialization_time = time.time()
     init_manager = initialization_phase.InitializationManager({"key": key, "attribute": target}, dataset, threshold)
     init_manager.initialize()
 
     cleaned_content = str(init_manager.constraint_cells).strip('{}')
-
+    total_init_time = time.time() - initialization_time
+    model_time = time.time()
     items = cleaned_content.split(', ')
 
     stripped_attributes = []
@@ -91,8 +95,9 @@ def delete_all_dependent_cells(target: str, key: int, dataset, threshold):
             stripped_attributes.append(attribute)
 
     constraint_cells_stripped = stripped_attributes
+    model_time = time.time() - model_time
     memory_bytes = calculate_deletion_memory(init_manager, constraint_cells_stripped, target, key)
-
+    deletion_time = None
     try:
         # 1. Get Configuration and Query Details
         db_details = config.get_database_config(dataset)
@@ -110,10 +115,12 @@ def delete_all_dependent_cells(target: str, key: int, dataset, threshold):
         if not conn.is_connected():
             return 0.0
         cursor = conn.cursor()
+        deletion_time = time.time()
         for constraint_cell in constraint_cells_stripped:
             cursor.execute(DELETION_QUERY.format(table_name=primary_table, column_name = constraint_cell, key=key))
         cursor.execute(DELETION_QUERY.format(table_name = primary_table, column_name = target, key = key))
         conn.commit()
+        deletion_time = time.time() - deletion_time
     except Error as e:
         print(e)
     finally:
@@ -122,5 +129,5 @@ def delete_all_dependent_cells(target: str, key: int, dataset, threshold):
         if conn:
             conn.close()
 
-    return len(init_manager.denial_constraints), len(constraint_cells_stripped) + 1, memory_bytes
+    return len(init_manager.denial_constraints), len(constraint_cells_stripped) + 1, memory_bytes, total_init_time, model_time, deletion_time
 

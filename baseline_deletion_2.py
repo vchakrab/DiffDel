@@ -147,6 +147,7 @@ def delete_one_path_dependent_cell(target: str, key: int, dataset: str, threshol
             Deletes one cell per explanation in the primary table row that the target cell depends on and the ones that fit in the threshold.
 
     """
+    initialization_time = time.time()
     init_manager = initialization_phase.InitializationManager({"key": key, "attribute": target},
                                                               dataset, threshold)
     init_manager.initialize()
@@ -159,7 +160,7 @@ def delete_one_path_dependent_cell(target: str, key: int, dataset: str, threshol
     graph_internal_edges = []
     graph_boundary_cells = set()
     found_explanations = []
-
+    deletion_time = None
     try:
         # 1. Get Configuration and Query Details
         db_details = config.get_database_config(dataset)
@@ -188,13 +189,15 @@ def delete_one_path_dependent_cell(target: str, key: int, dataset: str, threshol
         start_time = time.time()
         graph_boundary_edges, graph_internal_edges, graph_boundary_cells = explanations.build_graph_data(
             target_denial_constraints)
+        initialization_time = time.time() - start_time
+        model_time = time.time()
         found_explanations = explanations.find_all_weighted_explanations(
             explanations.set_edge_weight(graph_internal_edges),
             "t1." + target,
             graph_boundary_cells,
             5
         )
-        end_time = time.time() - start_time
+        model_time = time.time() - model_time
 
         # Calculate memory AFTER graph construction but BEFORE deletions
         memory_bytes = calculate_deletion_memory(
@@ -206,7 +209,7 @@ def delete_one_path_dependent_cell(target: str, key: int, dataset: str, threshol
             graph_boundary_cells,
             found_explanations
         )
-
+        deletion_time = time.time() - initialization_time
         for exp in found_explanations:
             actual_exp = exp[0]
             depth = exp[2]
@@ -229,6 +232,7 @@ def delete_one_path_dependent_cell(target: str, key: int, dataset: str, threshol
         cursor.execute(
             DELETION_QUERY.format(table_name = primary_table, column_name = target, key = key))
         conn.commit()
+        deletion_time = time.time() - model_time
 
     except Error as e:
         print(e)
@@ -239,4 +243,4 @@ def delete_one_path_dependent_cell(target: str, key: int, dataset: str, threshol
         if conn:
             conn.close()
 
-    return total_cells_deleted, end_time, memory_bytes, max_depth, len(found_explanations)
+    return total_cells_deleted, memory_bytes, max_depth, len(found_explanations), initialization_time, deletion_time, model_time
