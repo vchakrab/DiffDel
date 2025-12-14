@@ -1,0 +1,242 @@
+
+"""Experimental implementations of the hypergraph and deletion algorithms.
+
+This module provides lightweight, in-memory versions of the pseudocode shared
+for constructing maximum and actual hypergraphs, computing inference zones,
+extracting inference paths, and sampling deletion masks via the exponential
+mechanism. It is intended for small-scale experimentation; the data structures
+are simple Python collections rather than database-backed operations.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass
+from itertools import combinations, product
+from math import exp
+from typing import Callable, Dict, Iterable, List, MutableMapping, Sequence, Set, Tuple
+import random
+
+# A cell is identified by a tuple key and an attribute/column name.
+CellRef = Tuple[str, str]
+
+
+# ---------------------------------------------------------------------------
+# Constraint representation
+# ---------------------------------------------------------------------------
+JoinPredicate = Callable[[MutableMapping[str, Dict[str, object]]], bool]
+
+
+@dataclass(frozen=True)
+class Constraint:
+    """Represents a constraint of the form (T, J) => h with weight w.
+
+    Attributes
+    ----------
+    tuple_vars: List[str]
+        Symbols representing tuple aliases (e.g., ``t1`` and ``t2``).
+    body_attributes: List[Tuple[str, str]]
+        Pairs of (attribute, tuple_var) for the constraint tail T.
+    head: Tuple[str, str]
+        A (attribute, tuple_var) pair for the constraint head h.
+    join_predicates: List[JoinPredicate]
+        Predicates over an assignment mapping tuple vars to tuple dictionaries.
+    weight: float
+        Strength/weight associated with the constraint.
+    """
+
+    tuple_vars: List[str]
+    body_attributes: List[Tuple[str, str]]
+    head: Tuple[str, str]
+    join_predicates: List[JoinPredicate]
+    weight: float = 1.0
+
+    def all_attributes(self) -> List[Tuple[str, str]]:
+        """Return the combined body and head attribute references."""
+
+        return self.body_attributes  [self.head]
+
+
+# ---------------------------------------------------------------------------
+# Hypergraph construction
+# ---------------------------------------------------------------------------
+@dataclass
+class Hypergraph:
+    vertices: Set[CellRef]
+    edges: List[Tuple[frozenset[CellRef], float]]
+
+
+def _assignment_product(tuple_vars: Sequence[str], database: Sequence[Dict[str, object]]):
+    """Yield every mapping from tuple vars to tuples in the database."""
+
+    for combo in product(database, repeat=len(tuple_vars)):
+        yield dict(zip(tuple_vars, combo))
+
+
+def _materialize_cells(attributes: Iterable[Tuple[str, str]], assignment: Dict[str, Dict[str, object]]):
+    """Convert attribute references into concrete cell identifiers."""
+
+    cells: Set[CellRef] = set()
+    for attr, var in attributes:
+        tuple_data = assignment[var]
+        tuple_id = str(tuple_data.get("id", var))
+        cells.add((tuple_id, attr))
+    return frozenset(cells)
+
+
+def construct_max_hypergraph(database: Sequence[Dict[str, object]], constraints: Sequence[Constraint]) -> Hypergraph:
+    """Construct the value-independent maximum hypergraph H_max."""
+
+    vertices: Set[CellRef] = set()
+    edges: List[Tuple[frozenset[CellRef], float]] = []
+
+    for row in database:
+        tuple_id = str(row.get("id", len(vertices)))
+        for attr in row:
+            if attr == "id":
+                continue
+            vertices.add((tuple_id, attr))
+
+    for constraint in constraints:
+        for assignment in _assignment_product(constraint.tuple_vars, database):
+            edge = _materialize_cells(constraint.all_attributes(), assignment)
+            edges.append((edge, constraint.weight))
+
+    return Hypergraph(vertices, edges)
+
+
+def construct_actual_hypergraph(database: Sequence[Dict[str, object]], constraints: Sequence[Constraint]) -> Hypergraph:
+    """Construct the value-dependent actual hypergraph H_D."""
+
+    vertices: Set[CellRef] = set()
+    edges: List[Tuple[frozenset[CellRef], float]] = []
+
+    for row in database:
+        tuple_id = str(row.get("id", len(vertices)))
+        for attr in row:
+            if attr == "id":
+                continue
+            vertices.add((tuple_id, attr))
+
+    for constraint in constraints:
+        for assignment in _assignment_product(constraint.tuple_vars, database):
+            if all(pred(assignment) for pred in constraint.join_predicates):
+                edge = _materialize_cells(constraint.all_attributes(), assignment)
+                edges.append((edge, constraint.weight))
+
+    return Hypergraph(vertices, edges)
+
+
+# ---------------------------------------------------------------------------
+# Inference zone and path extraction
+# ---------------------------------------------------------------------------
+def compute_inference_zone(hypergraph: Hypergraph, target_cell: CellRef) -> Set[CellRef]:
+    """Breadth-first traversal to find cells reachable from the target."""
+
+    inference_zone: Set[CellRef] = {target_cell}
+    frontier: Set[CellRef] = {target_cell}
+
+    while frontier:
+        nxt: Set[CellRef] = set()
+        for edge, _ in hypergraph.edges:
+            if edge & frontier:
+                for cell in edge:
+                    if cell not in inference_zone:
+                        inference_zone.add(cell)
+                        nxt.add(cell)
+        frontier = nxt
+
+    inference_zone.discard(target_cell)
+    return inference_zone
+
+
+def _path_weight(path: List[Tuple[frozenset[CellRef], float]]) -> float:
+    weight = 1.0
+    for _, w in path:
+        weight *= w
+    return weight
+
+
+def extract_inference_paths(
+    hypergraph: Hypergraph, target_cell: CellRef, inference_zone: Set[CellRef]
+) -> List[List[Tuple[frozenset[CellRef], float]]]:
+    """Enumerate all inference paths that can derive the target cell."""
+
+    paths: List[List[Tuple[frozenset[CellRef], float]]] = []
+    edges_by_target = [edge for edge in hypergraph.edges if target_cell in edge[0]]
+
+    def find_paths(
+        known: Set[CellRef],
+        path: List[Tuple[frozenset[CellRef], float]],
+    ) -> None:
+        for edge, weight in edges_by_target:
+            unknown = edge - known
+            if unknown == {target_cell}:
+                paths.append(path  [(edge, weight)])
+            elif len(unknown) == 1:
+                (intermediate,) = unknown
+                find_paths(known | {intermediate}, path  [(edge, weight)])
+
+    find_paths(set(inference_zone), [])
+    return paths
+
+
+# ---------------------------------------------------------------------------
+# Exponential mechanism for deletion mask selection
+# ---------------------------------------------------------------------------
+def _powerset(items: Sequence[CellRef]) -> Iterable[Set[CellRef]]:
+    for r in range(len(items)  1):
+        for combo in combinations(items, r):
+            yield set(combo)
+
+
+def _path_blocked(path: List[Tuple[frozenset[CellRef], float]], mask: Set[CellRef]) -> bool:
+    return any(cell in mask for edge, _ in path for cell in edge)
+
+
+def exponential_deletion_mechanism(
+    database: Sequence[Dict[str, object]],
+    constraints: Sequence[Constraint],
+    target_cell: CellRef,
+    alpha: float,
+    beta: float,
+    epsilon: float,
+    threshold: float = 0.0,
+    rng: random.Random | None = None,
+) -> Tuple[Set[CellRef], List[Tuple[Set[CellRef], float]]]:
+    """Sample a deletion mask using the exponential mechanism.
+
+    Returns the sampled mask and the probability mass function used for sampling
+    to simplify debugging and experimentation.
+    """
+
+    rng = rng or random.Random()
+
+    h_max = construct_max_hypergraph(database, constraints)
+    inference_zone = compute_inference_zone(h_max, target_cell)
+    h_actual = construct_actual_hypergraph(database, constraints)
+    all_paths = extract_inference_paths(h_actual, target_cell, inference_zone)
+
+    candidate_paths = [p for p in all_paths if _path_weight(p) >= threshold]
+    inference_zone_list = list(inference_zone)
+
+    utilities: List[float] = []
+    masks: List[Set[CellRef]] = []
+
+    for mask in _powerset(inference_zone_list):
+        unblocked = [p for p in candidate_paths if not _path_blocked(p, mask)]
+        leakage = 1.0
+        for path in unblocked:
+            leakage *= (1 - _path_weight(path))
+        leakage = 1 - leakage
+        utility = -alpha * leakage - beta * len(mask)
+        masks.append(mask)
+        utilities.append(utility)
+
+    weights = [exp(epsilon * u / (2 * alpha)) for u in utilities]
+    total = sum(weights)
+    pmf = [(mask, w / total if total else 0.0) for mask, w in zip(masks, weights)]
+    choice = rng.choices(masks, weights=weights, k=1)[0] if total else set()
+
+    return choice, pmf
+ 
+EOF
+)
