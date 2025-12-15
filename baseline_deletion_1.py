@@ -1,10 +1,11 @@
 import time
-
+import sys
 from rtf_core import initialization_phase
 import mysql.connector
 from mysql.connector import Error
 import config
-import sys
+
+
 DELETION_QUERY = """
             UPDATE {table_name}
             SET `{column_name}` = NULL
@@ -12,47 +13,60 @@ DELETION_QUERY = """
             """
 
 
-def calculate_deletion_memory(init_manager, constraint_cells_stripped, target, key):
+def measure_optimal_memory(init_manager, target, key):
     """
-    Calculate memory based on Java logic:
-    - denial_constraints: list of tuples (each tuple is a hyperedge)
-    - constraint_cells: list of cells
+    Calculate memory based on P2E2/Java logic for the optimal approach.
+    This involves traversing the instantiated cells and edges.
     """
     memory = 0
+    
+    # Create a graph-like structure for traversal
+    cell_to_edges = {}
+    all_cells = {f"t1.{target}"}
 
-    # 1. Count cells visited/instantiated
-    # The target cell + all constraint cells
-    total_cells = len(constraint_cells_stripped) + 1
+    for dc in init_manager.denial_constraints:
+        # Each DC is a hyperedge. Let's assume the first element is the head for simplicity.
+        # This is a simplification, but it allows us to build a traversable graph.
+        head_attr = dc[0][0] if dc else None
+        if not head_attr:
+            continue
+            
+        head_cell = f"t1.{head_attr.split('.')[-1]}"
+        all_cells.add(head_cell)
+        
+        edge = set()
+        for pred in dc:
+            attr = pred[0].split('.')[-1]
+            cell = f"t1.{attr}"
+            edge.add(cell)
+            all_cells.add(cell)
 
-    # Per cell: table_index(4) + row_index(4) + insertion_time(4) + state(1) + cost(4) = 17 bytes
-    memory += total_cells * 17
+        if head_cell not in cell_to_edges:
+            cell_to_edges[head_cell] = []
+        cell_to_edges[head_cell].append(edge)
 
-    # 2. Count edges (denial constraints = hyperedges)
-    for constraint_tuple in init_manager.denial_constraints:
-        # Each tuple represents a hyperedge connecting multiple cells
-        edge_size = len(constraint_tuple)
-
-        # Per edge: pointers to cells (8 * edge_size) + parent pointer (8) + minCell (4)
-        memory += edge_size * 8 + 8 + 4
-
-    # 3. Algorithm overhead - data structures used
-    # Python list overhead for constraint_cells
-    memory += sys.getsizeof(init_manager.constraint_cells)
-    for cell in init_manager.constraint_cells:
-        memory += sys.getsizeof(cell)  # Each cell object
-
-    # List overhead for denial_constraints
-    memory += sys.getsizeof(init_manager.denial_constraints)
-    for constraint_tuple in init_manager.denial_constraints:
-        memory += sys.getsizeof(constraint_tuple)  # Each tuple
-
-    # List overhead for stripped_attributes
-    memory += sys.getsizeof(constraint_cells_stripped)
-
-    # If init_manager has other internal structures (queue, visited set, etc.)
-    # Add them here if they exist:
-
+    # Traverse from the target cell
+    q = [f"t1.{target}"]
+    visited = {f"t1.{target}"}
+    
+    while q:
+        curr_cell_attr = q.pop(0)
+        
+        # Per cell: table_index(4) + row_index(4) + insertion_time(4) + state(1) + cost(4) = 17 bytes
+        memory += 17
+        
+        if curr_cell_attr in cell_to_edges:
+            for edge in cell_to_edges[curr_cell_attr]:
+                # Per edge: pointers to cells (8 * edge_size) + parent pointer (8) + minCell (4) = 12 + 8 * size
+                memory += 12 + len(edge) * 8
+                
+                for cell in edge:
+                    if cell not in visited:
+                        visited.add(cell)
+                        q.append(cell)
+                        
     return memory
+
 
 def delete_all_dependent_cells(target: str, key: int, dataset, threshold):
     """
@@ -60,34 +74,47 @@ def delete_all_dependent_cells(target: str, key: int, dataset, threshold):
     Using Code from the initialization phase, we can get the cells that one cell depends on.
     Using the DELETION_QUERY, we delete each cell.
 
-        Parameters:
-            target (string): Target attribute
-            key (int): Gives the ID of the row in the primary table
-            dataset (string): Name of the dataset that the table belongs to
-            threshold (int): Threshold for deleting cells, used in baseline deletion two, but plqceholder here
-        Returns:
-            cells deleted (int): The total number of cells deleted
-        Side Effects:
-            Deletes all the cells in the primary table row that the target cell depends on.`
+    According to P2E2 paper (Section 4), the phases are:
+    1. Instantiation: Instantiate RDRs to identify dependencies (Algorithm 1)
+    2. Modeling: Construct the optimization model (ILP/Hypergraph)
+    3. Optimization: Solve to find minimal deletion set
+    4. Update to NULL: Execute the actual deletions in database
 
+    Parameters:
+        target (string): Target attribute
+        key (int): Gives the ID of the row in the primary table
+        dataset (string): Name of the dataset that the table belongs to
+        threshold (int): Threshold for deleting cells, used in baseline deletion two, but placeholder here
+
+    Returns:
+        tuple: (num_constraints, num_cells_deleted, memory_bytes,
+                instantiation_time, model_time, deletion_time)
+
+    Side Effects:
+        Deletes all the cells in the primary table row that the target cell depends on.
     """
-    memory = 0
-    initialization_time = time.time()
-    init_manager = initialization_phase.InitializationManager({"key": key, "attribute": target}, dataset, threshold)
-    init_manager.initialize()
 
+    # Phase 1: INSTANTIATION - Instantiate RDRs and identify dependencies
+    instantiation_start = time.time()
+    init_manager = initialization_phase.InitializationManager(
+        {"key": key, "attribute": target},
+        dataset,
+        threshold
+    )
+    init_manager.initialize()
+    instantiation_time = time.time() - instantiation_start
+
+    # Phase 2: MODELING - Extract and process constraint cells
+    model_start = time.time()
+
+    # Parse constraint cells from initialization manager
     cleaned_content = str(init_manager.constraint_cells).strip('{}')
-    total_init_time = time.time() - initialization_time
-    model_time = time.time()
     items = cleaned_content.split(', ')
 
     stripped_attributes = []
-
     for item in items:
         key_part = item.split('=>')[0].strip()
-
         dot_index = key_part.find('.')
-
         bracket_index = key_part.find('[')
 
         if dot_index != -1 and bracket_index != -1 and dot_index < bracket_index:
@@ -95,15 +122,31 @@ def delete_all_dependent_cells(target: str, key: int, dataset, threshold):
             stripped_attributes.append(attribute)
 
     constraint_cells_stripped = stripped_attributes
-    model_time = time.time() - model_time
-    memory_bytes = calculate_deletion_memory(init_manager, constraint_cells_stripped, target, key)
-    deletion_time = None
+
+    # Calculate memory usage for the model
+    memory_bytes = measure_optimal_memory(
+        init_manager,
+        target,
+        key
+    )
+
+    model_time = time.time() - model_start
+
+    # Phase 3: OPTIMIZATION (implicit in this baseline approach)
+    # For baseline, we delete all dependent cells, so optimization time is negligible
+    # and included in model_time
+
+    # Phase 4: UPDATE TO NULL - Execute deletions in database
+    deletion_time = 0.0
+    conn = None
+    cursor = None
+
     try:
-        # 1. Get Configuration and Query Details
+        # Get database configuration
         db_details = config.get_database_config(dataset)
         primary_table = dataset + "_copy_data"
 
-        # 2. Establish Connection
+        # Establish connection
         conn = mysql.connector.connect(
             host = db_details['host'],
             user = db_details['user'],
@@ -113,21 +156,58 @@ def delete_all_dependent_cells(target: str, key: int, dataset, threshold):
         )
 
         if not conn.is_connected():
-            return 0.0
+            print("Warning: Database connection failed")
+            return (
+                len(init_manager.denial_constraints),
+                len(constraint_cells_stripped) + 1,
+                memory_bytes,
+                instantiation_time,
+                model_time,
+                0.0
+            )
+
         cursor = conn.cursor()
-        deletion_time = time.time()
+
+        # Start timing the actual deletion operations
+        deletion_start = time.time()
+
+        # Delete all constraint cells
         for constraint_cell in constraint_cells_stripped:
-            cursor.execute(DELETION_QUERY.format(table_name=primary_table, column_name = constraint_cell, key=key))
-        cursor.execute(DELETION_QUERY.format(table_name = primary_table, column_name = target, key = key))
+            cursor.execute(
+                DELETION_QUERY.format(
+                    table_name = primary_table,
+                    column_name = constraint_cell,
+                    key = key
+                )
+            )
+
+        # Delete the target cell
+        cursor.execute(
+            DELETION_QUERY.format(
+                table_name = primary_table,
+                column_name = target,
+                key = key
+            )
+        )
+
         conn.commit()
-        deletion_time = time.time() - deletion_time
+        deletion_time = time.time() - deletion_start
+
     except Error as e:
-        print(e)
+        print(f"Database error: {e}")
+        deletion_time = 0.0
     finally:
         if cursor:
             cursor.close()
         if conn:
             conn.close()
 
-    return len(init_manager.denial_constraints), len(constraint_cells_stripped) + 1, memory_bytes, total_init_time, model_time, deletion_time
-
+    # Return metrics as per P2E2 evaluation
+    return (
+        len(init_manager.denial_constraints),  # Number of instantiated RDRs
+        len(constraint_cells_stripped) + 1,  # Number of cells deleted
+        memory_bytes,  # Memory overhead
+        instantiation_time,  # Time for Phase 1: Instantiation
+        model_time,  # Time for Phase 2: Modeling
+        deletion_time  # Time for Phase 4: Update to NULL
+    )
