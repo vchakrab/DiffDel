@@ -82,7 +82,7 @@ DATASETS = {
         'domain_file': 'hospital_domain_map.json',
         'dc_file': 'hospital_dcs.py',
         'dc_raw_file': 'hospital_dcs',
-        'dc_config_module': None
+        'dc_config_module': 'DCandDelset.dc_configs.topHospitalDCs_parsed'
     },
     'ncvoter': {
         'name': 'ncvoter',

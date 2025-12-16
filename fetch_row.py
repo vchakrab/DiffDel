@@ -14,6 +14,7 @@ Usage:
 import mysql.connector
 import sys
 import os
+import config
 from typing import Dict, Any
 
 # Add project root for config import
@@ -48,7 +49,7 @@ class RTFDatabaseManager:
     def fetch_row(self, target_key: int) -> Dict[str, Any]:
         """Fetch target tuple."""
         #change here asw
-        query = f"SELECT * FROM airports WHERE {self.dataset_info['key_column']} = %s LIMIT 1"
+        query = f"SELECT * FROM {config.DATASETS[self.dataset]['primary_table']} WHERE {self.dataset_info['key_column']} = %s LIMIT 1"
         self.cursor.execute(query, (target_key,))
         row = self.cursor.fetchone()
         
