@@ -52,6 +52,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/baseline_deletion_1_data_v8.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/baseline_deletion_1_data_v9.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/baseline_deletion_2_data.csv">
           <value>
             <Attribute>
@@ -94,6 +108,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/baseline_deletion_2_data_v8.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/baseline_deletion_2_data_v9.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/baseline_deletion_3_data_v4.csv">
           <value>
             <Attribute>
@@ -116,6 +144,20 @@
           </value>
         </entry>
         <entry key="/baseline_deletion_3_data_v7.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/baseline_deletion_3_data_v8.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/baseline_deletion_3_data_v9.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

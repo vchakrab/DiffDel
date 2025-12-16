@@ -194,7 +194,7 @@ def collect_baseline_2_data_for_all_dbs():
         (num_explanations, cells_deleted, memory_bytes, max_depth,
          instantiation_time, model_time, deletion_time)
     """
-    data_file_name = "baseline_deletion_2_data_v7.csv"
+    data_file_name = "baseline_deletion_2_data_v9.csv"
 
     # Only choosing attributes with a high number of denial constraints
     datasets = ["airport", "hospital", "ncvoter", "tax"]
@@ -251,7 +251,7 @@ def collect_baseline_1_data_for_all_dbs():
         (num_constraints, cells_deleted, memory_bytes,
          instantiation_time, model_time, deletion_time)
     """
-    data_file_name = "baseline_deletion_1_data_v7.csv"
+    data_file_name = "baseline_deletion_1_data_v9.csv"
 
     datasets = ["airport", "hospital", "ncvoter", "tax"]
     attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "marital_status"]
@@ -262,7 +262,7 @@ def collect_baseline_1_data_for_all_dbs():
         with open(data_file_name, mode = 'a') as csv_file:
             csv_file.write(f"-----{dataset}-----\n")
             csv_file.write(
-                "attribute,total_time,num_constraints,cells_deleted,memory_bytes,init_time,model_time,del_time\n")
+                "attribute,total_time,num_constraints,cells_deleted,max_depth,memory_bytes,init_time,model_time,del_time\n")
 
         for i in range(100):
             try:
@@ -284,7 +284,7 @@ def collect_baseline_1_data_for_all_dbs():
                 with open(data_file_name, mode = 'a') as csv_file:
                     csv_file.write(
                         f"{attr},{total_time},{num_constraints},{cells_deleted},"
-                        f"{memory},{max_depth},{init_time},{model_time},{del_time}\n"
+                        f"{max_depth},{memory},{init_time},{model_time},{del_time}\n"
                     )
 
                 if (i + 1) % 10 == 0:
@@ -305,7 +305,7 @@ def collect_baseline_deletion_data_3():
         (num_explanations, cells_deleted, memory_bytes, max_depth,
          instantiation_time, model_time, deletion_time)
     """
-    data_file_name = "baseline_deletion_3_data_v7.csv"
+    data_file_name = "baseline_deletion_3_data_v9.csv"
 
     datasets = ["airport", "hospital", "ncvoter", "tax"]
     attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "marital_status"]

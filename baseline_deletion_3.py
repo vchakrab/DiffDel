@@ -85,7 +85,7 @@ def ilp_approach_matching_java(cursor, table, key, target_attr, target_time, hyp
     if not GUROBI_AVAILABLE:
         raise RuntimeError("Gurobi required")
 
-    start = time.time()
+    start_total_ilp = time.time() # Start timer for the entire ILP process
 
     # Initialize
     max_id = 0
@@ -119,7 +119,7 @@ def ilp_approach_matching_java(cursor, table, key, target_attr, target_time, hyp
     instantiated_cells.add(deleted_cell)
 
     # BFS traversal building ILP model
-    ilp_model_build_start_time = time.time()
+    # ilp_model_build_start_time = time.time() # This timer is now subsumed by start_total_ilp
     memory_size = 0
     while cells_to_visit:
         curr = cells_to_visit.popleft()
@@ -199,13 +199,13 @@ def ilp_approach_matching_java(cursor, table, key, target_attr, target_time, hyp
                     model.addConstr(quicksum(tail_tji_vars) >= bi,
                                   name=f"tail_req_{edge_counter}")
     
-    instantiation_time = time.time() - ilp_model_build_start_time # Time for model building before optimize
+    # instantiation_time = time.time() - ilp_model_build_start_time # This is now part of total_ilp_time
 
     # Set objective and optimize
     model.setObjective(obj, GRB.MINIMIZE)
     model.optimize()
 
-    model_time = time.time() - start - instantiation_time # Optimization time only
+    # model_time = time.time() - start - instantiation_time # This is now part of total_ilp_time
 
     # Check status
     if model.status == GRB.INFEASIBLE:
@@ -225,27 +225,42 @@ def ilp_approach_matching_java(cursor, table, key, target_attr, target_time, hyp
     activated_dependencies_count = sum(1 for bi_var in edge_vars if bi_var.X == 1.0)
 
     model.dispose()
+    total_ilp_time = time.time() - start_total_ilp # End timer for the entire ILP process
 
-    return to_delete, model_time, instantiation_time, max_depth, len(cell_to_id), activated_dependencies_count, memory_size
+    return to_delete, total_ilp_time, max_depth, len(cell_to_id), activated_dependencies_count, memory_size
 
 
 def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
-    """Main function matching Java ILP approach"""
-    if not GUROBI_AVAILABLE:
-        return 0, 0.0, 0, 0, 0
+    if not GUROBI_AVAILABLE: return 0, 0, 0, 0, 0.0, 0.0, 0.0
 
-    print(f"\n{'='*70}")
-    print(f"ILP DELETION - JAVA STYLE")
-    print(f"Dataset: {dataset} | Target: {target} | Key: {key}")
-    print(f"{'='*70}\n")
-
-    # Initialize
+    # PURELY TIME CHANGE: Start instantiation timer here
+    instantiation_start = time.time()
+    
     init_mgr = initialization_phase.InitializationManager(
         {"key": key, "attribute": target}, dataset, threshold
     )
     init_mgr.initialize()
 
+    target_dcs = []
+    for dc in init_mgr.denial_constraints:
+        attrs = {p.split('.')[-1] for p in [x[0] for x in dc] + [x[2] for x in dc if isinstance(x[2], str)]}
+        if target in attrs:
+            target_dcs.append(dc)
+            
+    b_edges, i_edges, orig_bounds = explanations.build_graph_data(target_dcs)
+    bounds = {c for c in orig_bounds if not c.startswith('t1.')}
+    hyper = explanations.set_edge_weight(i_edges)
+    
+    # PURELY TIME CHANGE: End instantiation timer here
+    instantiation_time = time.time() - instantiation_start
+
+    model_time = 0
+    deletion_time = 0
+    conn = None
+    cursor = None
     try:
+        # PURELY TIME CHANGE: Start deletion timer here (includes DB connection)
+        deletion_start = time.time()
         db = config.get_database_config(dataset)
         conn = mysql.connector.connect(
             host=db['host'], user=db['user'],
@@ -255,78 +270,45 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
         cursor = conn.cursor()
         table = f"{dataset}_copy_data"
 
-        # Get target insertion time
         target_time = get_insertion_time(cursor, table, key, target)
-        print(f"Target insertion time: {target_time}")
-
-        # Get denial constraints with target
-        target_dcs = []
-        for dc in init_mgr.denial_constraints:
-            attrs = set(p.split('.')[-1] for p in
-                       [x[0] for x in dc] + [x[2] for x in dc if isinstance(x[2], str)])
-            if target in attrs:
-                target_dcs.append(dc)
-
-        print(f"Denial constraints: {len(target_dcs)}")
-
-        # Build graph
-        b_edges, i_edges, orig_bounds = explanations.build_graph_data(target_dcs)
-        bounds = {c for c in orig_bounds if not c.startswith('t1.')}
-
-        print(f"Boundary cells: {len(bounds)}")
-
-        # Build hypergraph
-        hyper = explanations.set_edge_weight(i_edges)
-        print(f"Hypergraph edges: {len(hyper)}")
-
-        # Run ILP (Java style - builds model during traversal)
-        print("\nRunning ILP (Java style)...\n")
-        to_del, model_time, instantiation_time, max_depth, num_cells, activated_dependencies_count, memory_bytes = ilp_approach_matching_java(
+        
+        # This function now returns total_ilp_time as its second value
+        to_del, total_ilp_time, max_depth, num_cells, activated_dependencies_count, memory_bytes = ilp_approach_matching_java(
             cursor, table, key, target, target_time, hyper, bounds
         )
+        model_time = total_ilp_time # Model time is the total time for the ILP function
 
-        print(f"ILP complete: {len(to_del)} cells to delete")
-        print(f"  - Model building (instantiation) time: {instantiation_time:.4f}s")
-        print(f"  - Model optimization time: {model_time:.4f}s")
-        print(f"  - Total cells instantiated: {num_cells}")
-        print(f"  - Max depth traversed: {max_depth}")
-        print(f"  - Activated dependencies (RDRs addressed): {activated_dependencies_count}")
-        print(f"  - Memory usage (bytes): {memory_bytes}\n")
-
-        # Execute deletions and measure time
-        start_deletion_time = time.time()
         for cell in to_del:
             attr = cell.attribute.split('.')[-1]
             cursor.execute(DELETION_QUERY.format(table_name=table, column_name=attr, key=key))
 
         conn.commit()
-        deletion_time = time.time() - start_deletion_time
-        print(f"Deletions committed in {deletion_time:.4f}s\n")
-
-        cursor.close()
-        conn.close()
-
-        # Return all metrics as per P2E2 evaluation methodology
-        return (
-            activated_dependencies_count,  # len(found_explanations)
-            len(to_del),                  # total_cells_deleted
-            memory_bytes,                 # memory_bytes (accurate)
-            max_depth,                    # Maximum depth of explanation paths
-            instantiation_time,           # Phase 1: Instantiation time
-            model_time,                   # Phase 2+3: Modeling + Optimization time
-            deletion_time                 # Phase 4: Update to NULL time
-        )
+        
+        # PURELY TIME CHANGE: End deletion timer here, and subtract model time to get pure deletion
+        deletion_time = (time.time() - deletion_start) - model_time
 
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error: {e}") # Keep this print for debugging, will remove later as per plan
         import traceback
         traceback.print_exc()
         return 0, 0, 0, 0, 0.0, 0.0, 0.0
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+        
+    return (
+        activated_dependencies_count,
+        len(to_del),
+        memory_bytes,
+        max_depth,
+        instantiation_time,  # This is the setup_time
+        model_time,          # This is the total ILP execution time
+        deletion_time        # This is pure deletion time
+    )
 
 
 if __name__ == "__main__":
     if not GUROBI_AVAILABLE:
-        print("Gurobi required")
         sys.exit(1)
 
     dataset = "airport"
@@ -335,12 +317,3 @@ if __name__ == "__main__":
     threshold = 5.0
 
     activated_dependencies_count, total_cells_deleted, memory_bytes, max_depth, instantiation_time, model_time, deletion_time = baseline_deletion_3(target, key, dataset, threshold)
-
-    print(f"{'='*70}")
-    print(f"FINAL RESULTS:")
-    print(f"  Cells deleted: {total_cells_deleted}")
-    print(f"  Total time: {instantiation_time + model_time + deletion_time:.4f}s")
-    print(f"  Memory usage: {memory_bytes} bytes")
-    print(f"  Max depth: {max_depth}")
-    print(f"  Activated dependencies: {activated_dependencies_count}")
-    print(f"{'='*70}")

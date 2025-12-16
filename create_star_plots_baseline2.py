@@ -153,9 +153,9 @@ if __name__ == '__main__':
         sys.exit(1)
 
     baseline_files = {
-        'Baseline 1': 'baseline_deletion_1_data_v7.csv',
-        'Baseline 2': 'baseline_deletion_2_data_v7.csv',
-        'Baseline 3': 'baseline_deletion_3_data_v7.csv'
+        'Baseline 1': 'baseline_deletion_1_data_v8.csv',
+        'Baseline 2': 'baseline_deletion_2_data_v8.csv',
+        'Baseline 3': 'baseline_deletion_3_data_v8.csv'
     }
 
     datasets_to_plot = ['airport', 'hospital', 'ncvoter', 'tax']

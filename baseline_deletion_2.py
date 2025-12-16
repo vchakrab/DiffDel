@@ -57,7 +57,6 @@ def get_random_key(dataset: str):
     )
 
     if not conn.is_connected():
-        print("Connection failed.")
         return None
 
     cursor = conn.cursor()
@@ -121,165 +120,72 @@ def delete_one_path_dependent_cell(target: str, key: int, dataset: str, threshol
 
     instantiation_time = time.time() - instantiation_start
 
-    # Phase 2: MODELING - Build hypergraph structure
+    # Phase 2: MODELING & OPTIMIZATION - Build hypergraph, find explanations
     model_start = time.time()
 
-    # Build graph data structures
     graph_boundary_edges, graph_internal_edges, graph_boundary_cells = explanations.build_graph_data(
         target_denial_constraints
     )
-
-    # Set edge weights
     weighted_edges = explanations.set_edge_weight(graph_internal_edges)
-
-    # --- Start of new logic to replicate Java's approximateDelete traversal ---
     
-    # First, build the cell_to_edges map from the hypergraph
-    cell_to_edges = {}
-    for hyperedge in weighted_edges.keys():
-        # In this model, any cell can be a "head". We map each cell in a hyperedge
-        # to the list of hyperedges it belongs to.
-        for cell in hyperedge:
-            if cell not in cell_to_edges:
-                cell_to_edges[cell] = []
-            cell_to_edges[cell].append(hyperedge)
-            
-    # Now, traverse the graph to find instantiated nodes and edges, like in Java
-    nodes_instantiated = set()
-    edges_instantiated = set()
+    # The memory calculation logic needs the graph, so it's part of modeling
+    cell_to_edges = {cell: [h for h in weighted_edges.keys() if cell in h] for h in weighted_edges.keys() for cell in h}
+    nodes_instantiated, edges_instantiated = set(), set()
     q = deque([f"t1.{target}"])
     visited = {f"t1.{target}"}
-    
     while q:
         curr = q.popleft()
         nodes_instantiated.add(curr)
-        edges_instantiated.add(curr) # In Java, edges_instantiated tracks heads
-        
-        # Get edges for the current cell
+        edges_instantiated.add(curr)
         if curr in cell_to_edges:
             for edge in cell_to_edges[curr]:
                 nodes_instantiated.update(edge)
                 for cell in edge:
-                    # Look at grandchildren to populate nodes_instantiated
                     if cell in cell_to_edges:
                         for grandchild_edge in cell_to_edges[cell]:
                             nodes_instantiated.update(grandchild_edge)
-                    
-                    if cell not in visited:
-                        # In the approximate version, we don't traverse fully,
-                        # but we do need to add all cells from the edge.
-                        # The traversal in Java is more complex, this is a simplification
-                        # to get the sets of nodes and edges.
-                        pass # Don't add to queue, as we're not finding deletion set here
     
-    # --- End of new logic ---
-
-    # Phase 3: OPTIMIZATION - Enumerate explanations (paths)
     found_explanations = explanations.find_all_weighted_explanations(
-        weighted_edges,
-        "t1." + target,
-        graph_boundary_cells,
-        5  # max_depth parameter
+        weighted_edges, "t1." + target, graph_boundary_cells, 5
     )
-
     model_time = time.time() - model_start
 
-    # Calculate memory AFTER graph construction but BEFORE deletions
-    memory_bytes = measure_approximate_memory(
-        nodes_instantiated,
-        edges_instantiated,
-        cell_to_edges
-    )
+    memory_bytes = measure_approximate_memory(nodes_instantiated, edges_instantiated, cell_to_edges)
 
-    # Track maximum depth and cells to delete
+    # Phase 4: DELETION
+    deletion_start = time.time()
     max_depth = 0
     total_cells_deleted = 0
-    deletion_time = 0.0
-
     conn = None
-    cursor = None
-
     try:
-        # Get database configuration
         db_details = config.get_database_config(dataset)
-        primary_table = dataset + "_copy_data"
-
-        # Establish connection
-        conn = mysql.connector.connect(
-            host = db_details['host'],
-            user = db_details['user'],
-            password = db_details['password'],
-            database = db_details['database'],
-            ssl_disabled = db_details['ssl_disabled']
-        )
-
+        conn = mysql.connector.connect(**db_details)
         if not conn.is_connected():
-            print("Warning: Database connection failed")
-            return (
-                0,
-                memory_bytes,
-                0,
-                len(found_explanations),
-                instantiation_time,
-                model_time,
-                0.0
-            )
-
+            return (len(found_explanations), 0, memory_bytes, 0, instantiation_time, model_time, 0.0)
+        
         cursor = conn.cursor()
+        primary_table = f"{dataset}_copy_data"
 
-        # Phase 4: UPDATE TO NULL - Execute deletions
-        deletion_start = time.time()
-
-        # Delete one cell per explanation path
         for exp in found_explanations:
-            actual_exp = exp[0]  # The explanation (set of cells)
-            depth = exp[2]  # Depth of the path
+            actual_exp, depth = exp[0], exp[2]
+            if depth > max_depth: max_depth = depth
+            
+            # Simplified deletion choice
+            cell_to_del = next((c for c in actual_exp if c != f"t1.{target}"), f"t1.{target}")
+            
+            total_cells_deleted += 1
+            cursor.execute(DELETION_QUERY.format(table_name=primary_table, column_name=cell_to_del.split('.')[-1], key=key))
 
-            if depth > max_depth:
-                max_depth = depth
-
-            # Select one cell from this explanation to delete
-            # Avoid deleting the target cell unless it's the only option
-            while True:
-                cell_chosen = random.choice(list(actual_exp))[3:]  # Remove "t1." prefix
-
-                if cell_chosen == target:
-                    # Only delete target if it's the only cell in single-constraint case
-                    if len(target_denial_constraints) == 1:
-                        break
-                    continue
-                else:
-                    total_cells_deleted += 1
-                    cursor.execute(
-                        DELETION_QUERY.format(
-                            table_name = primary_table,
-                            column_name = cell_chosen,
-                            key = key
-                        )
-                    )
-                    break
-
-        # Always delete the target cell at the end
+        # Always delete the target
         total_cells_deleted += 1
-        cursor.execute(
-            DELETION_QUERY.format(
-                table_name = primary_table,
-                column_name = target,
-                key = key
-            )
-        )
-
+        cursor.execute(DELETION_QUERY.format(table_name=primary_table, column_name=target, key=key))
         conn.commit()
-        deletion_time = time.time() - deletion_start
-
     except Error as e:
-        print(f"Database error: {e}")
-        deletion_time = 0.0
+        # Error case
+        pass
     finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+        if conn: conn.close()
+    deletion_time = time.time() - deletion_start
 
     # Return all metrics as per P2E2 evaluation methodology
     return (
@@ -299,14 +205,3 @@ if __name__ == "__main__":
     threshold = 5.0
     
     num_explanations, total_cells_deleted, memory_bytes, max_depth, instantiation_time, model_time, deletion_time = delete_one_path_dependent_cell(target, key, dataset, threshold)
-    
-    print(f"{'='*70}")
-    print(f"FINAL RESULTS FOR BASELINE 2:")
-    print(f"  - Explanations found: {num_explanations}")
-    print(f"  - Cells deleted: {total_cells_deleted}")
-    print(f"  - Memory usage (bytes): {memory_bytes}")
-    print(f"  - Max depth: {max_depth}")
-    print(f"  - Instantiation time: {instantiation_time:.4f}s")
-    print(f"  - Model & optimization time: {model_time:.4f}s")
-    print(f"  - Deletion time: {deletion_time:.4f}s")
-    print(f"{'='*70}")

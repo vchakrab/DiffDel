@@ -114,9 +114,9 @@ def create_combined_bar_plot(all_metrics, datasets):
 
 def main():
     file_paths = {
-        'Baseline 1': 'baseline_deletion_1_data_v7.csv',
-        'Baseline 2': 'baseline_deletion_2_data_v7.csv',
-        'Baseline 3': 'baseline_deletion_3_data_v7.csv'
+        'Baseline 1': 'baseline_deletion_1_data_v9.csv',
+        'Baseline 2': 'baseline_deletion_2_data_v9.csv',
+        'Baseline 3': 'baseline_deletion_3_data_v9.csv'
     }
 
     all_data = {}

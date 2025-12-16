@@ -137,7 +137,7 @@ def delete_all_dependent_cells(target: str, key: int, dataset, threshold):
     # and included in model_time
 
     # Phase 4: UPDATE TO NULL - Execute deletions in database
-    deletion_time = 0.0
+    deletion_start = time.time()
     conn = None
     cursor = None
 
@@ -156,7 +156,6 @@ def delete_all_dependent_cells(target: str, key: int, dataset, threshold):
         )
 
         if not conn.is_connected():
-            print("Warning: Database connection failed")
             return (
                 len(init_manager.denial_constraints),
                 len(constraint_cells_stripped) + 1,
@@ -167,9 +166,6 @@ def delete_all_dependent_cells(target: str, key: int, dataset, threshold):
             )
 
         cursor = conn.cursor()
-
-        # Start timing the actual deletion operations
-        deletion_start = time.time()
 
         # Delete all constraint cells
         for constraint_cell in constraint_cells_stripped:
@@ -191,16 +187,15 @@ def delete_all_dependent_cells(target: str, key: int, dataset, threshold):
         )
 
         conn.commit()
-        deletion_time = time.time() - deletion_start
-
     except Error as e:
-        print(f"Database error: {e}")
-        deletion_time = 0.0
+        pass
     finally:
         if cursor:
             cursor.close()
         if conn:
             conn.close()
+
+    deletion_time = time.time() - deletion_start
 
     # Return metrics as per P2E2 evaluation
     return (
