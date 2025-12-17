@@ -288,32 +288,24 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
         deletion_time = (time.time() - deletion_start) - model_time
 
     except Exception as e:
-        print(f"Error: {e}") # Keep this print for debugging, will remove later as per plan
+        print(f"Error in Baseline 3: {e}")
         import traceback
         traceback.print_exc()
-        return 0, 0, 0, 0, 0.0, 0.0, 0.0
+        return 0, set(), 0, 0, 0.0, 0.0, 0.0 # Return empty set on error
     finally:
         if cursor: cursor.close()
         if conn: conn.close()
         
+    # Convert cell objects to simple attribute strings for the mask
+    final_mask = {cell.attribute.split('.')[-1] for cell in to_del}
+
     return (
         activated_dependencies_count,
-        len(to_del),
+        final_mask,
         memory_bytes,
         max_depth,
-        instantiation_time,  # This is the setup_time
-        model_time,          # This is the total ILP execution time
-        deletion_time        # This is pure deletion time
+        instantiation_time,
+        model_time,
+        deletion_time,
+        num_cells # Add the count of instantiated cells to the return value
     )
-
-
-if __name__ == "__main__":
-    if not GUROBI_AVAILABLE:
-        sys.exit(1)
-
-    dataset = "airport"
-    target = "type"
-    key = 6323
-    threshold = 5.0
-
-    activated_dependencies_count, total_cells_deleted, memory_bytes, max_depth, instantiation_time, model_time, deletion_time = baseline_deletion_3(target, key, dataset, threshold)

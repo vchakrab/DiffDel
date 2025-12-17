@@ -122,6 +122,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/baseline_deletion_3_data_v10.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/baseline_deletion_3_data_v4.csv">
           <value>
             <Attribute>
@@ -165,6 +172,20 @@
           </value>
         </entry>
         <entry key="/csv_files/cleaned_airport.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/exponential_deletion_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/greedy_gumbel_data.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

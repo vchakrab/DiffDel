@@ -80,8 +80,32 @@ import psutil
 import baseline_deletion_1
 import baseline_deletion_2
 import baseline_deletion_3
+import exponential_deletion
+from differentialprivacyalgorithms import greedy_gumbel
 import mysql.connector
 import config
+from collections import Counter
+from exponential_deletion import clean_raw_dcs, find_inference_paths_str, calculate_leakage_str
+
+
+# --- Helper for new metric calculation ---
+def _count_active_paths(hyperedges, paths, mask, initial_known):
+    """Helper to count how many paths are NOT blocked by a mask."""
+    active_paths = []
+    for path in paths:
+        is_blocked = False
+        known_so_far = initial_known - mask
+        for edge_idx in path:
+            edge = hyperedges[edge_idx]
+            unknown_in_edge = [c for c in edge if c not in known_so_far]
+            if len(unknown_in_edge) == 1:
+                known_so_far.add(unknown_in_edge[0])
+            elif len(unknown_in_edge) > 1:
+                is_blocked = True
+                break
+        if not is_blocked:
+            active_paths.append(path)
+    return len(active_paths)
 
 
 # Dataset attributes definitions
@@ -298,14 +322,9 @@ def collect_baseline_1_data_for_all_dbs():
 
 def collect_baseline_deletion_data_3():
     """
-    Collect data for baseline deletion 3 (ILP Java-style).
-    This corresponds to the ILP-based approach in the P2E2 paper.
-
-    Returns from baseline_deletion_3.delete_ilp_java_style():
-        (num_explanations, cells_deleted, memory_bytes, max_depth,
-         instantiation_time, model_time, deletion_time)
+    Collect data for baseline deletion 3 (ILP Java-style), now with leakage and paths_blocked.
     """
-    data_file_name = "baseline_deletion_3_data_v9.csv"
+    data_file_name = "baseline_deletion_3_data_v11.csv" # New version for new data
 
     datasets = ["airport", "hospital", "ncvoter", "tax"]
     attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "marital_status"]
@@ -313,79 +332,196 @@ def collect_baseline_deletion_data_3():
     for dataset, attr in zip(datasets, attributes):
         print(f"Processing baseline 3 for dataset: {dataset}, attribute: {attr}")
 
+        try:
+            if dataset == 'ncvoter':
+                dataset_module_name = 'NCVoter'
+            else:
+                dataset_module_name = dataset.capitalize()
+            dc_module_path = f'DCandDelset.dc_configs.top{dataset_module_name}DCs_parsed'
+            dc_module = __import__(dc_module_path, fromlist=['denial_constraints'])
+            raw_dcs = dc_module.denial_constraints
+            hyperedges = clean_raw_dcs(raw_dcs)
+            edge_weights = {i: 0.8 for i in range(len(hyperedges))}
+        except ImportError:
+            print(f"Could not load DCs for {dataset}. Skipping.")
+            continue
+        
+        all_attributes = set(attr for he in hyperedges for attr in he)
+        initial_known_for_path_finding = set()
+        all_paths = find_inference_paths_str(hyperedges, attr, initial_known_for_path_finding)
+        total_paths = len(all_paths)
+
         with open(data_file_name, mode='a') as csv_file:
             csv_file.write(f"-----{dataset}-----\n")
             csv_file.write(
-                "attribute,total_time,num_explanations,cells_deleted,max_depth,memory_bytes,init_time,model_time,del_time\n")
+                "attribute,total_time,init_time,model_time,del_time,leakage,paths_blocked,mask_size,num_paths,memory_overhead_bytes,num_instantiated_cells\n")
 
         for i in range(100):
             try:
                 chosen_row = baseline_deletion_2.get_random_key(dataset)
-
-                if chosen_row is None:
-                    print(f"Warning: Could not get random key for {dataset}, iteration {i}")
-                    continue
+                if chosen_row is None: continue
 
                 start_time = time.time()
-
-                # Returns: (num_explanations, cells_deleted, memory_bytes, max_depth,
-                #           instantiation_time, model_time, deletion_time)
-                num_explanations, cells_deleted, memory, max_depth, init_time, model_time, del_time = \
+                
+                num_explanations, deleted_cells_set, memory, max_depth, init_time, model_time, del_time, num_instantiated = \
                     baseline_deletion_3.baseline_deletion_3(attr, chosen_row, dataset, 5.0)
 
                 total_time = time.time() - start_time
+                
+                mask = deleted_cells_set
+                mask_size = len(mask)
+                leakage = calculate_leakage_str(hyperedges, all_paths, mask, attr, initial_known_for_path_finding, edge_weights)
+                active_paths = _count_active_paths(hyperedges, all_paths, mask, initial_known_for_path_finding)
+                paths_blocked = total_paths - active_paths
 
                 with open(data_file_name, mode='a') as csv_file:
                     csv_file.write(
-                        f"{attr},{total_time},{num_explanations},{cells_deleted},"
-                        f"{max_depth},{memory},{init_time},{model_time},{del_time}\n"
+                        f"{attr},{total_time},{init_time},{model_time},{del_time},"
+                        f"{leakage},{paths_blocked},{mask_size},{total_paths},{memory},{num_instantiated}\n"
                     )
 
                 if (i + 1) % 10 == 0:
                     print(f"  Completed {i + 1}/100 iterations for {dataset}")
 
             except Exception as e:
-                print(f"Error in baseline 3, dataset {dataset}, iteration {i}: {e}")
+                print(f"Error in baseline 3, dataset {dataset}, iteration {i+1}: {e}")
                 continue
-
         print(f"Completed baseline 3 for {dataset}\n")
+
+def collect_exponential_deletion_data():
+    """
+    Collect data for the string-based exponential deletion algorithm.
+    """
+    data_file_name = "exponential_deletion_data_v2.csv"
+    datasets = ["airport", "hospital", "ncvoter", "tax", "adult"]
+    attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "marital_status", "education"]
+    
+    with open(data_file_name, mode='w', newline='') as csv_file: pass
+
+    for dataset, attr in zip(datasets, attributes):
+        print(f"Processing Exponential Deletion for dataset: {dataset}, attribute: {attr}")
+        with open(data_file_name, mode='a', newline='') as csv_file:
+            csv_file.write(f"-----{dataset}-----\n")
+            header = "target_attribute,total_time,init_time,model_time,del_time,leakage,utility,mask_size,num_paths,memory_overhead_bytes,num_instantiated_cells\n"
+            csv_file.write(header)
+        for i in range(100):
+            try:
+                chosen_row = baseline_deletion_2.get_random_key(dataset)
+                if chosen_row is None: continue
+
+                results = exponential_deletion.exponential_deletion_main(dataset=dataset, key=chosen_row, target_cell=attr)
+                
+                if results:
+                    total_time = results['init_time'] + results['model_time'] + results['del_time']
+                    with open(data_file_name, mode='a', newline='') as csv_file:
+                        csv_row = (
+                            f"{attr},{total_time},{results['init_time']},{results['model_time']},"
+                            f"{results['del_time']},{results['leakage']},{results['utility']},"
+                            f"{results['mask_size']},{results['num_paths']},{results['memory_overhead_bytes']},{results['num_instantiated_cells']}\n"
+                        )
+                        csv_file.write(csv_row)
+                if (i + 1) % 10 == 0:
+                    print(f"  Completed {i + 1}/100 iterations for {dataset}")
+            except Exception as e:
+                print(f"Error in exponential deletion experiment, dataset {dataset}, iteration {i+1}: {e}")
+                continue
+        print(f"Completed exponential deletion for {dataset}\n")
+
 
 def main():
     """
-    Main function to run all data collection.
-    """
-    print("=" * 60)
-    print("P2E2 Baseline Data Collection")
-    print("=" * 60)
-    print()
-
-    # --- Baseline 1 (AllDC) ---
-    print("Starting Baseline 1 (AllDC - Delete All Dependent Cells)...")
-    setup_database_copies()
-    collect_baseline_1_data_for_all_dbs()
-    cleanup_database_copies()
-    print("Finished Baseline 1.\n")
-
-    # --- Baseline 2 (MinRet) ---
-    print("=" * 60)
-    print("Starting Baseline 2 (MinRet - Delete One Cell Per Path)...")
-    setup_database_copies()
-    collect_baseline_2_data_for_all_dbs()
-    cleanup_database_copies()
-    print("Finished Baseline 2.\n")
-    
+    # Main function to run all data collection.
+    # """
+    # print("=" * 60)
+    # print("P2E2 Baseline Data Collection")
+    # print("=" * 60)
+    # print()
+    #
+    # # --- Baseline 1 (AllDC) ---
+    # print("Starting Baseline 1 (AllDC - Delete All Dependent Cells)...")
+    # setup_database_copies(DATASETS_TO_RUN)
+    # collect_baseline_1_data_for_all_dbs()
+    # cleanup_database_copies(DATASETS_TO_RUN)
+    # print("Finished Baseline 1.\n")
+    #
+    # # --- Baseline 2 (MinRet) ---
+    # print("=" * 60)
+    # print("Starting Baseline 2 (MinRet - Delete One Cell Per Path)...")
+    # setup_database_copies(DATASETS_TO_RUN)
+    # collect_baseline_2_data_for_all_dbs()
+    # cleanup_database_copies(DATASETS_TO_RUN)
+    # print("Finished Baseline 2.\n")
+    #
     # --- Baseline 3 (ILP) ---
+    # print("=" * 60)
+    # print("Starting Baseline 3 (ILP - Java Style)...")
+    # setup_database_copies()
+    # collect_baseline_deletion_data_3()
+    # cleanup_database_copies()
+    # print("Finished Baseline 3.\n")
+
+    # --- Exponential Deletion (Our Method) ---
+    # print("=" * 60)
+    # print("Starting Exponential Deletion (String-Based)...")
+    # setup_database_copies()
+    # collect_exponential_deletion_data()
+    # cleanup_database_copies(DATASETS_TO_RUN)
+    # print("Finished Exponential Deletion.\n")
+
+    # --- Greedy Gumbel (Our Method) ---
     print("=" * 60)
-    print("Starting Baseline 3 (ILP - Java Style)...")
+    print("Starting Greedy Gumbel (String-Based)...")
     setup_database_copies()
-    collect_baseline_deletion_data_3()
+    collect_greedy_gumbel_data()
     cleanup_database_copies()
-    print("Finished Baseline 3.\n")
+    print("Finished Greedy Gumbel.\n")
 
     print("=" * 60)
     print("Data collection completed!")
     print("=" * 60)
 
+def collect_greedy_gumbel_data():
+    """
+    Collect data for the string-based greedy gumbel algorithm.
+    """
+    data_file_name = "greedy_gumbel_data_v2.csv"
+    datasets = ["airport", "hospital", "ncvoter", "tax", "adult"]
+    attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "marital_status", "education"]
+
+    with open(data_file_name, mode='w', newline='') as csv_file: pass
+
+    for dataset, attr in zip(datasets, attributes):
+        print(f"Processing Greedy Gumbel for dataset: {dataset}, attribute: {attr}")
+        with open(data_file_name, mode='a', newline='') as csv_file:
+            csv_file.write(f"-----{dataset}-----\n")
+            header = "target_attribute,total_time,init_time,model_time,del_time,leakage,utility,mask_size,num_paths,memory_overhead_bytes,num_instantiated_cells\n"
+            csv_file.write(header)
+
+        for i in range(100):
+            try:
+                chosen_row = baseline_deletion_2.get_random_key(dataset)
+                if chosen_row is None: continue
+
+                results = greedy_gumbel.gumbel_deletion_main(dataset=dataset, key=chosen_row, target_cell=attr)
+                
+                if results:
+                    total_time = results['init_time'] + results['model_time'] + results['del_time']
+                    with open(data_file_name, mode='a', newline='') as csv_file:
+                        csv_row = (
+                            f"{attr},{total_time},{results['init_time']},{results['model_time']},"
+                            f"{results['del_time']},{results['leakage']},{results['utility']},"
+                            f"{results['mask_size']},{results['num_paths']},{results['memory_overhead_bytes']},{results['num_instantiated_cells']}\n"
+                        )
+                        csv_file.write(csv_row)
+                
+                if (i + 1) % 10 == 0:
+                    print(f"  Completed {i + 1}/100 iterations for {dataset}")
+
+            except Exception as e:
+                print(f"Error in gumbel experiment, dataset {dataset}, iteration {i+1}: {e}")
+                continue
+        
+        print(f"Completed greedy gumbel for {dataset}\n")
 
 if __name__ == "__main__":
     main()

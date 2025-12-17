@@ -2,24 +2,25 @@ import csv
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
-from matplotlib.backends.backend_pdf import PdfPages
+import os
 
 def parse_csv_for_bar_plots(file_path):
-    """
-    Parse CSV files, extracting component times and memory for bar plots.
-    This version correctly looks for 'init_time', 'model_time', 'del_time'.
-    """
+    """Robust parser for all baseline and new algorithm CSV formats."""
     data = {}
-    current_dataset = None
-    header_map = {}
-
+    if not os.path.exists(file_path):
+        print(f"Warning: File not found, skipping: {file_path}")
+        return data
+        
     with open(file_path, 'r') as f:
         reader = csv.reader(f)
+        current_dataset = None
+        header_map = {}
         for row in reader:
             if not row: continue
             if row[0].startswith('-----'):
-                current_dataset = row[0].strip('-')
-                data[current_dataset] = []
+                current_dataset = row[0].strip('-').lower()
+                if current_dataset not in data:
+                    data[current_dataset] = []
                 header_map = {}
                 continue
             if not current_dataset: continue
@@ -27,21 +28,18 @@ def parse_csv_for_bar_plots(file_path):
                 header = [h.strip() for h in row]
                 header_map = {name: idx for idx, name in enumerate(header)}
                 continue
-
+            
             try:
-                # Use the correct headers from v7 files
-                init_time = float(row[header_map['init_time']]) if 'init_time' in header_map else 0
-                model_time = float(row[header_map['model_time']]) if 'model_time' in header_map else 0
-                del_time = float(row[header_map['del_time']]) if 'del_time' in header_map else 0
-                memory = float(row[header_map['memory_bytes']]) if 'memory_bytes' in header_map else 0
-                total_time = float(row[header_map['total_time']]) if 'total_time' in header_map else (init_time + model_time + del_time) # Fallback to sum if total_time not explicit
-
+                init_time = float(row[header_map.get('init_time', -1)]) if 'init_time' in header_map and header_map.get('init_time', -1) != -1 and header_map['init_time'] < len(row) else 0.0
+                model_time = float(row[header_map.get('model_time', -1)]) if 'model_time' in header_map and header_map.get('model_time', -1) != -1 and header_map['model_time'] < len(row) else 0.0
+                del_time = float(row[header_map.get('del_time', -1)]) if 'del_time' in header_map and header_map.get('del_time', -1) != -1 and header_map['del_time'] < len(row) else 0.0
+                
+                mem_key = next((k for k in ['memory_overhead_bytes', 'memory_bytes'] if k in header_map), None)
+                memory = float(row[header_map[mem_key]]) if mem_key and header_map[mem_key] < len(row) else 0.0
+                
                 data[current_dataset].append({
-                    'init_time': init_time,
-                    'model_time': model_time,
-                    'del_time': del_time,
-                    'memory': memory,
-                    'total_time': total_time
+                    'init_time': init_time, 'model_time': model_time,
+                    'del_time': del_time, 'memory': memory,
                 })
             except (ValueError, IndexError, KeyError) as e:
                 print(f"Skipping row in {file_path} due to error: {e}. Row: {row}")
@@ -56,51 +54,50 @@ def calculate_sum_metrics(dataset_data):
         'model_time_sum': sum(d['model_time'] for d in dataset_data),
         'del_time_sum': sum(d['del_time'] for d in dataset_data),
         'memory_sum': sum(d['memory'] for d in dataset_data),
-        'total_time_sum': sum(d['total_time'] for d in dataset_data)
     }
 
-def create_combined_bar_plot(all_metrics, datasets):
-    """Create a single figure with a 1x4 grid of stacked bar plots."""
-    fig, axes = plt.subplots(1, 4, figsize=(24, 7))
+def create_combined_bar_plot(all_metrics, datasets, baselines):
+    """Create a single figure with a 1x4 grid of vertical stacked bar plots."""
+    fig, axes = plt.subplots(1, len(datasets), figsize=(24, 8), squeeze=False) # 1 row for horizontal layout
     axes = axes.flatten()
     fig.suptitle('Performance Comparison Across Datasets', fontsize=18, y=1.02)
+    
+    colors = {'Init Time': '#009E73', 'Model Time': '#56B4E9', 'Delete Time': '#800000', 'Memory': '#D55E00'} # High-contrast palette
 
-    for i, dataset_name in enumerate(datasets):
+    for i, dataset in enumerate(datasets):
         ax1 = axes[i]
-        metrics_data = {baseline: all_metrics[baseline].get(dataset_name, {}) for baseline in all_metrics}
-
-        labels = list(metrics_data.keys())
-        init_times = [m.get('init_time_sum', 0) for m in metrics_data.values()]
-        model_times = [m.get('model_time_sum', 0) for m in metrics_data.values()]
-        del_times = [m.get('del_time_sum', 0) for m in metrics_data.values()]
-        memory_values = [m.get('memory_sum', 0) for m in metrics_data.values()]
-        total_times_csv = [m.get('total_time_sum', 0) for m in metrics_data.values()]
+        dataset_data = {b: all_metrics.get(b, {}).get(dataset, {}) for b in baselines}
+        
+        labels = [b.replace('_', ' ').title() for b in baselines]
+        init_times = np.array([dataset_data[b].get('init_time_sum', 0) for b in baselines])
+        model_times = np.array([dataset_data[b].get('model_time_sum', 0) for b in baselines])
+        del_times = np.array([dataset_data[b].get('del_time_sum', 0) for b in baselines])
+        memory_values_kb = np.array([dataset_data[b].get('memory_sum', 0) / 1024 for b in baselines])
 
         x = np.arange(len(labels))
         width = 0.35
+        epsilon = 1e-6
 
-        bottom_init_model = np.array(init_times) + np.array(model_times)
-        bottom_all_components = bottom_init_model + np.array(del_times)
-        
-        overhead_times = np.maximum(0, np.array(total_times_csv) - bottom_all_components)
-        
-        # --- Time Bars (Left Y-axis) ---
-        ax1.bar(x - width/2, init_times, width, label='Init Time', color='#2E86AB')
-        ax1.bar(x - width/2, model_times, width, bottom=init_times, label='Model Time', color='#F18F01')
-        ax1.bar(x - width/2, del_times, width, bottom=bottom_init_model, label='Delete Time', color='#A23B72')
-        ax1.bar(x - width/2, overhead_times, width, bottom=bottom_all_components, label='Other Overhead', color='#CCCCCC')
+        # --- Time Bars (Left Y-axis, Stacked) ---
+        ax1.bar(x - width/2, init_times + epsilon, width, label='Init Time', color=colors['Init Time'])
+        ax1.bar(x - width/2, model_times + epsilon, width, bottom=init_times + epsilon, label='Model Time', color=colors['Model Time'])
+        ax1.bar(x - width/2, del_times + epsilon, width, bottom=init_times + model_times + epsilon, label='Delete Time', color=colors['Delete Time'])
 
-        ax1.set_ylabel('Total Time (s)', fontsize=12)
+        ax1.set_ylabel('Average Time (s) - Log Scale', fontsize=12, fontweight='bold')
+        ax1.set_yscale('log')
         ax1.tick_params(axis='y', labelsize=10)
         ax1.set_xticks(x)
         ax1.set_xticklabels(labels, fontsize=10, rotation=45, ha='right')
-        ax1.set_title(dataset_name.strip().title(), fontsize=14)
+        ax1.set_title(dataset.title(), fontsize=14, fontweight='bold')
 
+        # --- Memory Bars (Right Y-axis) ---
         ax2 = ax1.twinx()
-        ax2.bar(x + width/2, memory_values, width, label='Memory', color='#34A853')
-        ax2.set_ylabel('Total Memory (Bytes)', fontsize=12)
+        ax2.bar(x + width/2, memory_values_kb + epsilon, width, label='Memory', color=colors['Memory'])
+        ax2.set_ylabel('Average Memory (KB) - Log Scale', fontsize=12, fontweight='bold')
+        ax2.set_yscale('log')
         ax2.tick_params(axis='y', labelsize=10)
-        ax1.grid(axis='y', linestyle='--', alpha=0.7)
+        
+        ax1.grid(axis='y', linestyle='--', alpha=0.7, which="both")
 
     handles, labels = [], []
     for ax in fig.axes:
@@ -114,37 +111,25 @@ def create_combined_bar_plot(all_metrics, datasets):
 
 def main():
     file_paths = {
-        'Baseline 1': 'baseline_deletion_1_data_v9.csv',
-        'Baseline 2': 'baseline_deletion_2_data_v9.csv',
-        'Baseline 3': 'baseline_deletion_3_data_v9.csv'
+        'Baseline 3': 'baseline_deletion_3_data_v10.csv',
+        'Exponential Deletion': 'exponential_deletion_data.csv',
+        'Greedy Gumbel': 'greedy_gumbel_data.csv',
     }
-
-    all_data = {}
-    for baseline_name, file_path in file_paths.items():
-        try:
-            data = parse_csv_for_bar_plots(file_path)
-            all_data[baseline_name] = data
-        except FileNotFoundError:
-            print(f"Error: File not found at {file_path}.")
-            continue
+    datasets = ['airport', 'hospital', 'ncvoter', 'tax']
     
-    if not all_data:
-        print("No data to plot.")
+    all_data = {name: parse_csv_for_bar_plots(path) for name, path in file_paths.items()}
+    
+    if not any(all_data.values()):
+        print("No data found to plot. Check CSV file paths and content.")
         return
 
-    common_datasets = sorted(list(set.intersection(*[set(data.keys()) for data in all_data.values()])))
-    
-    all_metrics = {baseline: {} for baseline in file_paths.keys()}
-    for dataset_name in common_datasets:
-        for baseline_name in file_paths.keys():
-            if dataset_name in all_data[baseline_name]:
-                metrics = calculate_sum_metrics(all_data[baseline_name][dataset_name])
-                if metrics:
-                    all_metrics[baseline_name][dataset_name] = metrics
+    all_metrics = {baseline: {ds: calculate_sum_metrics(all_data[baseline].get(ds, [])) 
+                              for ds in datasets} 
+                   for baseline in file_paths.keys()}
 
     if all_metrics:
-        fig = create_combined_bar_plot(all_metrics, common_datasets)
-        output_file = 'bar_plot_combined_comparison.pdf'
+        fig = create_combined_bar_plot(all_metrics, datasets, list(file_paths.keys()))
+        output_file = 'bar_plot_combined_comparison_log.pdf'
         fig.savefig(output_file, format='pdf', bbox_inches='tight')
         print(f"Saved combined bar plot: {output_file}")
         plt.close(fig)
