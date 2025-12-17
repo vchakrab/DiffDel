@@ -12,7 +12,7 @@ from mysql.connector import Error
 
 # The 'config' module must be present in your environment
 # and contain the get_database_config method.
-# import config
+import config
 
 
 # =================================================================
@@ -126,6 +126,7 @@ def compute_product_leakage_str(active_paths: List[List[int]], hyperedges: List[
                                 edge_weights: Dict[int, float]) -> float:
     if edge_weights is None: edge_weights = {i: 1.0 for i in range(len(hyperedges))}
     if len(active_paths) == 0: return 0.0
+    print(len(active_paths))
     product = 1.0
     for path in active_paths:
         path_weight = 1.0

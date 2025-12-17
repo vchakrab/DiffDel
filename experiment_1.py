@@ -392,9 +392,9 @@ def collect_exponential_deletion_data():
     """
     Collect data for the string-based exponential deletion algorithm.
     """
-    data_file_name = "exponential_deletion_data_v2.csv"
-    datasets = ["airport", "hospital", "ncvoter", "tax", "adult"]
-    attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "marital_status", "education"]
+    data_file_name = "exponential_deletion_data_v11.csv"
+    datasets = ["airport", "hospital", "ncvoter", "tax"]
+    attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "marital_status"]
     
     with open(data_file_name, mode='w', newline='') as csv_file: pass
 
@@ -452,20 +452,20 @@ def main():
     # cleanup_database_copies(DATASETS_TO_RUN)
     # print("Finished Baseline 2.\n")
     #
-    # --- Baseline 3 (ILP) ---
+    #--- Baseline 3 (ILP) ---
     # print("=" * 60)
     # print("Starting Baseline 3 (ILP - Java Style)...")
     # setup_database_copies()
     # collect_baseline_deletion_data_3()
     # cleanup_database_copies()
     # print("Finished Baseline 3.\n")
-
-    # --- Exponential Deletion (Our Method) ---
+    #
+    # #--- Exponential Deletion (Our Method) ---
     # print("=" * 60)
     # print("Starting Exponential Deletion (String-Based)...")
     # setup_database_copies()
     # collect_exponential_deletion_data()
-    # cleanup_database_copies(DATASETS_TO_RUN)
+    # cleanup_database_copies()
     # print("Finished Exponential Deletion.\n")
 
     # --- Greedy Gumbel (Our Method) ---
@@ -484,9 +484,9 @@ def collect_greedy_gumbel_data():
     """
     Collect data for the string-based greedy gumbel algorithm.
     """
-    data_file_name = "greedy_gumbel_data_v2.csv"
-    datasets = ["airport", "hospital", "ncvoter", "tax", "adult"]
-    attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "marital_status", "education"]
+    data_file_name = "greedy_gumbel_data_v11.csv"
+    datasets = ["airport", "hospital", "ncvoter", "tax"]
+    attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "marital_status"]
 
     with open(data_file_name, mode='w', newline='') as csv_file: pass
 
