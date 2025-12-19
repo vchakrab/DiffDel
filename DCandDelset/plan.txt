@@ -1,0 +1,15 @@
+For now, this is the plan:
+
+# Airport: Use Pyro (has clear AFDs)
+airport_weights = PyroAFDExtractor(airport_data).extract_all_afds()
+
+# Hospital: Use Pyro, validate with HoloClean
+hospital_pyro = PyroAFDExtractor(hospital_data).extract_all_afds()
+hospital_holo = HoloCleanWeightExtractor(hospital_data).extract_all_weights()
+# Compare and report correlation
+
+# NCVoter: Use FastDD (has clear DDs for similar names/addresses)
+ncvoter_weights = FastDDExtractor(ncvoter_data).extract_all_dds()
+
+# Tax: Manual (domain-specific, hard to discover automatically)
+tax_weights = manual_specification_from_domain_experts()
