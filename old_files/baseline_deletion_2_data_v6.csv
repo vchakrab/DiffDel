@@ -1,0 +1,8 @@
+bu-----airport-----
+attribute,total_time,num_explanations,cells_deleted,max_depth,memory_bytes,init_time,model_time,del_time
+-----hospital-----
+attribute,total_time,num_explanations,cells_deleted,max_depth,memory_bytes,init_time,model_time,del_time
+-----ncvoter-----
+attribute,total_time,num_explanations,cells_deleted,max_depth,memory_bytes,init_time,model_time,del_time
+-----tax-----
+attribute,total_time,num_explanations,cells_deleted,max_depth,memory_bytes,init_time,model_time,del_time

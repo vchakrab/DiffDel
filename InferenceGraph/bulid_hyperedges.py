@@ -19,7 +19,7 @@ from importlib import import_module
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from cell import Attribute, Cell, Hyperedge
+from old_files.cell import Attribute, Cell, Hyperedge
 from config import get_dataset_info, list_available_datasets
 from fetch_row import RTFDatabaseManager
 

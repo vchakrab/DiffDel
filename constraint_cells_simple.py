@@ -14,7 +14,7 @@ project_root = os.path.dirname(os.path.abspath(__file__))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-from cell import Cell, Attribute
+from old_files.cell import Cell, Attribute
 from rtf_core.config import get_dataset_info
 from importlib import import_module
 

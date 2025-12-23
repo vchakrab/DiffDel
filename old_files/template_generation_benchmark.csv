@@ -1,0 +1,3 @@
+dataset,attribute,iteration,generation_time,num_paths,inference_zone_size,num_masks
+tax,marital_status,1,72.8303701877594,98217,10,1024
+tax,marital_status,2,70.97635197639465,98217,10,1024

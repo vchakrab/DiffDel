@@ -12,7 +12,7 @@ from typing import Any, Dict, Set, List, Tuple
 from collections import deque
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from cell import Attribute, Cell, Hyperedge
+from old_files.cell import Attribute, Cell, Hyperedge
 from InferenceGraph.bulid_hyperedges import build_hyperedge_map, fetch_row
 
 

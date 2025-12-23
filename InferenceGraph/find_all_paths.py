@@ -11,7 +11,7 @@ from typing import List
 # Add parent directories to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from cell import Cell
+from old_files.cell import Cell
 from fetch_row import RTFDatabaseManager
 from InferenceGraph.bulid_hyperedges import HyperedgeBuilder
 from InferenceGraph.build_hypergraph import build_hypergraph_tree, GraphNode

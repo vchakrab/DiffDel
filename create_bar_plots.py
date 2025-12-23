@@ -129,7 +129,7 @@ def main():
 
     if all_metrics:
         fig = create_combined_bar_plot(all_metrics, datasets, list(file_paths.keys()))
-        output_file = 'bar_plot_combined_comparison_log.pdf'
+        output_file = 'old_files/bar_plot_combined_comparison_log.pdf'
         fig.savefig(output_file, format='pdf', bbox_inches='tight')
         print(f"Saved combined bar plot: {output_file}")
         plt.close(fig)

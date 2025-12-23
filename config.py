@@ -51,6 +51,17 @@ DB_CONFIG = {
 
 # Complete dataset configurations
 DATASETS = {
+    'OnlineRetail': {
+        'name': 'OnlineRetail',
+        'database_name': 'OnlineRetail',
+        'primary_table': 'OnlineRetail_data',
+        'key_column': 'id',  # unique identifier per transaction
+        'tables': ['OnlineRetail_data'],
+        'domain_file': 'onlineretail_domain_map.json',
+        'dc_file': 'topOnlineretailDCs_parsed.py',
+        'dc_raw_file': 'topOnlineRetailDCs.txt',
+        'dc_config_module': None
+    },
     'adult': {
         'name': 'adult',
         'database_name': 'adult',

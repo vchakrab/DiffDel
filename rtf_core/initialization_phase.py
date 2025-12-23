@@ -10,7 +10,7 @@ project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-from cell import Cell, Attribute
+from old_files.cell import Cell, Attribute
 from fetch_row import RTFDatabaseManager
 from IDcomputation.IGC_c_get_global_domain_mysql import AttributeDomainComputation
 from IDcomputation.IGC_e_get_bound_new import DomianInferFromDC #name mistake

@@ -136,7 +136,9 @@ def gumbel_deletion_main(dataset: str, key: int, target_cell: str):
     memory_overhead = measure_memory_overhead_gumbel(hyperedges, paths, inference_zone)
     model_time = time.time() - model_start
 
-    leakage = calculate_leakage_str(hyperedges, paths, final_mask, target_cell, initial_known, edge_weights)
+    # For a fair leakage calculation, assume a stronger attacker.
+    initial_known_for_leakage = set()
+    leakage = calculate_leakage_str(hyperedges, paths, final_mask, target_cell, initial_known_for_leakage, edge_weights)
     utility = -alpha * leakage - beta * mask_size
     
     del_start = time.time()

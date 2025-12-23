@@ -4,7 +4,7 @@ from collections import deque
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from cell import Attribute, Cell
+from old_files.cell import Attribute, Cell
 from fetch_row import RTFDatabaseManager
 from InferenceGraph.bulid_hyperedges import HyperedgeBuilder
 

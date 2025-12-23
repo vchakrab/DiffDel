@@ -4,10 +4,9 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from domain_operations import NumericalDomain
 from bounds_interface import SimpleBoundsComputer
 from InferenceGraph.bulid_hyperedges import build_hyperedge_map, fetch_row
-from cell import Attribute, Cell, Hyperedge
+from old_files.cell import Cell
 from typing import List, Optional
 
 class SimpleBranchBuilder:
@@ -153,7 +152,7 @@ class SimpleBranchBuilder:
 
 # Test this simple version
 if __name__ == "__main__":
-    from cell import Attribute, Cell
+    from old_files.cell import Attribute, Cell
     
     # Test with age attribute
     attr = Attribute('adult_data', 'age')

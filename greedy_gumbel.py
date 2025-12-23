@@ -106,7 +106,7 @@ def filter_active_paths_str(hyperedges: List[Tuple[str, ...]], paths: List[List[
     active_paths = []
     for path in paths:
         is_blocked = False
-        known_so_far = initial_known - mask
+        known_so_far = set()
         for edge_idx in path:
             edge = hyperedges[edge_idx]
             unknown_in_edge = [c for c in edge if c not in known_so_far]

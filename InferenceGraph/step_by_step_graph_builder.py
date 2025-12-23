@@ -8,7 +8,6 @@ Compact script: Complete inference process for one target cell
 8: Intersect domains
 """
 
-import sys# InferenceGraph/full_rtf_optimizer.py
 """
 Full RTF Optimizer implementing the three-component architecture:
 1. build_graph() - Dynamic incremental graph construction 
@@ -25,8 +24,7 @@ from typing import Set, List, Dict, Tuple
 # Add parent directory for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from cell import Cell, Attribute
-from InferenceGraph.bulid_hyperedges import build_hyperedge_map, fetch_row
+from old_files.cell import Cell
 from DCandDelset.dc_configs.topAdultDCs_parsed import denial_constraints
 from IDcomputation.IGC_c_get_global_domain_mysql import AttributeDomainComputation
 
@@ -402,7 +400,7 @@ from typing import Set, List
 # Add parent directory for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from cell import Cell, Attribute
+from old_files.cell import Cell, Attribute
 from InferenceGraph.bulid_hyperedges import build_hyperedge_map, fetch_row
 from DCandDelset.dc_configs.topAdultDCs_parsed import denial_constraints
 from IDcomputation.IGC_c_get_global_domain_mysql import AttributeDomainComputation

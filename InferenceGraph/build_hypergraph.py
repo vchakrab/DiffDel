@@ -2,7 +2,7 @@ from typing import Any, List, Tuple, Dict, Set
 
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # Add parent directory to path for import resolution
-from cell import Attribute, Cell, Hyperedge
+from old_files.cell import Attribute, Cell, Hyperedge
 from InferenceGraph.bulid_hyperedges import HyperedgeBuilder
 from fetch_row import RTFDatabaseManager
 

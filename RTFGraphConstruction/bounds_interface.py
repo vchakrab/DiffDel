@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from domain_operations import NumericalDomain
 from IDcomputation.IGC_e_get_bound_new import DomianInferFromDC
-from cell import Cell
+from old_files.cell import Cell
 from typing import Optional, List, Tuple
 
 class SimpleBoundsComputer:
@@ -91,7 +91,7 @@ class SimpleBoundsComputer:
 
 # Test this module
 if __name__ == "__main__":
-    from cell import Attribute, Cell
+    from old_files.cell import Attribute, Cell
     
     # Test with a real cell
     bounds_computer = SimpleBoundsComputer('adult')

@@ -12,7 +12,7 @@ from typing import List, Tuple, Set
 from dataclasses import dataclass
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from cell import Attribute, Cell
+from old_files.cell import Attribute, Cell
 #error in the code, I can fix it, I want to ask if this is just an error on my side or for everyone that needs to be changed
 from InferenceGraph.bulid_hyperedges import build_hyperedge_map, fetch_row #names have changed in these files as build_hyperedge map is a part of a class
 #fetch row is also not there, it is an independent file and it is in RTFDatabaseManager class

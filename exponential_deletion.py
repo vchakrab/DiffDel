@@ -28,582 +28,14 @@ except ImportError:
 
 # The following imports are assumed to be available in the execution environment
 try:
-    from cell import Attribute, Cell, Hyperedge
+    from old_files.cell import Attribute, Cell, Hyperedge
     from fetch_row import RTFDatabaseManager
     from InferenceGraph.bulid_hyperedges import HyperedgeBuilder
     from InferenceGraph.build_hypergraph import build_hypergraph_tree, GraphNode
 except ImportError as e:
+    pass
     # Define placeholder classes/functions for running/inspection purposes
-    class Attribute:
-        def __init__(self, table, col): self.table = table; self.col = col
 
-        def __repr__(self): return f"Attr({self.col})"
-
-
-    class Cell:
-        def __init__(self, attribute, key,
-                     val): self.attribute = attribute; self.key = key; self.val = val
-
-        def __repr__(self): return f"Cell({self.attribute.col})"
-
-        def __hash__(self): return hash((self.attribute.col, self.key, self.val))
-
-        def __eq__(self, other): return isinstance(other, Cell) and (
-            self.attribute.col, self.key, self.val) == (other.attribute.col, other.key, other.val)
-
-
-    class Hyperedge:
-        def __init__(self, cells): self.cells = cells
-
-        def __iter__(self): return iter(self.cells)
-
-        def __repr__(self): return f"HE({[c.attribute.col for c in self.cells]})"
-
-        @property
-        def cell_names(self): return tuple(c.attribute.col for c in self.cells)
-
-
-    class RTFDatabaseManager:
-        def __init__(self, dataset): self.dataset = dataset
-
-        def __enter__(self): return self
-
-        def __exit__(self, exc_type, exc_val, exc_tb): pass
-
-        def fetch_row(self, key):
-            if key == 2 and self.dataset == 'adult':
-                return {'age': 39, 'workclass': 'State-gov', 'fnlwgt': 77516,
-                        'education': 'Bachelors', 'education-num': 13}
-            return {}
-
-
-    class HyperedgeBuilder:
-        def __init__(self, dataset): self.primary_table = dataset
-
-        def build_hyperedge_map(self, row, key, target_attr): return {}
-
-
-    class GraphNode:
-        def __init__(self, cell): self.cell = cell; self.branches = []
-
-        def __repr__(self): return f"Node({self.cell})"
-
-
-    def build_hypergraph_tree(row, key, target_attr, hyperedge_map):
-        return GraphNode(Cell(Attribute('adult', target_attr), key, row.get(target_attr, '')))
-
-
-# ==============================================================================
-# Path Representation and Utilities (UNCHANGED)
-# ==============================================================================
-
-class InferencePath:
-    # ... (InferencePath class remains unchanged)
-    """Represents a path in the inference graph as a sequence of hyperedges."""
-
-    def __init__(self, hyperedges: List[Hyperedge], cells: List[Cell]):
-        self.hyperedges = hyperedges
-        self.cells = cells
-        self._weight = None
-        self._cell_set = frozenset(cells)
-
-    def compute_weight(self, hyperedge_weights: Dict[FrozenSet[Cell], float]) -> float:
-        """Compute path weight as product of hyperedge weights."""
-        if self._weight is None:
-            self._weight = 1.0
-            for he in self.hyperedges:
-                he_key = frozenset(he.cells if hasattr(he, 'cells') else he)
-                weight = hyperedge_weights.get(he_key, 1.0)
-                self._weight *= weight
-        return self._weight
-
-    def is_blocked_by(self, mask: Set[Cell]) -> bool:
-        """Check if this path is blocked by the deletion mask."""
-        return bool(self._cell_set & mask)
-
-    def __repr__(self):
-        try:
-            weight_repr = f"{self._weight:.4f}" if self._weight is not None else "uncomputed"
-        except Exception:
-            weight_repr = "error"
-
-        cell_seq = " -> ".join([f"{c.attribute.col}" for c in self.cells])
-        return f"Path({cell_seq}, weight={weight_repr})"
-
-
-# ==============================================================================
-# Path Extraction (Original file logic, using GraphNode) (UNCHANGED)
-# ==============================================================================
-# ... (extract_all_paths and find_inference_paths remain unchanged)
-
-
-# ==============================================================================
-# Hitting Set Enumeration (UNCHANGED - Contains the generic powerset utility)
-# ==============================================================================
-# ... (powerset, enumerate_hitting_sets, enumerate_minimal_hitting_sets remain unchanged)
-
-
-# ==============================================================================
-# Utility and Leakage Computation (CELL-OBJECT BASED - UNCHANGED)
-# ==============================================================================
-
-def filter_active_paths(
-        # ... (filter_active_paths remains unchanged)
-        mask: Set[Cell],
-        paths: List[InferencePath]
-) -> List[InferencePath]:
-    """
-    Filter the list of high-strength paths to return only those NOT blocked by the mask M.
-    """
-    active_paths = [p for p in paths if not p.is_blocked_by(mask)]
-    return active_paths
-
-
-def compute_max_leakage(
-        # ... (compute_max_leakage remains unchanged)
-        active_paths: List[InferencePath],
-        hyperedge_weights: Dict[FrozenSet[Cell], float]
-) -> float:
-    """
-    Compute the inferential leakage L(M, c_t) as the maximum weight among active paths.
-    """
-    if not active_paths:
-        return 0.0
-
-    max_weight = max(p.compute_weight(hyperedge_weights) for p in active_paths)
-    return max_weight
-
-
-def compute_leakage(
-        # ... (compute_leakage remains unchanged)
-        mask: Set[Cell],
-        paths: List[InferencePath],
-        hyperedge_weights: Dict[FrozenSet[Cell], float]
-) -> float:
-    """
-    Compute inferential leakage L(M, c_t) by chaining the two new methods.
-    """
-    active_paths = filter_active_paths(mask, paths)
-    leakage = compute_max_leakage(active_paths, hyperedge_weights)
-    return leakage
-
-
-def get_path_inference_zone(paths: List[InferencePath], target_cell: Cell) -> Set[Cell]:
-    # ... (get_path_inference_zone remains unchanged)
-    """
-    Calculates the union of all unique cells contained within the given list of
-    inference paths, excluding the target cell itself.
-    """
-    all_cells_in_paths = set(
-        cell
-        for path in paths
-        for cell in path.cells
-    )
-
-    path_zone = all_cells_in_paths - {target_cell}
-
-    return path_zone
-
-
-def compute_utility(
-        # ... (compute_utility remains unchanged)
-        mask: Set[Cell],
-        target_cell: Cell,
-        paths: List[InferencePath],
-        hyperedge_weights: Dict[FrozenSet[Cell], float],
-        alpha: float,
-        beta: float
-) -> float:
-    """
-    Compute mask utility u(M, c_t).
-    """
-    leakage = compute_leakage(mask, paths, hyperedge_weights)
-    utility = -alpha * leakage - beta * len(mask)
-    return utility
-
-
-# ==============================================================================
-# Exponential Mechanism (CELL-OBJECT BASED - UNCHANGED)
-# ==============================================================================
-
-def exponential_mechanism_sample(
-        # ... (exponential_mechanism_sample remains unchanged)
-        candidates: List[Set[Cell]],
-        target_cell: Cell,
-        paths: List[InferencePath],
-        hyperedge_weights: Dict[FrozenSet[Cell], float],
-        alpha: float,
-        beta: float,
-        epsilon: float
-) -> Set[Cell]:
-    """
-    Sample a mask using the exponential mechanism.
-    """
-    if not candidates:
-        return set()
-
-    # Compute utilities for all candidates
-    utilities = []
-    for mask in candidates:
-        u = compute_utility(mask, target_cell, paths, hyperedge_weights, alpha, beta)
-        utilities.append(u)
-
-    utilities = np.array(utilities)
-
-    # Compute probabilities using exponential mechanism
-    scores = epsilon * utilities / (2 * alpha)
-
-    max_score = np.max(scores)
-    exp_scores = np.exp(scores - max_score)
-    probabilities = exp_scores / np.sum(exp_scores)
-
-    # Sample according to probabilities
-    selected_idx = np.random.choice(len(candidates), p = probabilities)
-    return candidates[selected_idx]
-
-
-# ==============================================================================
-# Gumbel Trick Utilities (UNCHANGED)
-# ==============================================================================
-# ... (sample_gumbel and compute_marginal_gain remain unchanged)
-
-
-# ==============================================================================
-# Main Algorithm (UNCHANGED)
-# ==============================================================================
-
-class DifferentialDeletion:
-    # ... (DifferentialDeletion class and its methods remain unchanged)
-
-    def __init__(
-            self,
-            dataset: str,
-            alpha: float = 1.0,
-            beta: float = 0.5,
-            epsilon: float = 1.0,
-            tau: float = 0.1,
-            hyperedge_weight_fn = None
-    ):
-        """
-        Initialize the differential deletion mechanism.
-        """
-        self.dataset = dataset
-        self.alpha = alpha
-        self.beta = beta
-        self.epsilon = epsilon
-        self.tau = tau
-        self.hyperedge_weight_fn = hyperedge_weight_fn or self._default_weight_fn
-
-        self.builder = HyperedgeBuilder(dataset = dataset)
-
-    def _default_weight_fn(self, hyperedge: Hyperedge) -> float:
-        """
-        Default hyperedge weight function (uniform 1.0).
-        """
-        return 1.0
-
-    def _compute_hyperedge_weights(
-            self,
-            hyperedge_map: Dict[Cell, List[Hyperedge]]
-    ) -> Dict[FrozenSet[Cell], float]:
-        """Compute weights for all hyperedges."""
-        weights = {}
-
-        all_hyperedges = set()
-        for hyperedges in hyperedge_map.values():
-            for he in hyperedges:
-                he_cells = he.cells if hasattr(he, 'cells') else he
-                all_hyperedges.add(frozenset(he_cells))
-
-        for he_frozen in all_hyperedges:
-            he = Hyperedge(list(he_frozen))
-            weights[he_frozen] = self.hyperedge_weight_fn(he)
-
-        return weights
-
-    def exponential_deletion(
-            self,
-            row: Dict[str, Any],
-            key: Any,
-            target_attr: str
-    ) -> Set[Cell]:
-        """
-        Execute the exponential deletion mechanism (Algorithm 1).
-        """
-        primary_table = self.builder.primary_table
-        inference_zone = {
-            Cell(Attribute(primary_table, attr), key, val)
-            for attr, val in row.items()
-        }
-
-        target_cell = Cell(
-            Attribute(primary_table, target_attr),
-            key,
-            row.get(target_attr)
-        )
-
-        known_attrs = {
-            attr for attr, val in row.items()
-            if val is not None and attr != target_attr
-        }
-
-        hyperedge_map = self.builder.build_hyperedge_map(row, key, target_attr)
-        root = build_hypergraph_tree(row, key, target_attr, hyperedge_map)
-
-        hyperedge_weights = self._compute_hyperedge_weights(hyperedge_map)
-
-        high_strength_paths = find_inference_paths(
-            known_attrs,
-            target_attr,
-            root,
-            hyperedge_weights,
-            self.tau
-        )
-
-        print(f"Found {len(high_strength_paths)} high-strength paths (τ={self.tau})")
-
-        candidate_cells = inference_zone - {target_cell}
-
-        candidates = enumerate_minimal_hitting_sets(
-            high_strength_paths,
-            candidate_cells
-        )
-
-        if set() not in candidates:
-            candidates.insert(0, set())
-
-        print(f"Generated {len(candidates)} candidate hitting sets")
-
-        selected_mask = exponential_mechanism_sample(
-            candidates,
-            target_cell,
-            high_strength_paths,
-            hyperedge_weights,
-            self.alpha,
-            self.beta,
-            self.epsilon
-        )
-
-        return selected_mask
-
-    def gumbel_deletion(
-            self,
-            row: Dict[str, Any],
-            key: Any,
-            target_attr: str
-    ) -> Set[Cell]:
-        """
-        Execute the Gumbel deletion mechanism (Algorithm 2).
-        """
-        primary_table = self.builder.primary_table
-        inference_zone = {
-            Cell(Attribute(primary_table, attr), key, val)
-            for attr, val in row.items()
-        }
-
-        target_cell = Cell(
-            Attribute(primary_table, target_attr),
-            key,
-            row.get(target_attr)
-        )
-
-        known_attrs = {
-            attr for attr, val in row.items()
-            if val is not None and attr != target_attr
-        }
-
-        hyperedge_map = self.builder.build_hyperedge_map(row, key, target_attr)
-        root = build_hypergraph_tree(row, key, target_attr, hyperedge_map)
-
-        hyperedge_weights = self._compute_hyperedge_weights(hyperedge_map)
-
-        high_strength_paths = find_inference_paths(
-            known_attrs,
-            target_attr,
-            root,
-            hyperedge_weights,
-            self.tau
-        )
-
-        print(f"Found {len(high_strength_paths)} high-strength paths (τ={self.tau})")
-
-        mask = set()
-
-        candidate_cells = inference_zone - {target_cell}
-
-        iteration = 0
-        while True:
-            active_paths = filter_active_paths(mask, high_strength_paths)
-
-            if not active_paths:
-                print(f"All paths blocked after {iteration} iterations")
-                break
-
-            available_cells = candidate_cells - mask
-
-            if not available_cells:
-                print(f"No more attributes to delete after {iteration} iterations")
-                break
-
-            iteration += 1
-            print(
-                f"\nIteration {iteration}: {len(active_paths)} active paths, {len(available_cells)} available attributes")
-
-            scores = {}
-            marginal_gains = {}
-
-            for cell in available_cells:
-                delta_u = compute_marginal_gain(
-                    cell,
-                    mask,
-                    high_strength_paths,
-                    hyperedge_weights,
-                    self.alpha,
-                    self.beta
-                )
-                marginal_gains[cell] = delta_u
-
-                g_A = sample_gumbel()
-
-                s_A = (self.epsilon / (2 * self.alpha)) * delta_u + g_A
-                scores[cell] = s_A
-
-            best_cell = max(scores.items(), key = lambda x: x[1])[0]
-            best_score = scores[best_cell]
-            best_gain = marginal_gains[best_cell]
-
-            print(
-                f"  Selected: {best_cell.attribute.col} (score={best_score:.4f}, Δu={best_gain:.4f})")
-
-            mask.add(best_cell)
-
-        return mask
-
-
-# ==============================================================================
-# Testing and Validation (UNCHANGED)
-# ==============================================================================
-
-def main():
-    """Test both differential deletion mechanisms."""
-    print("=" * 70)
-    print("Differential Deletion Mechanisms Test")
-    print("=" * 70)
-
-    # Test parameters
-    dataset = 'adult'
-    key = 2
-    target_attr = 'education'
-    np.random.seed(42)
-
-    # Fetch row (using placeholder if imports failed)
-    print(f"\nFetching row {key} from {dataset} dataset...")
-    db = RTFDatabaseManager(dataset)
-    row = db.fetch_row(key)
-
-    print(f"Target: {target_attr} = '{row.get(target_attr, 'N/A')}'")
-    print(f"Row attributes: {list(row.keys())}")
-
-    # Initialize differential deletion
-    dd = DifferentialDeletion(
-        dataset = dataset,
-        alpha = 1.0,
-        beta = 0.5,
-        epsilon = 1.0,
-        tau = 0.1
-    )
-
-    # --- Run Algorithm 1 ---
-    print(f"\n{'=' * 70}")
-    print("Algorithm 1: Exponential Deletion Mechanism")
-    print(f"{'=' * 70}")
-    mask_exponential = dd.exponential_deletion(row, key, target_attr)
-    print(f"\nAlgorithm 1 Results (size: {len(mask_exponential)})")
-
-    # --- Run Algorithm 2 ---
-    print(f"\n{'=' * 70}")
-    print("Algorithm 2: Gumbel Deletion Mechanism")
-    print(f"{'=' * 70}")
-    mask_gumbel = dd.gumbel_deletion(row, key, target_attr)
-    print(f"\nAlgorithm 2 Results (size: {len(mask_gumbel)})")
-
-    print(f"\n{'=' * 70}")
-    print("Test completed successfully!")
-    print(f"{'=' * 70}")
-
-
-#
-# if __name__ == '__main__':
-#
-#     # --- Raw String Function Test for Utility and Sampling ---
-#     print("\n" + "=" * 70)
-#     print("Testing Raw String Functions: Utility and Exponential Sampling")
-#     print("=" * 70)
-#
-#     # Setup for string-based test (mimics a simple hypergraph)
-#     test_hyperedges = [
-#         ('a', 'b', 'c'),  # Edge 0: {a, b} -> c, weight=0.8
-#         ('c', 'd', 'e')  # Edge 1: {c, d} -> e, weight=0.5
-#     ]
-#     test_target = 'c'
-#     test_known = {'a', 'b', 'd', 'e'}
-#     test_weights = {0: 0.8, 1: 0.5}  # edge_idx: weight
-#     test_paths = [[0]]  # Only one path: {a, b} --(0)--> c
-#     test_alpha = 1.0
-#     test_beta = 0.5
-#     test_epsilon = 1.0
-#
-#     # 1. Compute Inference Zone
-#     test_zone = get_path_inference_zone_str(test_paths, test_hyperedges, test_target)
-#     # Expected zone: {'a', 'b'} (cells in path 0 excluding target c)
-#     print(f"Inference Zone: {test_zone}")
-#
-#     # 2. Compute all possible masks
-#     candidates = compute_possible_mask_set_str(test_zone)
-#     print(f"Candidates: {candidates}")  # Expected: [{}, {'a'}, {'b'}, {'a', 'b'}]
-#
-#     # 3. Compute utilities
-#     utilities = []
-#     print("\nUtility Calculation (u(M, c)):")
-#     for mask in candidates:
-#         u = compute_utility_str(
-#             mask, test_target, test_paths, test_hyperedges, test_known,
-#             test_weights, test_alpha, test_beta
-#         )
-#         utilities.append(u)
-#
-#         # Calculate expected leakage for verification
-#         # L(M, c) = 0.0 if blocked, 1 - (1 - 0.8) = 0.8 if active
-#         if 'a' in mask or 'b' in mask:
-#             # Mask {'a'}, {'b'}, or {'a', 'b'} blocks path 0
-#             expected_leakage = 0.0
-#         else:
-#             # Mask {} leaves path 0 active
-#             expected_leakage = 0.8
-#
-#         # Expected Utility: -alpha * L - beta * |M|
-#         expected_utility = -test_alpha * expected_leakage - test_beta * len(mask)
-#
-#         print(
-#             f"  Mask {mask}: L={expected_leakage:.4f}, |M|={len(mask)}, u={u:.4f} (Expected: {expected_utility:.4f})")
-#         assert np.isclose(u,
-#                           expected_utility), f"Mismatch for mask {mask}: Got {u}, Expected {expected_utility}"
-#
-#     # 4. Sample a mask using the Exponential Mechanism
-#     selected_mask = exponential_mechanism_sample_str(
-#         candidates, test_target, test_paths, test_hyperedges, test_known,
-#         test_weights, test_alpha, test_beta, test_epsilon
-#     )
-#
-#     print(f"\nExponential Mechanism Sampled Mask: {selected_mask}")
-#
-#     print("Raw String Function Test successful.")
-#     print("=" * 70)
-#
-#     main()
-
-# -------- STR HyperEdges Based Exponential Deletion ----------
-# _____________________________________________________________
 
 def powerset(iterable):
     """
@@ -668,30 +100,30 @@ def find_inference_paths_str(hyperedges: List[Tuple[str, ...]],
     return all_paths
 
 
-def filter_active_paths_str(hyperedges: List[Tuple[str, ...]],
-                            paths: List[List[int]],
-                            mask: Set[str],
-                            initial_known: Set[str]) -> List[List[int]]:
-    # ... (filter_active_paths_str remains unchanged)
+def filter_active_paths_str(hyperedges, paths, mask, initial_known, target_cell=None):
     active_paths = []
 
+    # Use all attributes known initially for path calculation
+    all_attributes = set(c for he in hyperedges for c in he)
+
     for path in paths:
+        known_so_far = all_attributes - mask
         is_blocked = False
-        known_so_far = initial_known - mask
 
         for edge_idx in path:
-            edge = hyperedges[edge_idx]
-
-            unknown_in_edge = [c for c in edge if c not in known_so_far]
+            edge = set(hyperedges[edge_idx])
+            unknown_in_edge = edge - known_so_far
 
             if len(unknown_in_edge) == 0:
                 continue
             elif len(unknown_in_edge) == 1:
-                inferred_cell = unknown_in_edge[0]
-                known_so_far.add(inferred_cell)
+                known_so_far.update(unknown_in_edge)
             else:
-                is_blocked = True
-                break
+                if target_cell is not None and target_cell in unknown_in_edge:
+                    known_so_far.add(target_cell)
+                else:
+                    is_blocked = True
+                    break
 
         if not is_blocked:
             active_paths.append(path)
@@ -902,19 +334,19 @@ def exponential_deletion_main(dataset: str, key: int, target_cell: str):
     # --- Initialization Phase ---
     init_start = time.time()
     try:
-            # Determine the correct casing for the dataset module name
+        # Determine the correct casing for the dataset module name
         if dataset == 'ncvoter':
             dataset_module_name = 'NCVoter'
         else:
             dataset_module_name = dataset.capitalize()
-    
+
         dc_module_path = f'DCandDelset.dc_configs.top{dataset_module_name}DCs_parsed'
-        dc_module = __import__(dc_module_path, fromlist=['denial_constraints'])
+        dc_module = __import__(dc_module_path, fromlist = ['denial_constraints'])
         raw_dcs = dc_module.denial_constraints
         print(f"Successfully loaded {len(raw_dcs)} raw denial constraints for '{dataset}'.")
     except ImportError:
         print(f"Error: Could not find or load denial constraints for dataset '{dataset}'.")
-        print(f"Attempted to load module: {dc_module_path}") # Added for better debugging
+        print(f"Attempted to load module: {dc_module_path}")  # Added for better debugging
         return None
     hyperedges = clean_raw_dcs(raw_dcs)
     print("Cleaned DCs into simple hyperedges.")
@@ -949,7 +381,7 @@ def exponential_deletion_main(dataset: str, key: int, target_cell: str):
     candidate_masks = compute_possible_mask_set_str(inference_zone)
 
     memory_overhead = measure_memory_overhead_str(hyperedges, paths, candidate_masks)
-    
+
     # --- Execution/Sampling (Part of Modeling Time) ---
     edge_weights = {i: 0.8 for i in range(len(hyperedges))}
     alpha = 1.0
@@ -1031,9 +463,8 @@ def exponential_deletion_main(dataset: str, key: int, target_cell: str):
 if __name__ == '__main__':
     # Run the main orchestrator for a single test case
     results = exponential_deletion_main(
-        dataset='adult',
-        key=2,
-        target_cell='education'
+        dataset = 'adult',
+        key = 2,
+        target_cell = 'education'
     )
-
 
