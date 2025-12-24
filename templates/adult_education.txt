@@ -1,0 +1,220 @@
+============================================================
+TEMPLATE
+============================================================
+
+[I_INTRA]
+  native_country
+  occupation
+  race
+  relationship
+  sex
+
+------------------------------------------------------------
+
+[Π_INTRA]  (Inference Paths)
+  Path 1: [0]
+  Path 2: [1]
+  Path 3: [2]
+  Path 4: [3]
+  Path 5: [7]
+
+------------------------------------------------------------
+
+[R_INTRA]  (Candidate Masks)
+  Mask 1: {}
+  Mask 2: {education_num}
+  Mask 3: {occupation}
+  Mask 4: {age}
+  Mask 5: {race}
+  Mask 6: {fnlwgt}
+  Mask 7: {education_num, occupation}
+  Mask 8: {age, education_num}
+  Mask 9: {education_num, race}
+  Mask 10: {education_num, fnlwgt}
+  Mask 11: {age, occupation}
+  Mask 12: {occupation, race}
+  Mask 13: {fnlwgt, occupation}
+  Mask 14: {age, race}
+  Mask 15: {age, fnlwgt}
+  Mask 16: {fnlwgt, race}
+  Mask 17: {age, education_num, occupation}
+  Mask 18: {education_num, occupation, race}
+  Mask 19: {education_num, fnlwgt, occupation}
+  Mask 20: {age, education_num, race}
+  Mask 21: {age, education_num, fnlwgt}
+  Mask 22: {education_num, fnlwgt, race}
+  Mask 23: {age, occupation, race}
+  Mask 24: {age, fnlwgt, occupation}
+  Mask 25: {fnlwgt, occupation, race}
+  Mask 26: {age, fnlwgt, race}
+  Mask 27: {age, education_num, occupation, race}
+  Mask 28: {age, education_num, fnlwgt, occupation}
+  Mask 29: {education_num, fnlwgt, occupation, race}
+  Mask 30: {age, education_num, fnlwgt, race}
+  Mask 31: {age, fnlwgt, occupation, race}
+  Mask 32: {age, education_num, fnlwgt, occupation, race}
+
+------------------------------------------------------------
+
+[MASK METRICS]
+Mask: {}
+  Leakage: 1.0000
+  Utility: -1.0000
+  Probability: 0.056152
+
+Mask: {age}
+  Leakage: 1.0000
+  Utility: -1.5000
+  Probability: 0.043731
+
+Mask: {education_num}
+  Leakage: 1.0000
+  Utility: -1.5000
+  Probability: 0.043731
+
+Mask: {fnlwgt}
+  Leakage: 1.0000
+  Utility: -1.5000
+  Probability: 0.043731
+
+Mask: {occupation}
+  Leakage: 1.0000
+  Utility: -1.5000
+  Probability: 0.043731
+
+Mask: {race}
+  Leakage: 1.0000
+  Utility: -1.5000
+  Probability: 0.043731
+
+Mask: {age, education_num}
+  Leakage: 1.0000
+  Utility: -2.0000
+  Probability: 0.034058
+
+Mask: {age, fnlwgt}
+  Leakage: 1.0000
+  Utility: -2.0000
+  Probability: 0.034058
+
+Mask: {age, occupation}
+  Leakage: 1.0000
+  Utility: -2.0000
+  Probability: 0.034058
+
+Mask: {age, race}
+  Leakage: 1.0000
+  Utility: -2.0000
+  Probability: 0.034058
+
+Mask: {education_num, fnlwgt}
+  Leakage: 1.0000
+  Utility: -2.0000
+  Probability: 0.034058
+
+Mask: {education_num, occupation}
+  Leakage: 1.0000
+  Utility: -2.0000
+  Probability: 0.034058
+
+Mask: {education_num, race}
+  Leakage: 1.0000
+  Utility: -2.0000
+  Probability: 0.034058
+
+Mask: {fnlwgt, occupation}
+  Leakage: 1.0000
+  Utility: -2.0000
+  Probability: 0.034058
+
+Mask: {fnlwgt, race}
+  Leakage: 1.0000
+  Utility: -2.0000
+  Probability: 0.034058
+
+Mask: {occupation, race}
+  Leakage: 1.0000
+  Utility: -2.0000
+  Probability: 0.034058
+
+Mask: {age, education_num, fnlwgt}
+  Leakage: 1.0000
+  Utility: -2.5000
+  Probability: 0.026524
+
+Mask: {age, education_num, occupation}
+  Leakage: 1.0000
+  Utility: -2.5000
+  Probability: 0.026524
+
+Mask: {age, education_num, race}
+  Leakage: 1.0000
+  Utility: -2.5000
+  Probability: 0.026524
+
+Mask: {age, fnlwgt, occupation}
+  Leakage: 1.0000
+  Utility: -2.5000
+  Probability: 0.026524
+
+Mask: {age, fnlwgt, race}
+  Leakage: 1.0000
+  Utility: -2.5000
+  Probability: 0.026524
+
+Mask: {age, occupation, race}
+  Leakage: 1.0000
+  Utility: -2.5000
+  Probability: 0.026524
+
+Mask: {education_num, fnlwgt, occupation}
+  Leakage: 1.0000
+  Utility: -2.5000
+  Probability: 0.026524
+
+Mask: {education_num, fnlwgt, race}
+  Leakage: 1.0000
+  Utility: -2.5000
+  Probability: 0.026524
+
+Mask: {education_num, occupation, race}
+  Leakage: 1.0000
+  Utility: -2.5000
+  Probability: 0.026524
+
+Mask: {fnlwgt, occupation, race}
+  Leakage: 1.0000
+  Utility: -2.5000
+  Probability: 0.026524
+
+Mask: {age, education_num, fnlwgt, occupation}
+  Leakage: 1.0000
+  Utility: -3.0000
+  Probability: 0.020657
+
+Mask: {age, education_num, fnlwgt, race}
+  Leakage: 1.0000
+  Utility: -3.0000
+  Probability: 0.020657
+
+Mask: {age, education_num, occupation, race}
+  Leakage: 1.0000
+  Utility: -3.0000
+  Probability: 0.020657
+
+Mask: {age, fnlwgt, occupation, race}
+  Leakage: 1.0000
+  Utility: -3.0000
+  Probability: 0.020657
+
+Mask: {education_num, fnlwgt, occupation, race}
+  Leakage: 1.0000
+  Utility: -3.0000
+  Probability: 0.020657
+
+Mask: {age, education_num, fnlwgt, occupation, race}
+  Leakage: 1.0000
+  Utility: -3.5000
+  Probability: 0.016088
+
+============================================================

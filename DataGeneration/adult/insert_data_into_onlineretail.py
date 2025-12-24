@@ -5,7 +5,7 @@ from datetime import datetime
 # =====================
 # CONFIG
 # =====================
-DB_NAME = "online_retail_db"
+DB_NAME = "OnlineRetail"
 TABLE_NAME = "OnlineRetail_data"
 CSV_PATH = "/Users/adhariya/src/DiffDel/csv_files/OnlineRetail.csv"  # <-- change path
 USER = "root"

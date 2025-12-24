@@ -100,6 +100,7 @@ def find_inference_paths_str(hyperedges: List[Tuple[str, ...]],
     return all_paths
 
 
+
 def filter_active_paths_str(hyperedges, paths, mask, initial_known, target_cell=None):
     active_paths = []
 
@@ -129,7 +130,6 @@ def filter_active_paths_str(hyperedges, paths, mask, initial_known, target_cell=
             active_paths.append(path)
 
     return active_paths
-
 
 def compute_product_leakage_str(active_paths: List[List[int]],
                                 hyperedges: List[Tuple[str, ...]],
@@ -312,20 +312,25 @@ def clean_raw_dcs(raw_dcs: List[List[Tuple[str, str, str]]]) -> List[Tuple[str, 
             # pred is like ('t1.education', '!=', 't2.education')
             # or ('t1.age', '==', '30')
             for item in [pred[0], pred[2]]:
-                if '.' in item:  # It's an attribute like 't1.education'
+                if 't1.' in item or 't2.' in item:  # It's an attribute
                     attr_name = item.split('.')[-1]
                     attributes.add(attr_name)
+                else:  # It's a constant value
+                    # We can add the constant itself, or a representation of it.
+                    # For now, let's add the constant value to the hyperedge
+                    attributes.add(item)
         if attributes:
             cleaned_hyperedges.append(tuple(sorted(list(attributes))))
     return cleaned_hyperedges
 
 
-def exponential_deletion_main(dataset: str, key: int, target_cell: str):
+def exponential_deletion_main(dataset: str, key: int, target_cell: str, epsilon: float = 1, alpha: float = 1, beta: float = 0.5, edge_weights: Dict[int, float] = None):
     """
     Main orchestrator for the string-based exponential deletion mechanism.
     Captures and returns a dictionary of performance and result metrics.
     Deletions are performed on the '{dataset}_copy_data' table.
     """
+
     print("\n" + "=" * 70)
     print(
         f"Running Main Orchestrator for Dataset: '{dataset}', Key: {key}, Target: '{target_cell}'")
@@ -384,9 +389,6 @@ def exponential_deletion_main(dataset: str, key: int, target_cell: str):
 
     # --- Execution/Sampling (Part of Modeling Time) ---
     edge_weights = {i: 0.8 for i in range(len(hyperedges))}
-    alpha = 1.0
-    beta = 0.5
-    epsilon = 1.0
 
     final_mask = exponential_mechanism_sample_str(
         candidate_masks, target_cell, paths, hyperedges, initial_known,

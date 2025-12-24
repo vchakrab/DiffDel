@@ -14,7 +14,7 @@ from old_files.cell import Cell, Attribute
 from fetch_row import RTFDatabaseManager
 from IDcomputation.IGC_c_get_global_domain_mysql import AttributeDomainComputation
 from IDcomputation.IGC_e_get_bound_new import DomianInferFromDC #name mistake
-from rtf_core.config import get_dataset_info
+from config import get_dataset_info
 
 class InitializationManager:
     """

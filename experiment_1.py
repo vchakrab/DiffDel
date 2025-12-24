@@ -74,7 +74,8 @@
 #                     csv_file.write(f"{chosen_attr},{end_time},{dependencies},{cells_deleted},{depth},{memory},{init_time},{model_time},{del_time}\n")
 # collect_baseline_1_data_for_all_dbs()
 import time
-from old_files import baseline_deletion_3, baseline_deletion_2, baseline_deletion_1
+from old_files import baseline_deletion_2, baseline_deletion_1
+import baseline_deletion_3
 import exponential_deletion
 from differentialprivacyalgorithms import greedy_gumbel
 import two_phase_deletion
@@ -103,48 +104,56 @@ def _count_active_paths(hyperedges, paths, mask, initial_known):
     return len(active_paths)
 
 
-# Dataset attributes definitions
-hospital_attributes = [
-    "ProviderNumber", "HospitalName", "City", "State", "ZIPCode",
-    "CountyName", "PhoneNumber", "HospitalType", "HospitalOwner",
-    "EmergencyService", "Condition", "MeasureCode", "MeasureName",
-    "Sample", "StateAvg"
-]
-
-tax_attributes = [
-    "fname", "lname", "gender", "area_code", "phone", "city", "state",
-    "zip", "marital_status", "has_child", "salary", "rate", "single_exemp",
-    "married_exemp", "child_exemp"
-]
-
-ncvoter_attributes = [
-    "voter_id", "voter_reg_num", "name_prefix", "first_name", "middle_name",
-    "last_name", "name_suffix", "age", "gender", "race", "ethnic",
-    "street_address", "city", "state", "zip_code", "full_phone_num",
-    "birth_place", "register_date", "download_month"
-]
-
-airport_attributes = [
-    'ident', 'type', 'name', 'latitude_deg', 'longitude_deg', 'elevation_ft',
-    'iso_country', 'iso_region', 'municipality', 'scheduled_service'
-]
 
 # Dataset sizes
-sizes = {
-    "airport": 45037,
-    "hospital": 114920,
-    "tax": 99905,
-    "ncvoter": 1001
-}
 
-DATASETS_TO_RUN = ["airport", "hospital", "ncvoter", "tax"]
+
+DATASETS_TO_RUN = ["airport", "hospital", "ncvoter", "tax", 'flights', 'Onlineretail', 'adult']
 ORIGINAL_TABLE_NAMES = {
     "airport": "airports",
     "hospital": "hospital_data",
     "ncvoter": "ncvoter_data",
-    "tax": "tax_data"
+    "tax": "tax_data",
+    "adult": 'adult_data',
+    'Onlineretail': 'onlineretail_data',
+    'flights': 'flight_data'
 }
 
+def get_random_key(dataset: str):
+    """
+    Get a random key from the dataset.
+
+    Parameters:
+        dataset (str): Name of the dataset
+
+    Returns:
+        int: Random ID from the dataset
+    """
+    db_details = config.get_database_config(dataset)
+
+    conn = mysql.connector.connect(
+        host = db_details['host'],
+        user = db_details['user'],
+        password = db_details['password'],
+        database = db_details['database'],
+        ssl_disabled = db_details['ssl_disabled']
+    )
+
+    if not conn.is_connected():
+        return None
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(f"""SELECT ID
+                       FROM {dataset + "_copy_data"}
+                       ORDER BY RAND()
+                       LIMIT 1;
+        """)
+        result = cursor.fetchone()
+        return result[0] if result else None
+    finally:
+        cursor.close()
+        conn.close()
 
 def setup_database_copies():
     """Create a temporary copy of the main table for each dataset."""
@@ -216,8 +225,9 @@ def collect_baseline_2_data_for_all_dbs():
     data_file_name = "old_files/baseline_deletion_2_data_v9.csv"
 
     # Only choosing attributes with a high number of denial constraints
-    datasets = ["airport", "hospital", "ncvoter", "tax"]
-    attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "marital_status"]
+    datasets = ["airport", "hospital", "ncvoter", "tax", 'flights', 'OnlineRetail', 'adult']
+    attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "marital_status", "FlightNum",
+                      "InvoiceNo", "education"]
 
     for dataset, attr in zip(datasets, attributes):
         print(f"Processing baseline 2 for dataset: {dataset}, attribute: {attr}")
@@ -319,10 +329,10 @@ def collect_baseline_deletion_data_3():
     """
     Collect data for baseline deletion 3 (ILP Java-style), now with leakage and paths_blocked.
     """
-    data_file_name = "old_files/baseline_deletion_3_data_v11.csv"  # New version for new data
+    data_file_name = "delmin_data_v12.csv"  # New version for new data
 
-    datasets = ["airport", "hospital", "ncvoter", "tax"]
-    attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "marital_status"]
+    datasets = ['Onlineretail']
+    attributes = ["InvoiceNo"]
 
     for dataset, attr in zip(datasets, attributes):
         print(f"Processing baseline 3 for dataset: {dataset}, attribute: {attr}")
@@ -353,7 +363,7 @@ def collect_baseline_deletion_data_3():
 
         for i in range(100):
             try:
-                chosen_row = baseline_deletion_2.get_random_key(dataset)
+                chosen_row = get_random_key(dataset)
                 if chosen_row is None: continue
 
                 start_time = time.time()
@@ -387,10 +397,13 @@ def collect_exponential_deletion_data():
     """
     Collect data for the string-based exponential deletion algorithm.
     """
-    data_file_name = "old_files/exponential_deletion_data_v11-leakage.csv"
-    datasets = ["airport", "hospital", "ncvoter", "tax"]
-    attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "marital_status"]
-    
+    data_file_name = "delexp_data_v12.csv"
+    datasets = [
+        #"airport", "hospital", "ncvoter", "tax", 'flights',
+        'Onlineretail']
+    attributes = ["InvoiceNo"]
+
+
     with open(data_file_name, mode='w', newline='') as csv_file: pass
 
     for dataset, attr in zip(datasets, attributes):
@@ -401,7 +414,7 @@ def collect_exponential_deletion_data():
             csv_file.write(header)
         for i in range(100):
             try:
-                chosen_row = baseline_deletion_2.get_random_key(dataset)
+                chosen_row = get_random_key(dataset)
                 if chosen_row is None: continue
 
                 results = exponential_deletion.exponential_deletion_main(dataset=dataset, key=chosen_row, target_cell=attr)
@@ -427,44 +440,58 @@ def collect_2phase_deletion_data():
     """
     Collect data for the 2-Phase deletion algorithm.
     """
-    data_file_name = "2phase_deletion_data.csv"
-    datasets = ["airport", "hospital", "ncvoter", "tax", "adult"]
-    attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "marital_status", "education"]
-    
-    with open(data_file_name, mode='w', newline='') as csv_file: pass # Clear file
+    data_file_name = "2phase_deletion_data_v12.csv"
+    datasets = ["airport", "hospital", "ncvoter", "tax", 'flights', 'Onlineretail', 'adult']
+    attributes_map = {
+        # "airport": "latitude_deg",
+        # "hospital": "ProviderNumber",
+        # "ncvoter": "voter_reg_num",
+        "OnlineRetail": "InvoiceNo",
+        # "adult": "education"
+    }
 
-    for dataset, attr in zip(datasets, attributes):
-        print(f"--- Starting 2-Phase Experiment for Dataset: {dataset} ---")
-        
-        # --- Perform Offline Phase Once Per Dataset ---
-        all_templates = two_phase_deletion.offline_precomputation(dataset)
+    # --- Perform Offline Phase for all datasets and attributes first ---
+    all_templates = {}
+    for dataset, attr in attributes_map.items():
+        # This will build the template if it doesn't exist, and load it.
+        templates = two_phase_deletion.offline_precomputation(dataset, [attr], force_rebuild=True)
+        all_templates.update(templates)
+
+    with open(data_file_name, mode='w', newline='') as csv_file: pass  # Clear file
+
+    for dataset, attr in attributes_map.items():
+        print(f"--- Starting 2-Phase Online Experiment for Dataset: {dataset} ---")
         
         with open(data_file_name, mode='a', newline='') as csv_file:
             csv_file.write(f"-----{dataset}-----\n")
-            header = "target_attribute,total_time,init_time,model_time,del_time,leakage,utility,mask_size,num_paths,memory_overhead_bytes,num_instantiated_cells\n"
+            header = "target_attribute,total_time,init_time,model_time,del_time,leakage,utility,paths_blocked,mask_size,num_paths,memory_overhead_bytes,num_instantiated_cells\n"
             csv_file.write(header)
 
         for i in range(100):
             try:
-                chosen_row = baseline_deletion_2.get_random_key(dataset)
+                chosen_row = get_random_key(dataset)
                 if chosen_row is None: continue
                 
                 start_time = time.time()
+                # Pass the pre-loaded templates to the main function
                 results = two_phase_deletion.two_phase_deletion_main(
-                    dataset=dataset, key=chosen_row, target_cell=attr, templates=all_templates
+                    dataset=dataset, key=chosen_row, target_cell=attr, templates={attr: all_templates[attr]}
                 )
                 total_time = time.time() - start_time
                 
                 if results:
+                    paths_blocked = results['paths_blocked']
                     with open(data_file_name, mode='a', newline='') as csv_file:
                         csv_row = (
                             f"{attr},{total_time},{results['init_time']},{results['model_time']},"
-                            f"{results['del_time']},{results['leakage']},{results['utility']},"
+                            f"{results['del_time']},{results['leakage']},{results['utility']},{paths_blocked},"
                             f"{results['mask_size']},{results['num_paths']},{results['memory_overhead_bytes']},{results['num_instantiated_cells']}\n"
                         )
                         csv_file.write(csv_row)
+
                 if (i + 1) % 10 == 0:
                     print(f"  Completed {i + 1}/100 iterations for {dataset}")
+
             except Exception as e:
                 print(f"Error in 2-phase experiment, dataset {dataset}, iteration {i+1}: {e}")
                 continue
@@ -478,50 +505,50 @@ def main():
     print("P2E2 Baseline Data Collection")
     print("=" * 60)
     print()
-
+    #
     # --- Baseline 3 (ILP) ---
     print("=" * 60)
     print("Starting Baseline 3 (ILP - Java Style)...")
-    setup_database_copies(DATASETS_TO_RUN)
+    setup_database_copies()
     collect_baseline_deletion_data_3()
-    cleanup_database_copies(DATASETS_TO_RUN)
+    cleanup_database_copies()
     print("Finished Baseline 3.\n")
 
-    # --- Exponential Deletion (Our Method) ---
-    print("=" * 60)
-    print("Starting Exponential Deletion (String-Based)...")
-    setup_database_copies(DATASETS_TO_RUN)
-    collect_exponential_deletion_data()
-    cleanup_database_copies(DATASETS_TO_RUN)
-    print("Finished Exponential Deletion.\n")
+    # # --- Exponential Deletion (Our Method) ---
+    # print("=" * 60)
+    # print("Starting Exponential Deletion (String-Based)...")
+    # setup_database_copies()
+    # collect_exponential_deletion_data()
+    # cleanup_database_copies()
+    # print("Finished Exponential Deletion.\n")
+    # #
+    # # --- Greedy Gumbel (Our Method) ---
+    # print("=" * 60)
+    # print("Starting Greedy Gumbel (String-Based)...")
+    # setup_database_copies()
+    # collect_greedy_gumbel_data()
+    # cleanup_database_copies()
+    # print("Finished Greedy Gumbel.\n")
 
-    # --- Greedy Gumbel (Our Method) ---
-    print("=" * 60)
-    print("Starting Greedy Gumbel (String-Based)...")
-    setup_database_copies(DATASETS_TO_RUN)
-    collect_greedy_gumbel_data()
-    cleanup_database_copies(DATASETS_TO_RUN)
-    print("Finished Greedy Gumbel.\n")
-    
-    # --- 2-Phase Deletion (Our Method) ---
-    print("=" * 60)
-    print("Starting 2-Phase Deletion...")
-    setup_database_copies(DATASETS_TO_RUN)
-    collect_2phase_deletion_data()
-    cleanup_database_copies(DATASETS_TO_RUN)
-    print("Finished 2-Phase Deletion.\n")
+    # # --- 2-Phase Deletion (Our Method) ---
+    # print("=" * 60)
+    # print("Starting 2-Phase Deletion...")
+    # setup_database_copies()
+    # collect_2phase_deletion_data()
+    # cleanup_database_copies()
+    # print("Finished 2-Phase Deletion.\n")
+    #
+    # print("=" * 60)
+    # print("Data collection completed!")
+    # print("=" * 60)
 
-    print("=" * 60)
-    print("Data collection completed!")
-    print("=" * 60)
-
-def collect_greedy_gumbel_data():
+def collect_greedy_gumbel_data(epsilon: float):
     """
     Collect data for the string-based greedy gumbel algorithm.
     """
-    data_file_name = "old_files/greedy_gumbel_data_v12-trial_leakage_fix.csv"
-    datasets = ["airport", "hospital", "ncvoter", "tax"]
-    attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "marital_status"]
+    data_file_name = f"delgum_data_epsilon_leakage_graph_{epsilon}.csv"
+    datasets = ["airport", "hospital", "ncvoter", "Onlineretail", "adult"]
+    attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "InvoiceNo", "education"]
 
     with open(data_file_name, mode='w', newline='') as csv_file: pass
 

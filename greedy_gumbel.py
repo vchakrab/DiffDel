@@ -61,30 +61,42 @@ def clean_raw_dcs(raw_dcs: List[List[Tuple[str, str, str]]]) -> List[Tuple[str, 
 # 2. STR HYPEREDGE METHODS (LOGIC RETAINED AS PROVIDED)
 # =================================================================
 
-def find_inference_paths_str(hyperedges: List[Tuple[str, ...]], target_cell: str,
-                             initial_known: Set[str]) -> List[List[int]]:
-    if initial_known is None: raise ValueError("initial_known must be provided")
+def find_inference_paths_str(hyperedges: List[Tuple[str, ...]],
+                             target_cell: str,
+                             initial_known: Set[str] = None) -> List[List[int]]:
+    # ... (find_inference_paths_str remains unchanged)
+    if initial_known is None:
+        raise ValueError("initial_known must be provided")
+
     all_paths = []
     seen_paths = set()
 
     def dfs(known_cells: Set[str], used_edges: Set[int], current_path: List[int],
             can_assume_known: Set[str]):
+
         for edge_idx, edge in enumerate(hyperedges):
-            if edge_idx in used_edges: continue
+            if edge_idx in used_edges:
+                continue
+
             for inferred_cell in edge:
-                if inferred_cell in known_cells: continue
+                if inferred_cell in known_cells:
+                    continue
+
                 other_cells = [c for c in edge if c != inferred_cell]
+
                 if all(c in known_cells for c in other_cells):
                     new_known = known_cells | {inferred_cell}
                     new_used = used_edges | {edge_idx}
                     new_path = current_path + [edge_idx]
+
                     if inferred_cell == target_cell:
                         path_tuple = tuple(new_path)
                         if path_tuple not in seen_paths:
                             seen_paths.add(path_tuple)
                             all_paths.append(new_path)
-                    if inferred_cell != target_cell:
-                        dfs(new_known, new_used, new_path, can_assume_known)
+
+                    dfs(new_known, new_used, new_path, can_assume_known)
+
                 elif inferred_cell == target_cell:
                     unknown_cells = [c for c in other_cells if c not in known_cells]
                     if all(c in can_assume_known for c in unknown_cells):
@@ -95,30 +107,43 @@ def find_inference_paths_str(hyperedges: List[Tuple[str, ...]], target_cell: str
                             all_paths.append(new_path)
 
     all_cells = set()
-    for edge in hyperedges: all_cells.update(edge)
+    for edge in hyperedges:
+        all_cells.update(edge)
     potentially_inferrable = all_cells - initial_known - {target_cell}
+
     dfs(initial_known, set(), [], potentially_inferrable)
     return all_paths
 
 
-def filter_active_paths_str(hyperedges: List[Tuple[str, ...]], paths: List[List[int]],
-                            mask: Set[str], initial_known: Set[str]) -> List[List[int]]:
+
+def filter_active_paths_str(hyperedges, paths, mask, initial_known, target_cell=None):
     active_paths = []
+
+    # Use all attributes known initially for path calculation
+    all_attributes = set(c for he in hyperedges for c in he)
+
     for path in paths:
+        known_so_far = all_attributes - mask
         is_blocked = False
-        known_so_far = set()
+
         for edge_idx in path:
-            edge = hyperedges[edge_idx]
-            unknown_in_edge = [c for c in edge if c not in known_so_far]
+            edge = set(hyperedges[edge_idx])
+            unknown_in_edge = edge - known_so_far
+
             if len(unknown_in_edge) == 0:
                 continue
             elif len(unknown_in_edge) == 1:
-                inferred_cell = unknown_in_edge[0]
-                known_so_far.add(inferred_cell)
+                known_so_far.update(unknown_in_edge)
             else:
-                is_blocked = True
-                break
-        if not is_blocked: active_paths.append(path)
+                if target_cell is not None and target_cell in unknown_in_edge:
+                    known_so_far.add(target_cell)
+                else:
+                    is_blocked = True
+                    break
+
+        if not is_blocked:
+            active_paths.append(path)
+
     return active_paths
 
 
@@ -283,8 +308,7 @@ def greedy_gumbel_max_deletion_str(
 # =================================================================
 # 4. MAIN ORCHESTRATOR
 # =================================================================
-
-def exponential_deletion_main(dataset: str, key: int, target_cell: str, method: str = 'gumbel'):
+def gumbel_deletion_main(dataset: str, key: int, target_cell: str, method: str = 'gumbel', epsilon: float = 1.0, alpha: float = 1.0, beta: float = 0.5, K : int = 10, edge_weights = None):
     """
     Main orchestrator for the string-based deletion mechanism (Exp or Gumbel).
     """
@@ -333,10 +357,6 @@ def exponential_deletion_main(dataset: str, key: int, target_cell: str, method: 
 
     # --- Algorithm Parameters ---
     edge_weights = {i: 0.8 for i in range(len(hyperedges))}
-    alpha = 1.0
-    beta = 0.5
-    epsilon = 1.0
-    K = 10
     memory_overhead = 0.0
 
     # --- Execution/Sampling ---
@@ -444,7 +464,7 @@ def exponential_deletion_main(dataset: str, key: int, target_cell: str, method: 
 if __name__ == '__main__':
     # Example run using the Greedy Gumbel-Max Deletion method
     # NOTE: Execution requires 'mysql.connector' and a 'config' module setup.
-    results = exponential_deletion_main(
+    results = gumbel_deletion_main(
         dataset = 'adult',
         key = 2,
         target_cell = 'education',

@@ -51,7 +51,7 @@ DB_CONFIG = {
 
 # Complete dataset configurations
 DATASETS = {
-    'OnlineRetail': {
+    'Onlineretail': {
         'name': 'OnlineRetail',
         'database_name': 'OnlineRetail',
         'primary_table': 'OnlineRetail_data',
@@ -59,7 +59,18 @@ DATASETS = {
         'tables': ['OnlineRetail_data'],
         'domain_file': 'onlineretail_domain_map.json',
         'dc_file': 'topOnlineretailDCs_parsed.py',
-        'dc_raw_file': 'topOnlineRetailDCs.txt',
+        'dc_raw_file': 'topOnlineretailDCs.txt',
+        'dc_config_module': None
+    },
+    'flights': {
+        'name': 'flights',
+        'database_name': 'flights',
+        'primary_table': 'flights_data',
+        'key_column': 'id',  # unique identifier per transaction
+        'tables': ['flights_data'],
+        'domain_file': 'flights_domain_map.json',
+        'dc_file': 'topFlightsDCs_parsed.py',
+        'dc_raw_file': 'topFlightsDCs.txt',
         'dc_config_module': None
     },
     'adult': {

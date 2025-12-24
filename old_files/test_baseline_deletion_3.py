@@ -8,7 +8,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 try:
-    from old_files.baseline_deletion_3 import ilp_approach_matching_java, Cell
+    from baseline_deletion_3 import ilp_approach_matching_java, Cell
     from config import DB_CONFIG
     GUROBI_AVAILABLE = True
 except (ImportError, ModuleNotFoundError) as e:
