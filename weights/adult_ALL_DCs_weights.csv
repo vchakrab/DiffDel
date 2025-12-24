@@ -1,0 +1,9 @@
+dc_index,lhs,rhs,weight,n_A,n_A_and_B,method,samples,note,pattern
+1,Education-num,education,1.0,1902,1902,adaptive_sampling,10000,"Found 1902 pairs in 10,000 samples",FD
+2,education,Education-num,1.0,1828,1828,adaptive_sampling,10000,"Found 1828 pairs in 10,000 samples",FD
+3,education,Education-num >,1.0,1000,1000,comparison_sampling,5193,DC violation rate: 0.00%,comparison_DC
+4,education,Education-num <,1.0,1000,1000,comparison_sampling,5249,DC violation rate: 0.00%,comparison_DC
+5,capital-gain,capital-loss,0.9063429727478282,8403,7616,adaptive_sampling,10000,"Found 8403 pairs in 10,000 samples",correlation
+6,capital-gain,capital-loss,0.8993080410403245,8382,7538,adaptive_sampling,10000,"Found 8382 pairs in 10,000 samples",correlation
+7,age & fnlwgt & relationship & Native-country,sex,1.0,1930,1930,exhaustive,1930,Checked all 1930 pairs,FD
+8,age & fnlwgt & education,occupation,0.2155511811023622,1016,219,exhaustive,1016,Checked all 1016 pairs,FD

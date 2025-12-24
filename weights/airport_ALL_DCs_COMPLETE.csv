@@ -1,0 +1,41 @@
+dc_index,pattern,lhs,rhs,weight,n_A,n_A_and_B,method,samples,note
+1,unique,N/A,id,1.0,0,0,unique,0,Uniqueness constraint
+2,unique,N/A,ident,1.0,0,0,unique,0,Uniqueness constraint
+3,FD,name & iso_country,elevation_ft,0.006608785797589737,7717,51,exhaustive,7717,exhaustive computation
+4,FD,name & iso_country,continent,,0,0,missing_cols,0,Missing: ['continent']
+5,FD,latitude_deg & iso_country,continent,,0,0,missing_cols,0,Missing: ['continent']
+6,FD,name & longitude_deg,latitude_deg,0.9047619047619048,21,19,exhaustive,21,exhaustive computation
+7,FD,name & longitude_deg,iso_region,0.9523809523809523,21,20,exhaustive,21,exhaustive computation
+8,FD,name & latitude_deg,iso_region,0.95,20,19,exhaustive,20,exhaustive computation
+9,FD,latitude_deg & iso_country & iata_code,iso_region,,0,0,missing_cols,0,Missing: ['iata_code']
+10,FD,name & latitude_deg,longitude_deg,0.95,20,19,exhaustive,20,exhaustive computation
+11,FD,longitude_deg & iso_country,continent,,0,0,missing_cols,0,Missing: ['continent']
+12,FD,latitude_deg & iso_country & wikipedia_link,iso_region,,0,0,missing_cols,0,Missing: ['wikipedia_link']
+13,FD,latitude_deg & iso_country & keywords,continent,,0,0,missing_cols,0,"Missing: ['keywords', 'continent']"
+14,FD,longitude_deg & iata_code & keywords,scheduled_service,,0,0,missing_cols,0,"Missing: ['iata_code', 'keywords']"
+15,FD,longitude_deg & wikipedia_link & keywords,scheduled_service,,0,0,missing_cols,0,"Missing: ['wikipedia_link', 'keywords']"
+16,FD,latitude_deg & iata_code & keywords,iso_region,,0,0,missing_cols,0,"Missing: ['iata_code', 'keywords']"
+17,FD,latitude_deg & iso_country & wikipedia_link & keywords,continent,,0,0,missing_cols,0,"Missing: ['wikipedia_link', 'keywords', 'continent']"
+18,FD,iso_region,iso_country,1.0,100,100,adaptive,10144,adaptive computation
+19,FD,latitude_deg & iso_country & iata_code,type,,0,0,missing_cols,0,Missing: ['iata_code']
+20,FD,latitude_deg & iso_country & home_link,type,,0,0,missing_cols,0,Missing: ['home_link']
+21,FD,longitude_deg & iso_country & wikipedia_link,type,,0,0,missing_cols,0,Missing: ['wikipedia_link']
+22,FD,latitude_deg & longitude_deg,type,0.8823529411764706,34,30,exhaustive,34,exhaustive computation
+23,FD,latitude_deg & iso_country & wikipedia_link,type,,0,0,missing_cols,0,Missing: ['wikipedia_link']
+24,FD,latitude_deg & longitude_deg,type,0.8823529411764706,34,30,exhaustive,34,exhaustive computation
+25,FD,latitude_deg & longitude_deg & iata_code,type,,0,0,missing_cols,0,Missing: ['iata_code']
+26,FD,latitude_deg & longitude_deg & home_link,type,,0,0,missing_cols,0,Missing: ['home_link']
+27,FD,latitude_deg & longitude_deg & scheduled_service,type,0.8823529411764706,34,30,exhaustive,34,exhaustive computation
+28,FD,latitude_deg & longitude_deg & wikipedia_link,type,,0,0,missing_cols,0,Missing: ['wikipedia_link']
+29,FD,longitude_deg & iata_code,type,,0,0,missing_cols,0,Missing: ['iata_code']
+30,FD,name & longitude_deg,type,1.0,21,21,exhaustive,21,exhaustive computation
+31,FD,name & longitude_deg,type,1.0,21,21,exhaustive,21,exhaustive computation
+32,FD,name & iso_country,type,0.9405209278216924,7717,7258,exhaustive,7717,exhaustive computation
+33,FD,name & longitude_deg,type,1.0,21,21,exhaustive,21,exhaustive computation
+34,FD,name & latitude_deg,type,1.0,20,20,exhaustive,20,exhaustive computation
+35,FD,name & latitude_deg & wikipedia_link,type,,0,0,missing_cols,0,Missing: ['wikipedia_link']
+36,FD,latitude_deg & iso_country & keywords,type,,0,0,missing_cols,0,Missing: ['keywords']
+37,FD,longitude_deg & wikipedia_link & keywords,type,,0,0,missing_cols,0,"Missing: ['wikipedia_link', 'keywords']"
+38,FD,latitude_deg & longitude_deg & keywords,type,,0,0,missing_cols,0,Missing: ['keywords']
+39,FD,name & latitude_deg,longitude_deg,0.95,20,19,exhaustive,20,exhaustive computation
+40,FD,name & latitude_deg,longitude_deg,0.95,20,19,exhaustive,20,exhaustive computation

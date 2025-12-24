@@ -10,6 +10,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="$USER_HOME$/Downloads/hospital_ALL_DCs_weights_CORRECTED.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="$USER_HOME$/Downloads/onlineretail_ALL_DCs_weights.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/csv_files/adult.csv">
           <value>
             <Attribute>
@@ -38,6 +52,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/delexp_data_collect_epsilon.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/delexp_data_v12.csv">
           <value>
             <Attribute>
@@ -46,6 +67,13 @@
           </value>
         </entry>
         <entry key="/delgum_data_epsilon_leakage_graph.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delgum_data_epsilon_leakage_graph_v2.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -73,28 +101,28 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="/exponential_deletion_data.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/exponential_deletion_data_v11.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/greedy_gumbel_data_v12-trial_leakage_fix.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="/temp_trial.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/weights/adult_ALL_DCs_weights.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/weights/airport_ALL_DCs_COMPLETE.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/weights/ncvoter_ALL_DCs_weights.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

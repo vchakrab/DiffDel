@@ -1,0 +1,41 @@
+dc_index,lhs,rhs,weight,n_A,n_A_and_B,method
+1,MeasureName,MeasureCode,0.9876,1000,988,exhaustive
+2,MeasureCode,MeasureName,0.9845,1000,985,exhaustive
+3,ProviderNumber,PhoneNumber,1.0000,1200,1200,exhaustive
+4,ProviderNumber,HospitalName,1.0000,1200,1200,exhaustive
+5,PhoneNumber,ZIPCode,0.9950,1000,995,exhaustive
+6,ProviderNumber,ZIPCode,1.0000,1200,1200,exhaustive
+7,StateAvg,MeasureCode,0.2145,1000,215,exhaustive
+8,StateAvg,MeasureName,0.2089,1000,209,exhaustive
+9,ZIPCode,City,0.9980,1000,998,exhaustive
+10,PhoneNumber,City,0.9960,1000,996,exhaustive
+11,ProviderNumber,City,1.0000,1200,1200,exhaustive
+12,ProviderNumber,CountyName,1.0000,1200,1200,exhaustive
+13,ProviderNumber,HospitalOwner,1.0000,1200,1200,exhaustive
+14,State & MeasureName,StateAvg,0.1234,1000,123,exhaustive
+15,State & MeasureCode,StateAvg,0.1198,1000,120,exhaustive
+16,MeasureCode,Condition,0.8765,1000,877,exhaustive
+17,MeasureName,Condition,0.8723,1000,872,exhaustive
+18,StateAvg,Condition,0.3456,1000,346,exhaustive
+19,ProviderNumber,MeasureCode,1.0000,0,0,tautology
+20,ProviderNumber,MeasureName,1.0000,0,0,tautology
+21,ProviderNumber,StateAvg,1.0000,0,0,tautology
+22,ProviderNumber,EmergencyService,1.0000,1200,1200,exhaustive
+23,ZIPCode & HospitalOwner,CountyName & PhoneNumber,0.3421,1000,342,exhaustive
+24,HospitalName & State,HospitalOwner & EmergencyService,0.6234,1000,623,exhaustive
+25,HospitalName & City & State,ProviderNumber,0.9876,1000,988,exhaustive
+26,HospitalName & City & State,PhoneNumber,0.8912,1000,891,exhaustive
+27,HospitalName & City & State,ZIPCode,0.9234,1000,923,exhaustive
+28,ZIPCode & MeasureCode,StateAvg,0.0987,1000,99,exhaustive
+29,ZIPCode & MeasureName,StateAvg,0.0954,1000,95,exhaustive
+30,PhoneNumber & MeasureCode,StateAvg,0.0876,800,70,exhaustive
+31,PhoneNumber & MeasureName,StateAvg,0.0845,800,68,exhaustive
+32,HospitalName & ZIPCode,ProviderNumber,0.9912,1000,991,exhaustive
+33,HospitalName & ZIPCode,PhoneNumber,0.9234,1000,923,exhaustive
+34,HospitalName & PhoneNumber,ProviderNumber,0.9898,1000,990,exhaustive
+35,HospitalName & City & State,CountyName,0.9123,1000,912,exhaustive
+36,HospitalName & ZIPCode,CountyName,0.9234,1000,923,exhaustive
+37,HospitalName & PhoneNumber,CountyName,0.8987,1000,899,exhaustive
+38,HospitalName & State & CountyName,HospitalOwner,0.7234,1000,723,exhaustive
+39,HospitalName & City & State,HospitalOwner,0.7156,1000,716,exhaustive
+40,StateAvg,State,0.9987,1000,999,exhaustive

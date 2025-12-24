@@ -1,0 +1,28 @@
+dc_index,pattern,lhs,rhs,weight,n_pairs,n_violations,method,samples
+1,FD,InvoiceNo,CustomerID,0.0,13,13,exhaustive,13
+2,multi_unequal,InvoiceDate & Quantity & Description,"UnitPrice, InvoiceNo, StockCode",1.0,0,0,no_dup,0
+3,multi_unequal,UnitPrice & InvoiceDate & StockCode,"Country, Description",1.0,0,0,no_dup,0
+4,multi_unequal,InvoiceDate & StockCode,"Country, Description",1.0,0,0,no_dup,0
+5,multi_unequal,InvoiceDate & Quantity & StockCode,"InvoiceNo, Description",1.0,0,0,no_dup,0
+6,multi_unequal,InvoiceDate & Quantity & StockCode,"Description, CustomerID",1.0,0,0,no_dup,0
+7,multi_unequal,InvoiceDate & Quantity & Description,"CustomerID, StockCode",1.0,0,0,no_dup,0
+8,multi_unequal,InvoiceNo & StockCode,"Description, Quantity",1.0,0,0,no_dup,0
+9,comparison_DC,InvoiceNo & StockCode,"InvoiceDate, UnitPrice>, Quantity<",1.0,0,0,no_dup,0
+10,multi_unequal,UnitPrice & InvoiceDate & StockCode,"Description, CustomerID",1.0,0,0,no_dup,0
+11,multi_unequal,UnitPrice & InvoiceDate & Description,"CustomerID, StockCode",1.0,0,0,no_dup,0
+12,multi_unequal,InvoiceDate & Description,"Country, StockCode",1.0,0,0,no_dup,0
+13,multi_unequal,InvoiceDate & CustomerID & Description,"UnitPrice, InvoiceNo, StockCode",1.0,0,0,no_dup,0
+14,comparison_DC,InvoiceNo & Description,"InvoiceDate, UnitPrice>, Quantity<",1.0,0,0,no_dup,0
+15,comparison_DC,N/A,"Country, InvoiceDate, Description, CustomerID, StockCode, Quantity<, UnitPrice<",0.43939393939393945,66,37,exhaustive,66
+16,multi_unequal,InvoiceDate & Quantity & Description,"Country, UnitPrice",1.0,0,0,no_dup,0
+17,comparison_DC,InvoiceDate & CustomerID & StockCode,"Description, UnitPrice<",1.0,0,0,no_dup,0
+18,multi_unequal,InvoiceNo & StockCode,"UnitPrice, Description",1.0,0,0,no_dup,0
+19,FD,InvoiceNo,Country,0.0,13,13,exhaustive,13
+20,multi_unequal,InvoiceNo & StockCode,"InvoiceDate, Description",1.0,0,0,no_dup,0
+21,multi_unequal,InvoiceNo & Description,"InvoiceDate, StockCode",1.0,0,0,no_dup,0
+22,multi_unequal,InvoiceDate & Quantity & StockCode,"Country, UnitPrice",1.0,0,0,no_dup,0
+23,multi_unequal,InvoiceDate & Quantity & StockCode,"Country, Description",1.0,0,0,no_dup,0
+24,multi_unequal,UnitPrice & InvoiceDate & CustomerID,"Country, Quantity",0.0,5,5,exhaustive,5
+25,FD,InvoiceDate & CustomerID & StockCode,Country,1.0,0,0,no_dup,0
+26,FD,InvoiceDate & CustomerID & Description,Country,1.0,0,0,no_dup,0
+27,multi_unequal,InvoiceDate & Quantity & StockCode,"UnitPrice, Description",1.0,0,0,no_dup,0

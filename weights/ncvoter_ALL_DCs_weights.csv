@@ -1,0 +1,38 @@
+dc_index,pattern,lhs,rhs,weight,n_A,n_A_and_B,method,samples,note
+1,unique,N/A,state,1.0,0,0,constant,0,Constant value (all same)
+2,FD,voter_reg_num,voter_id,1.0,1,1,exhaustive,1,exhaustive computation
+3,FD,voter_id,voter_reg_num,1.0,1,1,exhaustive,1,exhaustive computation
+4,FD,voter_id,last_name,1.0,1,1,exhaustive,1,exhaustive computation
+5,FD,voter_reg_num,last_name,1.0,1,1,exhaustive,1,exhaustive computation
+6,FD,voter_id,first_name,1.0,1,1,exhaustive,1,exhaustive computation
+7,FD,voter_reg_num,first_name,1.0,1,1,exhaustive,1,exhaustive computation
+8,FD,street_address,zip_code,1.0,46,46,exhaustive,46,exhaustive computation
+9,FD,voter_id,zip_code,1.0,1,1,exhaustive,1,exhaustive computation
+10,FD,voter_reg_num,zip_code,1.0,1,1,exhaustive,1,exhaustive computation
+11,FD,street_address,city,1.0,46,46,exhaustive,46,exhaustive computation
+12,FD,voter_id,city,1.0,1,1,exhaustive,1,exhaustive computation
+13,FD,voter_reg_num,city,1.0,1,1,exhaustive,1,exhaustive computation
+14,FD,voter_id,register_date,1.0,1,1,exhaustive,1,exhaustive computation
+15,FD,voter_reg_num,register_date,1.0,1,1,exhaustive,1,exhaustive computation
+16,FD,voter_id,age,1.0,1,1,exhaustive,1,exhaustive computation
+17,FD,voter_reg_num,age,1.0,1,1,exhaustive,1,exhaustive computation
+18,tautology,voter_id,download_month,1.0,0,0,tautology,0,All EQUAL predicates (tautology)
+19,tautology,voter_reg_num,download_month,1.0,0,0,tautology,0,All EQUAL predicates (tautology)
+20,tautology,voter_reg_num,full_phone_num,1.0,0,0,tautology,0,All EQUAL predicates (tautology)
+21,tautology,voter_id,full_phone_num,1.0,0,0,tautology,0,All EQUAL predicates (tautology)
+22,FD,voter_id,gender,1.0,1,1,exhaustive,1,exhaustive computation
+23,FD,voter_reg_num,gender,1.0,1,1,exhaustive,1,exhaustive computation
+24,comparison_DC,voter_reg_num,age >,1.0,1,1,comparison,50000,Comparison DC
+28,FD,voter_id,birth_place,1.0,1,1,exhaustive,1,exhaustive computation
+29,FD,voter_reg_num,birth_place,1.0,1,1,exhaustive,1,exhaustive computation
+30,tautology,voter_id,middle_name,1.0,0,0,tautology,0,All EQUAL predicates (tautology)
+31,tautology,voter_reg_num,middle_name,1.0,0,0,tautology,0,All EQUAL predicates (tautology)
+32,tautology,first_name,street_address,1.0,0,0,tautology,0,All EQUAL predicates (tautology)
+33,tautology,voter_id,street_address,1.0,0,0,tautology,0,All EQUAL predicates (tautology)
+34,tautology,voter_reg_num,street_address,1.0,0,0,tautology,0,All EQUAL predicates (tautology)
+35,FD,street_address,last_name,0.6739130434782609,46,31,exhaustive,46,exhaustive computation
+36,FD,street_address,name_prefix,0.0,0,0,no_dup,0,no_dup computation
+37,FD,zip_code,name_prefix,1.0,25,25,exhaustive,25,exhaustive computation
+38,FD,street_address,name_suffix,0.0,0,0,no_dup,0,no_dup computation
+39,FD,ethnic & street_address,age,0.19047619047619047,42,8,exhaustive,42,exhaustive computation
+40,FD,middle_name & street_address,last_name,1.0,1,1,exhaustive,1,exhaustive computation
