@@ -59,6 +59,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/delexp_data_collect_epsilon_v3.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delexp_data_collect_epsilon_v4.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/delexp_data_v12.csv">
           <value>
             <Attribute>
@@ -74,6 +88,20 @@
           </value>
         </entry>
         <entry key="/delgum_data_epsilon_leakage_graph_v2.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delgum_data_epsilon_leakage_graph_v3.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delgum_data_epsilon_leakage_graph_v4.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

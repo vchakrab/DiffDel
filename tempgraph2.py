@@ -5,8 +5,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
-INPUT_FILE = "delexp_data_collect_epsilon.csv"
-OUTPUT_PDF = "graph_x.pdf"
+INPUT_FILE = "delexp_data_collect_epsilon_v3.csv"
+OUTPUT_PDF = "graph_x_delexp.pdf"
 
 # Your file DOES NOT have dataset headers; it repeats a CSV header between dataset blocks.
 # Each block belongs to datasets in this fixed repeating order:
@@ -85,6 +85,18 @@ def smooth_lowess(x: np.ndarray, y: np.ndarray, frac: float = 0.35) -> tuple[np.
         return x, y_smooth.to_numpy()
 
 
+# ------------------------------------------------------------------
+# Global matplotlib + LaTeX configuration
+# ------------------------------------------------------------------
+plt.rcParams.update({
+    "text.usetex": False,
+    "font.family": "serif",
+    "font.variant": "small-caps",
+    "font.weight": "normal",
+    "axes.titleweight": "normal",
+    "axes.labelweight": "normal",
+    "legend.fontsize": 13,
+})
 def main():
     df = parse_tempdata(INPUT_FILE)
 
@@ -105,34 +117,52 @@ def main():
     datasets = [d for d in DATASETS_IN_ORDER if d in set(g["dataset"])]
 
     with PdfPages(OUTPUT_PDF) as pdf:
-        fig, axes = plt.subplots(1, 3, figsize=(14, 4.2), constrained_layout=True)
-
-        specs = [
-            ("leakage", "Leakage"),
-            ("utility", "Utility"),
-            ("mask_size", "Mask Size"),
-        ]
+        fig, axes = plt.subplots(1, 2, figsize=(14, 4.2))
 
         frac = 0.40
 
-        for ax, (col, ylabel) in zip(axes, specs):
-            for ds in datasets:
-                sub = g[g["dataset"] == ds].sort_values("epsilon")
-                x = sub["epsilon"].to_numpy()
-                y = sub[col].to_numpy()
+        # Plot Leakage and Mask Size on the first subplot
+        ax1 = axes[0]
+        ax2 = ax1.twinx()
 
-                xs, ys = smooth_lowess(x, y, frac=frac)
-                ax.plot(xs, ys, linewidth=2, alpha=0.95, label=ds)
+        for ds in datasets:
+            sub = g[g["dataset"] == ds].sort_values("epsilon")
+            x = sub["epsilon"].to_numpy()
+            y_leakage = sub["leakage"].to_numpy()
+            y_mask_size = sub["mask_size"].to_numpy()
 
-            ax.set_xlabel("epsilon")
-            ax.set_ylabel(ylabel)
-            ax.grid(True, alpha=0.25)
+            xs, ys_leakage = smooth_lowess(x, y_leakage, frac=frac)
+            ax1.plot(xs, ys_leakage, linewidth=2, alpha=0.95, label=ds.capitalize() if ds != 'ncvoter' else 'NCVoter')
 
-        handles, labels = axes[0].get_legend_handles_labels()
-        fig.legend(handles, labels, loc="upper center",
-                   ncol=min(5, len(datasets)), frameon=True)
+            xs, ys_mask_size = smooth_lowess(x, y_mask_size, frac=frac)
+            ax2.plot(xs, ys_mask_size, linewidth=2, alpha=0.95, linestyle='--') # Removed label
 
-        pdf.savefig(fig)
+        ax1.set_xlabel("epsilon")
+        ax1.set_ylabel("Leakage")
+        ax2.set_ylabel("Mask Size")
+        ax1.grid(True, alpha=0.25)
+        
+        # Plot Utility on the second subplot
+        ax3 = axes[1]
+        for ds in datasets:
+            sub = g[g["dataset"] == ds].sort_values("epsilon")
+            x = sub["epsilon"].to_numpy()
+            y_utility = sub["utility"].to_numpy()
+
+            xs, ys_utility = smooth_lowess(x, y_utility, frac=frac)
+            ax3.plot(xs, ys_utility, linewidth=2, alpha=0.95, label=ds.capitalize() if ds != 'ncvoter' else 'NCVoter')
+
+        ax3.set_xlabel("epsilon")
+        ax3.set_ylabel("Utility")
+        ax3.grid(True, alpha=0.25)
+
+        lines1, labels1 = ax1.get_legend_handles_labels()
+        # Only use labels from ax1 (leakage lines)
+        fig.legend(lines1, labels1, loc='upper center', bbox_to_anchor=(0.5, 1.02), ncol=len(datasets))
+        fig.text(0.98, 0.98, "--- Mask Size\n— Leakage, Utility", ha='right', va='top', fontsize=9)
+        
+        fig.tight_layout(rect=[0, 0, 1, 0.9])
+        pdf.savefig(fig, bbox_inches='tight')
         plt.close(fig)
 
     print(f"Wrote: {OUTPUT_PDF}")

@@ -7,7 +7,7 @@ Differential Deletion Mechanisms
 
 import sys
 import os
-from typing import Any, Dict, List, Set, Tuple, FrozenSet
+from typing import Any, Dict, List, Set, Tuple, FrozenSet, Optional
 from collections import defaultdict, deque, Counter
 from itertools import chain, combinations
 import time
@@ -152,7 +152,50 @@ def compute_product_leakage_str(active_paths: List[List[int]],
     leakage = 1 - product
     return leakage
 
+#
+def calculate_inferential_leakage(active_paths: List[List[int]],
+                                  hyperedges: List[Tuple[str, ...]],
+                                  edge_weights: Optional[List[float] | Dict[int, float]]) -> float:
+    """
+    Implements the Paper's logic (Definition 5.1).
+    Groups paths into Channels (Eq 3) then aggregates Channels (Eq 4).
+    """
+    if not active_paths:
+        return 0.0
 
+    # Ensure edge_weights is a dictionary for .get() access
+    if isinstance(edge_weights, list):
+        edge_weights_dict = {i: w for i, w in enumerate(edge_weights)}
+    elif edge_weights is None:
+        # Default to 1.0 if no weights are provided
+        edge_weights_dict = {i: 1.0 for i in range(len(hyperedges))}
+    else:
+        edge_weights_dict = edge_weights
+
+    # 1. Group paths by final hyperedge (Inference Channel e in E*)
+    inference_channels = defaultdict(list)
+    for path in active_paths:
+        final_edge_idx = path[-1]
+        inference_channels[final_edge_idx].append(path)
+
+    # 2. Equation 3: Effective weight (w*) for each channel
+    channel_effective_weights = []
+    for edge_idx, paths in inference_channels.items():
+        path_success_probs = []
+        for path in paths:
+            # w(pi): product of edge weights in path
+            w_pi = np.prod([edge_weights_dict.get(e_idx, 1.0) for e_idx in path])
+            path_success_probs.append(w_pi)
+
+        # w*_e = 1 - PRODUCT(1 - w_pi)
+        w_star_e = 1 - np.prod([1 - p for p in path_success_probs])
+        channel_effective_weights.append(w_star_e)
+
+    # 3. Equation 4: Total Inferential Leakage (L)
+    # L = 1 - PRODUCT(1 - w*_e)
+    leakage = 1 - np.prod([1 - w_star for w_star in channel_effective_weights])
+
+    return float(leakage)
 def calculate_leakage_str(hyperedges: List[Tuple[str, ...]],
                           paths: List[List[int]],
                           mask: Set[str],
@@ -167,12 +210,11 @@ def calculate_leakage_str(hyperedges: List[Tuple[str, ...]],
         initial_known
     )
 
-    leakage = compute_product_leakage_str(
+    leakage = calculate_inferential_leakage(
         active_paths,
         hyperedges,
         edge_weights
     )
-
     return leakage
 
 
@@ -388,7 +430,8 @@ def exponential_deletion_main(dataset: str, key: int, target_cell: str, epsilon:
     memory_overhead = measure_memory_overhead_str(hyperedges, paths, candidate_masks)
 
     # --- Execution/Sampling (Part of Modeling Time) ---
-    edge_weights = {i: 0.8 for i in range(len(hyperedges))}
+    if edge_weights is None:
+        edge_weights = {i: 0.8 for i in range(len(hyperedges))}
 
     final_mask = exponential_mechanism_sample_str(
         candidate_masks, target_cell, paths, hyperedges, initial_known,

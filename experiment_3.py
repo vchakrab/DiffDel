@@ -403,7 +403,7 @@ def collect_exponential_deletion_data(epsilon, verbose: bool = False):
     """
     Collect data for the string-based exponential deletion algorithm.
     """
-    data_file_name = "delexp_data_collect_epsilon.csv"
+    data_file_name = "delexp_data_collect_epsilon_v4.csv"
     datasets = ["airport", "hospital", "ncvoter", "Onlineretail", "adult"]
     attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "InvoiceNo", "education"]
 
@@ -425,6 +425,15 @@ def collect_exponential_deletion_data(epsilon, verbose: bool = False):
             else:
                 writer.writerow(header_simple)
 
+        # Load weights
+        try:
+            weights_module = __import__(f"weights.weights_corrected.{dataset}_weights", fromlist=["WEIGHTS"])
+            weights_list = weights_module.WEIGHTS
+            edge_weights = {i: weights_list[i] for i in range(len(weights_list))}
+        except (ImportError, IndexError):
+            print(f"Could not load weights for {dataset}. Using default weights.")
+            edge_weights = None
+
         for i in range(5):
             try:
                 chosen_row = get_random_key(dataset)
@@ -432,7 +441,8 @@ def collect_exponential_deletion_data(epsilon, verbose: bool = False):
 
                 results = exponential_deletion.exponential_deletion_main(dataset = dataset,
                                                                          key = chosen_row,
-                                                                         target_cell = attr,epsilon=epsilon)
+                                                                         target_cell = attr,epsilon=epsilon,
+                                                                         edge_weights=edge_weights)
 
                 if results:
                     total_time = results['init_time'] + results['model_time'] + results['del_time']
@@ -534,26 +544,26 @@ def main():
     print()
     #
     # --- Baseline 3 (ILP) ---
-    print("=" * 60)
-    print("Starting Baseline 3 (ILP - Java Style)...")
-    setup_database_copies()
-    collect_baseline_deletion_data_3()
-    cleanup_database_copies()
-    print("Finished Baseline 3.\n")
+    # print("=" * 60)
+    # print("Starting Baseline 3 (ILP - Java Style)...")
+    # setup_database_copies()
+    # collect_baseline_deletion_data_3()
+    # cleanup_database_copies()
+    # print("Finished Baseline 3.\n")
 
     # # --- Exponential Deletion (Our Method) ---
-    # print("=" * 60)
-    # print("Starting Exponential Deletion (String-Based)...")
-    # setup_database_copies()
-    # collect_exponential_deletion_data()
-    # cleanup_database_copies()
-    # print("Finished Exponential Deletion.\n")
+    print("=" * 60)
+    print("Starting Exponential Deletion (String-Based)...")
+    setup_database_copies()
+    collect_exponential_deletion_data(1.0)
+    cleanup_database_copies()
+    print("Finished Exponential Deletion.\n")
     # #
     # --- Greedy Gumbel (Our Method) ---
     print("=" * 60)
     print("Starting Greedy Gumbel (String-Based)...")
     setup_database_copies()
-    collect_greedy_gumbel_data()
+    collect_greedy_gumbel_data(1.0)
     cleanup_database_copies()
     print("Finished Greedy Gumbel.\n")
 
@@ -573,7 +583,7 @@ def main():
 import csv
 
 def collect_greedy_gumbel_data(epsilon: float, verbose: bool = False):
-    data_file_name = "delgum_data_epsilon_leakage_graph_v2.csv"
+    data_file_name = "delgum_data_epsilon_leakage_graph_v4.csv"
     datasets = ["airport", "hospital", "ncvoter", "Onlineretail", "adult"]
     attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "InvoiceNo", "education"]
 
@@ -592,6 +602,15 @@ def collect_greedy_gumbel_data(epsilon: float, verbose: bool = False):
                 ])
             else:
                 writer.writerow(["epsilon","leakage","utility","mask_size"])
+        
+        # Load weights
+        try:
+            weights_module = __import__(f"weights.weights_corrected.{dataset}_weights", fromlist=["WEIGHTS"])
+            weights_list = weights_module.WEIGHTS
+            edge_weights = {i: weights_list[i] for i in range(len(weights_list))}
+        except (ImportError, IndexError):
+            print(f"Could not load weights for {dataset}. Using default weights.")
+            edge_weights = None
 
         for i in range(5):
             try:
@@ -603,7 +622,8 @@ def collect_greedy_gumbel_data(epsilon: float, verbose: bool = False):
                     dataset=dataset,
                     key=chosen_row,
                     target_cell=attr,
-                    epsilon=epsilon
+                    epsilon=epsilon,
+                    edge_weights=edge_weights
                 )
 
                 if results:
@@ -632,10 +652,16 @@ def collect_greedy_gumbel_data(epsilon: float, verbose: bool = False):
 
 
 def collect_epsilon_change_data():
+    # setup_database_copies()
+    #
+    # for epsilon in range(1, 300):
+    #     collect_exponential_deletion_data(epsilon)
+    #
+    # cleanup_database_copies()
     setup_database_copies()
 
     for epsilon in range(1, 300):
-        collect_exponential_deletion_data(epsilon)
+        collect_greedy_gumbel_data(epsilon)
 
     cleanup_database_copies()
 
