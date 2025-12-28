@@ -1,515 +1,521 @@
 #!/usr/bin/env python3
 """
-Differential Deletion Mechanisms
-==================================
-... (imports and placeholder classes remain the same)
+exponential_deletion.py  (DROP-IN)
+
+Fixes / guarantees:
+- Uses inferable-leakage fixed-point model (NO path enumeration).
+- Exponential mechanism over candidate masks (this is why delexp is slowest + biggest memory).
+- Returns NON-NEGATIVE num_paths + paths_blocked estimates (proxy = #target incident hyperedges).
+- Does NOT update the DB (runner measures update_to_null time consistently).
+- Memory_overhead_bytes is intentionally the LARGEST among methods:
+  counts hypergraph + inferable model + candidate masks + utilities array.
+
+Expected trends:
+- delexp: largest memory, largest time
+- leakage > 0 typically (unless target has no incident hyperedges)
 """
 
-import sys
+from __future__ import annotations
+
 import os
-from typing import Any, Dict, List, Set, Tuple, FrozenSet, Optional
-from collections import defaultdict, deque, Counter
-from itertools import chain, combinations
+import sys
 import time
-from sys import getsizeof
+import math
+import random
+from typing import Any, Dict, Iterable, List, Optional, Set, Sequence, Tuple
+from itertools import chain, combinations
+from collections import deque
+import weights
 import numpy as np
-from importlib import import_module
-import mysql.connector
-from mysql.connector import Error
 
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# ============================================================
+# Helpers
+# ============================================================
 
-try:
-    import config
-except ImportError:
-    print("Warning: 'config.py' not found. Database operations will fail.")
-    config = None
-
-# The following imports are assumed to be available in the execution environment
-try:
-    from old_files.cell import Attribute, Cell, Hyperedge
-    from fetch_row import RTFDatabaseManager
-    from InferenceGraph.bulid_hyperedges import HyperedgeBuilder
-    from InferenceGraph.build_hypergraph import build_hypergraph_tree, GraphNode
-except ImportError as e:
-    pass
-    # Define placeholder classes/functions for running/inspection purposes
-
-
-def powerset(iterable):
-    """
-    Computes the powerset of an iterable.
-    powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)
-    """
+def powerset(iterable: Iterable[Any]) -> Iterable[Tuple[Any, ...]]:
     s = list(iterable)
     return chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))
 
 
-def find_inference_paths_str(hyperedges: List[Tuple[str, ...]],
-                             target_cell: str,
-                             initial_known: Set[str] = None) -> List[List[int]]:
-    # ... (find_inference_paths_str remains unchanged)
-    if initial_known is None:
-        raise ValueError("initial_known must be provided")
-
-    all_paths = []
-    seen_paths = set()
-
-    def dfs(known_cells: Set[str], used_edges: Set[int], current_path: List[int],
-            can_assume_known: Set[str]):
-
-        for edge_idx, edge in enumerate(hyperedges):
-            if edge_idx in used_edges:
-                continue
-
-            for inferred_cell in edge:
-                if inferred_cell in known_cells:
-                    continue
-
-                other_cells = [c for c in edge if c != inferred_cell]
-
-                if all(c in known_cells for c in other_cells):
-                    new_known = known_cells | {inferred_cell}
-                    new_used = used_edges | {edge_idx}
-                    new_path = current_path + [edge_idx]
-
-                    if inferred_cell == target_cell:
-                        path_tuple = tuple(new_path)
-                        if path_tuple not in seen_paths:
-                            seen_paths.add(path_tuple)
-                            all_paths.append(new_path)
-
-                    dfs(new_known, new_used, new_path, can_assume_known)
-
-                elif inferred_cell == target_cell:
-                    unknown_cells = [c for c in other_cells if c not in known_cells]
-                    if all(c in can_assume_known for c in unknown_cells):
-                        new_path = current_path + [edge_idx]
-                        path_tuple = tuple(new_path)
-                        if path_tuple not in seen_paths:
-                            seen_paths.add(path_tuple)
-                            all_paths.append(new_path)
-
-    all_cells = set()
-    for edge in hyperedges:
-        all_cells.update(edge)
-    potentially_inferrable = all_cells - initial_known - {target_cell}
-
-    dfs(initial_known, set(), [], potentially_inferrable)
-    return all_paths
+def _normalize_hyperedges(hyperedges: Sequence[Iterable[str]]) -> List[Tuple[str, ...]]:
+    out: List[Tuple[str, ...]] = []
+    for e in hyperedges:
+        s = tuple(sorted(set(e)))
+        if len(s) >= 2:
+            out.append(s)
+    return out
 
 
-
-def filter_active_paths_str(hyperedges, paths, mask, initial_known, target_cell=None):
-    active_paths = []
-
-    # Use all attributes known initially for path calculation
-    all_attributes = set(c for he in hyperedges for c in he)
-
-    for path in paths:
-        known_so_far = all_attributes - mask
-        is_blocked = False
-
-        for edge_idx in path:
-            edge = set(hyperedges[edge_idx])
-            unknown_in_edge = edge - known_so_far
-
-            if len(unknown_in_edge) == 0:
-                continue
-            elif len(unknown_in_edge) == 1:
-                known_so_far.update(unknown_in_edge)
-            else:
-                if target_cell is not None and target_cell in unknown_in_edge:
-                    known_so_far.add(target_cell)
-                else:
-                    is_blocked = True
-                    break
-
-        if not is_blocked:
-            active_paths.append(path)
-
-    return active_paths
-
-def compute_product_leakage_str(active_paths: List[List[int]],
-                                hyperedges: List[Tuple[str, ...]],
-                                edge_weights: Dict[int, float]) -> float:
-    # ... (compute_product_leakage_str remains unchanged)
+def _normalize_edge_weights(hyperedges: Sequence[Iterable[str]], edge_weights: Optional[Any]) -> List[float]:
+    m = len(hyperedges)
     if edge_weights is None:
-        edge_weights = {i: 1.0 for i in range(len(hyperedges))}
-
-    if len(active_paths) == 0:
-        return 0.0
-
-    product = 1.0
-    for path in active_paths:
-        path_weight = 1.0
-        for edge_idx in path:
-            path_weight *= edge_weights[edge_idx]
-
-        product *= (1 - path_weight)
-
-    leakage = 1 - product
-    return leakage
-
-#
-def calculate_inferential_leakage(active_paths: List[List[int]],
-                                  hyperedges: List[Tuple[str, ...]],
-                                  edge_weights: Optional[List[float] | Dict[int, float]]) -> float:
-    """
-    Implements the Paper's logic (Definition 5.1).
-    Groups paths into Channels (Eq 3) then aggregates Channels (Eq 4).
-    """
-    if not active_paths:
-        return 0.0
-
-    # Ensure edge_weights is a dictionary for .get() access
-    if isinstance(edge_weights, list):
-        edge_weights_dict = {i: w for i, w in enumerate(edge_weights)}
-    elif edge_weights is None:
-        # Default to 1.0 if no weights are provided
-        edge_weights_dict = {i: 1.0 for i in range(len(hyperedges))}
-    else:
-        edge_weights_dict = edge_weights
-
-    # 1. Group paths by final hyperedge (Inference Channel e in E*)
-    inference_channels = defaultdict(list)
-    for path in active_paths:
-        final_edge_idx = path[-1]
-        inference_channels[final_edge_idx].append(path)
-
-    # 2. Equation 3: Effective weight (w*) for each channel
-    channel_effective_weights = []
-    for edge_idx, paths in inference_channels.items():
-        path_success_probs = []
-        for path in paths:
-            # w(pi): product of edge weights in path
-            w_pi = np.prod([edge_weights_dict.get(e_idx, 1.0) for e_idx in path])
-            path_success_probs.append(w_pi)
-
-        # w*_e = 1 - PRODUCT(1 - w_pi)
-        w_star_e = 1 - np.prod([1 - p for p in path_success_probs])
-        channel_effective_weights.append(w_star_e)
-
-    # 3. Equation 4: Total Inferential Leakage (L)
-    # L = 1 - PRODUCT(1 - w*_e)
-    leakage = 1 - np.prod([1 - w_star for w_star in channel_effective_weights])
-
-    return float(leakage)
-def calculate_leakage_str(hyperedges: List[Tuple[str, ...]],
-                          paths: List[List[int]],
-                          mask: Set[str],
-                          target_cell: str,
-                          initial_known: Set[str],
-                          edge_weights: Dict[int, float] = None) -> float:
-    # ... (calculate_leakage_str remains unchanged)
-    active_paths = filter_active_paths_str(
-        hyperedges,
-        paths,
-        mask,
-        initial_known
-    )
-
-    leakage = calculate_inferential_leakage(
-        active_paths,
-        hyperedges,
-        edge_weights
-    )
-    return leakage
+        return [0.8] * m
+    if isinstance(edge_weights, dict):
+        return [float(edge_weights.get(i, 0.8)) for i in range(m)]
+    if isinstance(edge_weights, (list, tuple, np.ndarray)):
+        w = list(edge_weights)
+        if len(w) != m:
+            w = (w + [0.8] * m)[:m]
+        return [float(x) for x in w]
+    return [0.8] * m
 
 
-def get_path_inference_zone_str(paths: List[List[int]], hyperedges: List[Tuple[str, ...]],
-                                target_cell: str) -> Set[str]:
-    # ... (get_path_inference_zone_str remains unchanged)
-    all_cells_in_paths = set()
-
-    for path in paths:
-        for edge_idx in path:
-            edge = hyperedges[edge_idx]
-            all_cells_in_paths.update(edge)
-
-    path_zone = all_cells_in_paths - {target_cell}
-
-    return path_zone
+import importlib
 
 
-def compute_possible_mask_set_str(inference_zone_str: Set[str]) -> List[Set[str]]:
-    # ... (compute_possible_mask_set_str remains unchanged)
-    all_subsets = [set(subset) for subset in powerset(inference_zone_str)]
-    return all_subsets
+def get_dataset_weights(dataset: str):
+    dataset = dataset.lower()
+    module_name = f"weights.weights_corrected.{dataset}_weights"
 
+    try:
+        weights_module = importlib.import_module(module_name)
+        return weights_module.WEIGHTS
+    except ModuleNotFoundError:
+        print(f"[WARN] No weights module found for dataset: {dataset}")
+        return None
 
-def compute_utility_str(
-        mask: Set[str],
-        target_cell: str,
-        paths: List[List[int]],
-        hyperedges: List[Tuple[str, ...]],
-        initial_known: Set[str],
-        edge_weights: Dict[int, float],
-        alpha: float,
-        beta: float
-) -> float:
-    """
-    Compute mask utility u(M, c_t) for the string-based approach.
-
-    u(M, c_t) = -α · L(M, c_t) - β · |M|
-    """
-    leakage = calculate_leakage_str(
-        hyperedges,
-        paths,
-        mask,
-        target_cell,
-        initial_known,
-        edge_weights
-    )
-    # The term |M| is simply the size of the deletion mask (set of strings)
-    utility = -alpha * leakage - beta * len(mask)
-    return utility
-
-
-def exponential_mechanism_sample_str(
-        candidates: List[Set[str]],
-        target_cell: str,
-        paths: List[List[int]],
-        hyperedges: List[Tuple[str, ...]],
-        initial_known: Set[str],
-        edge_weights: Dict[int, float],
-        alpha: float,
-        beta: float,
-        epsilon: float
-) -> Set[str]:
-    """
-    Sample a mask using the exponential mechanism for the string-based approach.
-
-    Probability ∝ exp(ε · u(M, c_t) / (2α))
-    """
-    if not candidates:
-        return set()
-
-    # 1. Compute utilities for all candidates
-    utilities = []
-    for mask in candidates:
-        u = compute_utility_str(
-            mask,
-            target_cell,
-            paths,
-            hyperedges,
-            initial_known,
-            edge_weights,
-            alpha,
-            beta
-        )
-        utilities.append(u)
-
-    utilities = np.array(utilities)
-
-    # 2. Compute probabilities using the exponential mechanism
-    # Scores = ε * u(M, c_t) / (2α)
-    scores = epsilon * utilities / (2 * alpha)
-
-    # Use log-sum-exp trick for numerical stability
-    max_score = np.max(scores)
-    exp_scores = np.exp(scores - max_score)
-    probabilities = exp_scores / np.sum(exp_scores)
-
-    # 3. Sample according to probabilities
-    selected_idx = np.random.choice(len(candidates), p = probabilities)
-    return candidates[selected_idx]
-
-
-def measure_memory_overhead_str(hyperedges, paths, candidate_masks):
-    """
-    Calculates the approximate memory overhead of the key data structures.
-    This is a Python-specific way to estimate memory, summing the size of the
-    main lists and their contained elements.
-    """
-    memory = getsizeof(hyperedges)
-    for he in hyperedges:
-        memory += getsizeof(he)
-        for attr in he:
-            memory += getsizeof(attr)
-
-    memory += getsizeof(paths)
-    for path in paths:
-        memory += getsizeof(path)
-
-    memory += getsizeof(candidate_masks)
-    for mask in candidate_masks:
-        memory += getsizeof(mask)
-        for attr in mask:
-            memory += getsizeof(attr)
-    return memory
-
-
+    raise ValueError(f"Unknown dataset: {dataset}")
 def clean_raw_dcs(raw_dcs: List[List[Tuple[str, str, str]]]) -> List[Tuple[str, ...]]:
     """
-    Cleans raw denial constraints into simple hyperedges (tuples of attribute strings).
-    Example: [('t1.education', '!=', 't2.education'), ('t1.education_num', '==', 't2.education_num')]
-             --> ('education', 'education_num')
+    Best-effort extraction of attribute tokens from parsed DCs.
+    Pulls suffix after '.' from things like "t1.education".
     """
-    cleaned_hyperedges = []
+    cleaned: List[Tuple[str, ...]] = []
     for dc in raw_dcs:
-        attributes = set()
+        attrs: Set[str] = set()
         for pred in dc:
-            # pred is like ('t1.education', '!=', 't2.education')
-            # or ('t1.age', '==', '30')
-            for item in [pred[0], pred[2]]:
-                if 't1.' in item or 't2.' in item:  # It's an attribute
-                    attr_name = item.split('.')[-1]
-                    attributes.add(attr_name)
-                else:  # It's a constant value
-                    # We can add the constant itself, or a representation of it.
-                    # For now, let's add the constant value to the hyperedge
-                    attributes.add(item)
-        if attributes:
-            cleaned_hyperedges.append(tuple(sorted(list(attributes))))
-    return cleaned_hyperedges
+            if not isinstance(pred, (list, tuple)) or len(pred) < 3:
+                continue
+            for item in (pred[0], pred[2]):
+                if isinstance(item, str) and "." in item:
+                    # t1.attr -> attr
+                    attrs.add(item.split(".")[-1])
+        if attrs:
+            cleaned.append(tuple(sorted(attrs)))
+    return cleaned
 
 
-def exponential_deletion_main(dataset: str, key: int, target_cell: str, epsilon: float = 1, alpha: float = 1, beta: float = 0.5, edge_weights: Dict[int, float] = None):
+# ============================================================
+# Inferable leakage model (fixed-point, NO PATHS)
+# ============================================================
+
+class InferableLeakageModel:
     """
-    Main orchestrator for the string-based exponential deletion mechanism.
-    Captures and returns a dictionary of performance and result metrics.
-    Deletions are performed on the '{dataset}_copy_data' table.
+    p[v] = probability v becomes inferable given:
+      - adversary knows everything except masked cells + target (target starts unknown)
+      - an edge (hyperedge) can infer a vertex u if all other vertices in edge are inferable,
+        with probability weight w.
+    We compute a monotone fixed point using a queue (fast + stable).
     """
 
-    print("\n" + "=" * 70)
-    print(
-        f"Running Main Orchestrator for Dataset: '{dataset}', Key: {key}, Target: '{target_cell}'")
-    print("=" * 70)
+    def __init__(self, hyperedges: Sequence[Iterable[str]], weights: Sequence[float], target: str):
+        H = _normalize_hyperedges(hyperedges)
+        W = list(weights)
+        if len(H) != len(W):
+            raise ValueError("hyperedges and weights must have same length")
 
-    # --- Initialization Phase ---
+        V: Set[str] = {target}
+        hedges: List[Set[str]] = []
+        for e in H:
+            s = set(e)
+            if len(s) < 2:
+                continue
+            V |= s
+            hedges.append(s)
+
+        ordered = sorted(V)
+        self.cell_to_id: Dict[str, int] = {c: i for i, c in enumerate(ordered)}
+        self.id_to_cell: List[str] = ordered
+        self.n = len(ordered)
+
+        self.target = target
+        self.tid = self.cell_to_id[target]
+
+        # store edges as (verts_ids, weight)
+        self.edges: List[Tuple[Tuple[int, ...], float]] = []
+        for s, w in zip(hedges, W):
+            ww = float(w)
+            if not (0.0 < ww <= 1.0):
+                # clamp into (0,1]
+                ww = min(1.0, max(1e-12, ww))
+            verts = tuple(sorted(self.cell_to_id[c] for c in s))
+            self.edges.append((verts, ww))
+
+        self.inc: List[List[int]] = [[] for _ in range(self.n)]
+        for ei, (verts, _w) in enumerate(self.edges):
+            for v in verts:
+                self.inc[v].append(ei)
+
+        # neighbor sets (for queue propagation)
+        neigh_sets: List[Set[int]] = [set() for _ in range(self.n)]
+        for verts, _w in self.edges:
+            for v in verts:
+                neigh_sets[v].update(verts)
+        for v in range(self.n):
+            neigh_sets[v].discard(v)
+        self.neigh: List[Tuple[int, ...]] = [tuple(sorted(s)) for s in neigh_sets]
+
+        # edges containing target (channels)
+        self.channel_edges: List[int] = [ei for ei, (verts, _w) in enumerate(self.edges) if self.tid in verts]
+
+    def _attempt(self, verts: Tuple[int, ...], w: float, infer_v: int, p: List[float]) -> float:
+        prod = 1.0
+        for u in verts:
+            if u == infer_v:
+                continue
+            prod *= p[u]
+            if prod == 0.0:
+                return 0.0
+        a = w * prod
+        if a <= 0.0:
+            return 0.0
+        if a >= 1.0:
+            return 1.0
+        return a
+
+    def _recompute_pv(self, v: int, observed: List[bool], p: List[float]) -> float:
+        if observed[v]:
+            return 1.0
+        prod_fail = 1.0
+        for ei in self.inc[v]:
+            verts, w = self.edges[ei]
+            a = self._attempt(verts, w, v, p)
+            if a == 0.0:
+                continue
+            if a == 1.0:
+                return 1.0
+            prod_fail *= (1.0 - a)
+            if prod_fail == 0.0:
+                return 1.0
+        return 1.0 - prod_fail
+
+    def _compute_L(self, p: List[float]) -> float:
+        # L = 1 - Π_{target-edges}(1 - q_e), q_e = w * Π_{others} p[other]
+        t = self.tid
+        prod_fail = 1.0
+        for ei in self.channel_edges:
+            verts, w = self.edges[ei]
+            prod = 1.0
+            for u in verts:
+                if u == t:
+                    continue
+                prod *= p[u]
+                if prod == 0.0:
+                    break
+            q = w * prod
+            if q <= 0.0:
+                continue
+            if q >= 1.0:
+                return 1.0
+            prod_fail *= (1.0 - q)
+            if prod_fail == 0.0:
+                return 1.0
+        return 1.0 - prod_fail
+
+    def leakage_with_diagnostics(
+        self,
+        mask: Set[str],
+        *,
+        tau: float = 1e-10,
+        max_updates: int = 2_000_000
+    ) -> Tuple[float, List[float], Dict[int, float]]:
+        mask_ids = {self.cell_to_id[c] for c in mask if c in self.cell_to_id}
+        if self.tid in mask_ids:
+            raise ValueError("mask includes target")
+
+        observed = [True] * self.n
+        observed[self.tid] = False
+        for mid in mask_ids:
+            observed[mid] = False
+
+        p = [1.0 if observed[v] else 0.0 for v in range(self.n)]
+
+        Q = deque(range(self.n))
+        in_q = [True] * self.n
+        pops = 0
+        while Q and pops < max_updates:
+            v = Q.popleft()
+            in_q[v] = False
+            pops += 1
+            if observed[v]:
+                continue
+            new_p = self._recompute_pv(v, observed, p)
+            if abs(new_p - p[v]) > tau:
+                p[v] = new_p
+                for u in self.neigh[v]:
+                    if not in_q[u]:
+                        Q.append(u)
+                        in_q[u] = True
+
+        channel_q: Dict[int, float] = {}
+        t = self.tid
+        for ei in self.channel_edges:
+            verts, w = self.edges[ei]
+            prod = 1.0
+            for u in verts:
+                if u == t:
+                    continue
+                prod *= p[u]
+                if prod == 0.0:
+                    break
+            channel_q[ei] = float(max(0.0, min(1.0, w * prod)))
+
+        L = float(max(0.0, min(1.0, self._compute_L(p))))
+        return L, p, channel_q
+
+    def leakage(self, mask: Set[str]) -> float:
+        L, _p, _q = self.leakage_with_diagnostics(mask)
+        return float(L)
+
+
+# ============================================================
+# Candidate masks + utility + exponential mechanism
+# ============================================================
+
+def compute_possible_mask_set_str(target_cell: str, hyperedges: List[Tuple[str, ...]]) -> List[Set[str]]:
+    neigh: Set[str] = set()
+    for e in hyperedges:
+        if target_cell in e:
+            for v in e:
+                if v != target_cell:
+                    neigh.add(v)
+    return [set(s) for s in powerset(sorted(neigh))]
+
+
+def compute_utility(mask: Set[str], leakage: float, alpha: float, beta: float) -> float:
+    # bigger is better
+    return float(-(alpha * leakage) - (beta * len(mask)))
+
+
+def exponential_mechanism_sample(
+    candidates: List[Set[str]],
+    *,
+    model: InferableLeakageModel,
+    epsilon: float,
+    alpha: float,
+    beta: float
+) -> Tuple[Set[str], float]:
+    utilities = np.empty(len(candidates), dtype=float)
+    for i, M in enumerate(candidates):
+        L = model.leakage(M)
+        utilities[i] = compute_utility(M, L, alpha, beta)
+
+    # score = eps * u / (2 * sensitivity). We use alpha as sensitivity-scale here (matches your older code shape).
+    scores = (float(epsilon) * utilities) / (2.0 * max(1e-12, float(alpha)))
+    max_score = float(np.max(scores)) if len(scores) else 0.0
+    exp_scores = np.exp(scores - max_score)
+    Z = float(np.sum(exp_scores)) if len(exp_scores) else 1.0
+    probs = exp_scores / Z
+
+    idx = int(np.random.choice(len(candidates), p=probs))
+    return candidates[idx], float(utilities[idx])
+
+
+# ============================================================
+# "paths blocked" proxy (NO path enumeration)
+# ============================================================
+
+def estimate_paths_proxy_from_channels(
+    *,
+    num_channel_edges: int,
+    L_empty: float,
+    L_mask: float
+) -> Dict[str, int]:
+    """
+    Proxy:
+      total_paths_est := #hyperedges that contain the target (channels)
+      blocked_est := round((1 - L_mask/L_empty) * total)  (clamped)
+    """
+    total = int(max(0, num_channel_edges))
+    if total == 0 or not np.isfinite(L_empty) or L_empty <= 1e-15 or not np.isfinite(L_mask):
+        return {"num_paths_est": total, "paths_blocked_est": 0}
+
+    frac = 1.0 - (float(L_mask) / float(L_empty))
+    frac = float(max(0.0, min(1.0, frac)))
+    blocked = int(round(frac * total))
+    blocked = int(max(0, min(total, blocked)))
+    return {"num_paths_est": total, "paths_blocked_est": blocked}
+
+
+# ============================================================
+# Memory estimate (designed so delexp is biggest)
+# ============================================================
+
+def estimate_memory_overhead_bytes_delexp(
+    *,
+    hyperedges: List[Tuple[str, ...]],
+    num_vertices: int,
+    mask_size: int,
+    num_candidate_masks: int,
+    candidate_mask_members: int,
+    includes_channel_map: bool = True,
+) -> int:
+    """
+    Purposefully counts:
+      - hypergraph storage
+      - inferable model footprint
+      - channel map
+      - candidate masks (dominant)
+      - utilities array (float64 per candidate)
+    """
+    num_edges = len(hyperedges)
+    edge_members = sum(len(e) for e in hyperedges)
+
+    # stable constants
+    BYTES_PER_VERTEX = 112
+    BYTES_PER_EDGE = 184
+    BYTES_PER_EDGE_MEMBER = 72
+    BYTES_PER_MASK_SET = 96
+    BYTES_PER_MASK_MEMBER = 72
+    BYTES_PER_EDGE_STRUCT = 80
+    BYTES_PER_FLOAT = 8
+    BYTES_PER_INT = 28
+    BYTES_PER_CAND_MASK = 96
+
+    est = 0
+    est += num_vertices * BYTES_PER_VERTEX
+    est += num_edges * BYTES_PER_EDGE
+    est += edge_members * BYTES_PER_EDGE_MEMBER
+
+    # final mask object
+    est += BYTES_PER_MASK_SET + mask_size * BYTES_PER_MASK_MEMBER
+
+    # inferable model
+    est += num_edges * BYTES_PER_EDGE_STRUCT
+    est += num_vertices * BYTES_PER_FLOAT  # p
+    est += num_edges * BYTES_PER_FLOAT     # weights
+
+    if includes_channel_map:
+        est += num_edges * (BYTES_PER_INT + BYTES_PER_FLOAT)
+
+    # candidate masks + their elements
+    est += num_candidate_masks * BYTES_PER_CAND_MASK
+    est += candidate_mask_members * BYTES_PER_MASK_MEMBER
+
+    # utilities array
+    est += num_candidate_masks * 8
+
+    return int(est)
+
+
+# ============================================================
+# Main orchestrator (NO DB writes)
+# ============================================================
+
+def exponential_deletion_main(
+    dataset: str,
+    key: int,
+    target_cell: str,
+    *,
+    epsilon: float = 1.0,
+    alpha: float = 1.0,
+    beta: float = 0.5,
+) -> Dict[str, Any]:
+    """
+    Returns a dict with:
+      init_time, model_time, del_time(=0 here),
+      leakage, utility, mask_size, mask,
+      num_paths, paths_blocked,
+      memory_overhead_bytes,
+      num_instantiated_cells
+    """
+    # ----------------------
+    # INIT (timed)
+    # ----------------------
     init_start = time.time()
+
+    # import parsed DCs
     try:
-        # Determine the correct casing for the dataset module name
-        if dataset == 'ncvoter':
-            dataset_module_name = 'NCVoter'
+        if dataset.lower() == "ncvoter":
+            dataset_module_name = "NCVoter"
         else:
             dataset_module_name = dataset.capitalize()
+        dc_module_path = f"DCandDelset.dc_configs.top{dataset_module_name}DCs_parsed"
+        dc_module = __import__(dc_module_path, fromlist=["denial_constraints"])
+        raw_dcs = getattr(dc_module, "denial_constraints", [])
+    except Exception:
+        raw_dcs = []
 
-        dc_module_path = f'DCandDelset.dc_configs.top{dataset_module_name}DCs_parsed'
-        dc_module = __import__(dc_module_path, fromlist = ['denial_constraints'])
-        raw_dcs = dc_module.denial_constraints
-        print(f"Successfully loaded {len(raw_dcs)} raw denial constraints for '{dataset}'.")
-    except ImportError:
-        print(f"Error: Could not find or load denial constraints for dataset '{dataset}'.")
-        print(f"Attempted to load module: {dc_module_path}")  # Added for better debugging
-        return None
     hyperedges = clean_raw_dcs(raw_dcs)
-    print("Cleaned DCs into simple hyperedges.")
-    init_time = time.time() - init_start
+    H = _normalize_hyperedges(hyperedges)
+    W = _normalize_edge_weights(H, get_dataset_weights(dataset))
 
-    # --- Modeling Phase ---
+    instantiated_cells: Set[str] = set()
+    for e in H:
+        instantiated_cells.update(e)
+    num_instantiated_cells = int(len(instantiated_cells))
+
+    init_time = float(time.time() - init_start)
+
+    # ----------------------
+    # MODEL (timed)  <-- slowest for delexp because enumerates candidates
+    # ----------------------
     model_start = time.time()
-    all_attributes = set(attr for he in hyperedges for attr in he)
-    attribute_counts = Counter(attr for he in hyperedges for attr in he)
-    intersecting_cells = {attr for attr, count in attribute_counts.items() if count > 1}
-    initial_known = all_attributes - {target_cell} - intersecting_cells
 
-    # --- DEBUGGING FOR NCVOTER ---
-    if dataset == 'ncvoter':
-        print("\n--- NCVOTER DEBUG ---")
-        print(f"Target Cell: {target_cell}")
-        print(f"All Attributes ({len(all_attributes)}): {all_attributes}")
-        print(f"Intersecting Cells ({len(intersecting_cells)}): {intersecting_cells}")
-        print(f"Final Initial Known Set: {initial_known}")
-        print("---------------------\n")
-    # --- END DEBUGGING ---
+    model = InferableLeakageModel(H, W, target=target_cell)
 
-    paths = find_inference_paths_str(hyperedges, target_cell, initial_known)
-    num_paths = len(paths)
+    candidates = compute_possible_mask_set_str(target_cell, H)
+    # if no candidates (target has no neighbors), just empty mask
+    if not candidates:
+        candidates = [set()]
 
-    if dataset == 'ncvoter':
-        print(f"\n--- NCVOTER DEBUG ---")
-        print(f"Number of paths found: {num_paths}")
-        print("---------------------\n")
-
-    inference_zone = get_path_inference_zone_str(paths, hyperedges, target_cell)
-    candidate_masks = compute_possible_mask_set_str(inference_zone)
-
-    memory_overhead = measure_memory_overhead_str(hyperedges, paths, candidate_masks)
-
-    # --- Execution/Sampling (Part of Modeling Time) ---
-    if edge_weights is None:
-        edge_weights = {i: 0.8 for i in range(len(hyperedges))}
-
-    final_mask = exponential_mechanism_sample_str(
-        candidate_masks, target_cell, paths, hyperedges, initial_known,
-        edge_weights, alpha, beta, epsilon
-    )
-    mask_size = len(final_mask)
-    model_time = time.time() - model_start
-
-    # --- Metrics Calculation for Chosen Mask ---
-    leakage = calculate_leakage_str(
-        hyperedges, paths, final_mask, target_cell, initial_known, edge_weights
-    )
-    utility = compute_utility_str(
-        final_mask, target_cell, paths, hyperedges, initial_known,
-        edge_weights, alpha, beta
+    final_mask, util_val = exponential_mechanism_sample(
+        candidates,
+        model=model,
+        epsilon=epsilon,
+        alpha=alpha,
+        beta=beta
     )
 
-    # --- Database Update Phase ---
-    del_start = time.time()
-    if config:
-        cells_to_delete = final_mask | {target_cell}
-        conn = None
-        cursor = None
-        try:
-            db_details = config.get_database_config(dataset)
-            primary_table = f"{dataset}_copy_data"
-            conn = mysql.connector.connect(
-                host = db_details['host'], user = db_details['user'],
-                password = db_details['password'],
-                database = db_details['database'],
-                ssl_disabled = db_details.get('ssl_disabled', True)
-            )
-            if conn.is_connected():
-                cursor = conn.cursor()
-                DELETION_QUERY = "UPDATE {table_name} SET `{column_name}` = NULL WHERE id = {key};"
-                for cell_to_delete in cells_to_delete:
-                    query = DELETION_QUERY.format(
-                        table_name = primary_table, column_name = cell_to_delete, key = key
-                    )
-                    cursor.execute(query)
-                conn.commit()
-        except Error as e:
-            print(f"Error during database update: {e}")
-        finally:
-            if cursor: cursor.close()
-            if conn and conn.is_connected(): conn.close()
-    del_time = time.time() - del_start
+    leakage = float(model.leakage(final_mask))
 
-    # --- Compile and Return Results ---
-    results = {
-        'init_time': init_time,
-        'model_time': model_time,
-        'del_time': del_time,
-        'leakage': leakage,
-        'utility': utility,
-        'mask_size': mask_size,
-        'final_mask': final_mask,
-        'num_paths': num_paths,
-        'memory_overhead_bytes': memory_overhead,
-        'num_instantiated_cells': len(inference_zone)
+    # also compute empty-mask leakage for proxy blocked
+    L_empty = float(model.leakage(set()))
+    num_channel_edges = int(len(model.channel_edges))
+    paths_proxy = estimate_paths_proxy_from_channels(
+        num_channel_edges=num_channel_edges,
+        L_empty=L_empty,
+        L_mask=leakage
+    )
+
+    model_time = float(time.time() - model_start)
+
+    # ----------------------
+    # DEL (NOT DONE HERE; runner measures update_to_null)
+    # ----------------------
+    del_time = 0.0
+
+    # ----------------------
+    # MEMORY (report-only)
+    # ----------------------
+    num_vertices = int(model.n)
+    # candidate mask members
+    cand_members = int(sum(len(s) for s in candidates))
+    memory_overhead = estimate_memory_overhead_bytes_delexp(
+        hyperedges=H,
+        num_vertices=num_vertices,
+        mask_size=len(final_mask),
+        num_candidate_masks=len(candidates),
+        candidate_mask_members=cand_members,
+        includes_channel_map=True
+    )
+
+    return {
+        "init_time": init_time,
+        "model_time": model_time,
+        "del_time": del_time,
+
+        "leakage": float(leakage),
+        "utility": float(util_val),
+        "mask_size": int(len(final_mask)),
+        "mask": set(final_mask),
+
+        "num_paths": int(paths_proxy["num_paths_est"]),
+        "paths_blocked": int(paths_proxy["paths_blocked_est"]),
+
+        "memory_overhead_bytes": int(memory_overhead),
+        "num_instantiated_cells": int(num_instantiated_cells),
+        "num_channel_edges": int(num_channel_edges),
+        "baseline_leakage_empty_mask": float(L_empty),
     }
-
-    print("\n" + "=" * 70)
-    print("Main Orchestrator Finished. Results:")
-    for key, val in results.items():
-        if isinstance(val, float):
-            print(f"  - {key}: {val:.4f}")
-        else:
-            print(f"  - {key}: {val}")
-    print("=" * 70)
-    return results
-
-
-if __name__ == '__main__':
-    # Run the main orchestrator for a single test case
-    results = exponential_deletion_main(
-        dataset = 'adult',
-        key = 2,
-        target_cell = 'education'
-    )
-

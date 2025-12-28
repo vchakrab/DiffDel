@@ -41,8 +41,12 @@ DB_CONFIG = {
     'host': 'localhost',
     'user': 'root', 
     'password': 'my_password',
+    'use_pure': True,
+    'charset': 'utf8mb4',
+    'allow_local_infile': True,
     'ssl_disabled': True,
-    'charset': 'utf8mb4'
+    # Use 'DISABLED' to bypass the need for SSL and public keys
+    # This works for the C-Extension used in version 9.5.0
 }
 
 # ============================================================================
@@ -60,18 +64,18 @@ DATASETS = {
         'domain_file': 'onlineretail_domain_map.json',
         'dc_file': 'topOnlineretailDCs_parsed.py',
         'dc_raw_file': 'topOnlineretailDCs.txt',
-        'dc_config_module': None
+        'dc_config_module': 'DCandDelset.dc_configs.topOnlineretailDCs_parsed'
     },
-    'flights': {
-        'name': 'flights',
-        'database_name': 'flights',
-        'primary_table': 'flights_data',
+    'flight': {
+        'name': 'flight',
+        'database_name': 'flight',
+        'primary_table': 'flight_data',
         'key_column': 'id',  # unique identifier per transaction
-        'tables': ['flights_data'],
-        'domain_file': 'flights_domain_map.json',
-        'dc_file': 'topFlightsDCs_parsed.py',
-        'dc_raw_file': 'topFlightsDCs.txt',
-        'dc_config_module': None
+        'tables': ['flight_data'],
+        'domain_file': 'flight_domain_map.json',
+        'dc_file': 'topFlightDCs_parsed.py',
+        'dc_raw_file': 'topFlightDCs.txt',
+        'dc_config_module': 'DCandDelset.dc_configs.topFlightsDCs_parsed'
     },
     'adult': {
         'name': 'adult',
@@ -93,7 +97,7 @@ DATASETS = {
         'domain_file': 'tax_domain_map.json',
         'dc_file': 'tax_dcs.py',
         'dc_raw_file': 'tax_dcs',
-        'dc_config_module': None
+        'dc_config_module': 'DCandDelset.dc_configs.topTaxDCs_parsed'
     },
     'hospital': {
         'name': 'hospital',
@@ -104,7 +108,7 @@ DATASETS = {
         'domain_file': 'hospital_domain_map.json',
         'dc_file': 'hospital_dcs.py',
         'dc_raw_file': 'hospital_dcs',
-        'dc_config_module': None
+        'dc_config_module': 'DCandDelset.dc_configs.topHospitalDCs_parsed'
     },
     'ncvoter': {
         'name': 'ncvoter',
@@ -115,7 +119,7 @@ DATASETS = {
         'domain_file': 'ncvoter_domain_map.json',
         'dc_file': 'ncvoter_dcs.py',
         'dc_raw_file': 'ncvoter_dcs',
-        'dc_config_module': None
+        'dc_config_module': 'DCandDelset.dc_configs.topNCVoterDCs_parsed'
     },
     'airport': {
         'name': 'airport',
@@ -126,7 +130,7 @@ DATASETS = {
         'domain_file': 'airport_domain_map.json',
         'dc_file': 'airport_dcs.py',
         'dc_raw_file': 'airport_dcs',
-        'dc_config_module': None
+        'dc_config_module': 'DCandDelset.dc_configs.topAirportDCs_parsed'
     },
     'rtf25': {
         'name': 'rtf25',

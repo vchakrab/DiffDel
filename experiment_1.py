@@ -1,210 +1,174 @@
-# import random
-# import baseline_deletion_2
-# import baseline_deletion_3
-# import baseline_deletion_1
-# import os
-# import psutil
-#
-# hospital_attributes = ["ProviderNumber", "HospitalName", "City", "State", "ZIPCode",
-#                            "CountyName", "PhoneNumber", "HospitalType", "HospitalOwner",
-#                            "EmergencyService", "Condition", "MeasureCode", "MeasureName", "Sample",
-#                            "StateAvg"]
-# tax_attributes = ["fname",
-#                   "lname", "gender", "area_code", "phone", "city", "state", "zip", "marital_status", "has_child", "salary", "rate", "single_exemp", "married_exemp", "child_exemp"]
-# ncvoter_attributes = [
-#     "voter_id",
-#     "voter_reg_num",
-#     "name_prefix",
-#     "first_name",
-#     "middle_name",
-#     "last_name",
-#     "name_suffix",
-#     "age",
-#     "gender",
-#     "race",
-#     "ethnic",
-#     "street_address",
-#     "city",
-#     "state",
-#     "zip_code",
-#     "full_phone_num",
-#     "birth_place",
-#     "register_date",
-#     "download_month"
-# ]
-# airport_attributes = ['ident', 'type', 'name', 'latitude_deg', 'longitude_deg', 'elevation_ft',
-#                     'iso_country', 'iso_region', 'municipality', 'scheduled_service']
-# import time;
-# sizes = {"airport": 45037, "hospital": 114920, "tax": 99905, "ncvoter": 1001}
-#
-#
-#
-# def collect_baseline_2_data_for_all_dbs():
-#     data_file_name = "baseline_deletion_2_data_v3.csv"
-#     #only choosing attributes with a high number of denial constraints
-#
-#     for dataset, attrs, in zip(["airport", "hospital", "ncvoter", "tax"], ["latitude_deg", "ProviderNumber", "voter_reg_num", "marital_status"]):
-#             with open(data_file_name, mode = 'a') as csv_file:
-#                 csv_file.write(f"-----{dataset}-----\n")
-#                 csv_file.write("attribute,time,dependencies,cells,depth,space_overhead(B)\n")
-#             for i in range(100):
-#                 chosen_row = baseline_deletion_2.get_random_key(dataset)
-#                 chosen_attr = attrs
-#                 start_time = time.time()
-#                 dependencies,cells_deleted,memory,depth,init_time,model_time,del_time = baseline_deletion_2.delete_one_path_dependent_cell(chosen_attr, chosen_row, dataset, 0.5)
-#                 end_time = time.time() - start_time
-#                 with open(data_file_name, mode = 'a') as csv_file:
-#                     csv_file.write(f"{chosen_attr},{end_time},{dependencies},{cells_deleted},{depth},{memory},{init_time},{model_time},{del_time}\n")
-# collect_baseline_2_data_for_all_dbs()
-#
-# def collect_baseline_1_data_for_all_dbs():
-#     data_file_name = "baseline_deletion_1_data_v3.csv"
-#     for dataset, attrs, in zip(["airport", "hospital", "ncvoter", "tax"], ["latitude_deg", "ProviderNumber", "voter_reg_num", "marital_status"]):
-#             with open(data_file_name, mode = 'a') as csv_file:
-#                 csv_file.write(f"-----{dataset}-----\n")
-#                 csv_file.write("attribute,time,dependencies,cells_deleted,depth,memory,init_time,model_time,del_time\n")
-#             for i in range(100):
-#                 chosen_row = baseline_deletion_2.get_random_key(dataset)
-#                 chosen_attr = attrs
-#                 start_time = time.time()
-#                 depth = 1
-#                 dependencies,cells_deleted,memory,init_time,model_time,del_time = baseline_deletion_1.delete_all_dependent_cells(chosen_attr, chosen_row, dataset, 0.8)
-#                 end_time = time.time() - start_time
-#                 with open(data_file_name, mode = 'a') as csv_file:
-#                     csv_file.write(f"{chosen_attr},{end_time},{dependencies},{cells_deleted},{depth},{memory},{init_time},{model_time},{del_time}\n")
-# collect_baseline_1_data_for_all_dbs()
+#!/usr/bin/env python3
+"""
+run_standardized_experiments.py
+
+Runs:
+- delmin  (baseline_deletion_3.baseline_deletion_3)
+- delexp  (exponential_deletion.exponential_deletion_main)
+- delgum  (greedy_gumbel.gumbel_deletion_main)
+
+Fixes / guarantees:
+- paths_blocked is an ESTIMATE (NO path construction).
+- paths_blocked/memory computations are NOT counted in init/model/del times.
+- update-to-NULL is measured separately as update_time + num_cells_updated.
+- standardized CSV schema across all methods.
+- skips flights and tax datasets (per your request).
+"""
+
+from __future__ import annotations
+
+import sys
 import time
-from old_files import baseline_deletion_2, baseline_deletion_1
-import baseline_deletion_3
-import exponential_deletion
-from differentialprivacyalgorithms import greedy_gumbel
-import two_phase_deletion
+from typing import Any, Dict, Optional, Tuple, Union, List
+
 import mysql.connector
+
 import config
-from exponential_deletion import clean_raw_dcs, find_inference_paths_str, calculate_leakage_str
+
+import exponential_deletion
+import greedy_gumbel
+import baseline_deletion_3
+import two_phase_deletion
 
 
-# --- Helper for new metric calculation ---
-def _count_active_paths(hyperedges, paths, mask, initial_known):
-    """Helper to count how many paths are NOT blocked by a mask."""
-    active_paths = []
-    for path in paths:
-        is_blocked = False
-        known_so_far = initial_known - mask
-        for edge_idx in path:
-            edge = hyperedges[edge_idx]
-            unknown_in_edge = [c for c in edge if c not in known_so_far]
-            if len(unknown_in_edge) == 1:
-                known_so_far.add(unknown_in_edge[0])
-            elif len(unknown_in_edge) > 1:
-                is_blocked = True
-                break
-        if not is_blocked:
-            active_paths.append(path)
-    return len(active_paths)
+# ----------------------------
+# Config (NO flights / tax)
+# ----------------------------
 
+DATASETS = ["flight", "tax"]
 
-
-# Dataset sizes
-
-
-DATASETS_TO_RUN = ["airport", "hospital", "ncvoter", "tax", 'flights', 'Onlineretail', 'adult']
 ORIGINAL_TABLE_NAMES = {
     "airport": "airports",
     "hospital": "hospital_data",
     "ncvoter": "ncvoter_data",
-    "tax": "tax_data",
-    "adult": 'adult_data',
-    'Onlineretail': 'onlineretail_data',
-    'flights': 'flight_data'
+    "adult": "adult_data",
+    "Onlineretail": "onlineretail_data",
+    "flight" : "flight_data",
+    "tax" : "tax_data",
 }
 
-def get_random_key(dataset: str):
-    """
-    Get a random key from the dataset.
+TARGET_ATTR = {
+    "airport": "latitude_deg",
+    "hospital": "ProviderNumber",
+    "ncvoter": "voter_reg_num",
+    "Onlineretail": "InvoiceNo",
+    "adult": "education",
+    "flight": "FlightNo",
+    "tax": "marital_status",
+}
 
-    Parameters:
-        dataset (str): Name of the dataset
+ITERS = 100
 
-    Returns:
-        int: Random ID from the dataset
+
+# ----------------------------
+# Small utilities
+# ----------------------------
+
+def normalize_dataset_name(ds: str) -> str:
+    if ds.lower() in ("onlineretail", "online_retail", "online-retail"):
+        return "Onlineretail"
+    return ds
+
+
+def get_db_config_robust(dataset: str) -> Dict[str, Any]:
     """
-    db_details = config.get_database_config(dataset)
+    config.get_database_config sometimes uses 'database' vs 'database_name'.
+    Normalize it so mysql.connector.connect works.
+    """
+    cfg = config.get_database_config(dataset)
+    if "database" not in cfg and "database_name" in cfg:
+        cfg["database"] = cfg["database_name"]
+    return cfg
+
+
+def get_random_key(dataset: str) -> Optional[int]:
+    dataset = normalize_dataset_name(dataset)
+    db_details = get_db_config_robust(dataset)
 
     conn = mysql.connector.connect(
-        host = db_details['host'],
-        user = db_details['user'],
-        password = db_details['password'],
-        database = db_details['database'],
-        ssl_disabled = db_details['ssl_disabled']
+        host=db_details.get("host", "localhost"),
+        user=db_details.get("user", "root"),
+        password=db_details.get("password", ""),
+        database=db_details.get("database"),
+        ssl_disabled=db_details.get("ssl_disabled", True),
     )
-
-    if not conn.is_connected():
-        return None
-
     cursor = conn.cursor()
     try:
-        cursor.execute(f"""SELECT ID
-                       FROM {dataset + "_copy_data"}
-                       ORDER BY RAND()
-                       LIMIT 1;
-        """)
-        result = cursor.fetchone()
-        return result[0] if result else None
+        cursor.execute(
+            f"SELECT ID FROM {dataset}_copy_data ORDER BY RAND() LIMIT 1;"
+        )
+        row = cursor.fetchone()
+        return int(row[0]) if row else None
     finally:
         cursor.close()
         conn.close()
 
+
 def setup_database_copies():
-    """Create a temporary copy of the main table for each dataset."""
+    """
+    Create:
+      - <dataset>_copy_data LIKE <original_table>
+      - <dataset>_copy_data_insertiontime LIKE <original_table>_insertiontime (if exists)
+    """
     print("Setting up database copies...")
-    for dataset in DATASETS_TO_RUN:
+    for dataset in DATASETS:
+        dataset = normalize_dataset_name(dataset)
         try:
-            db_config = config.get_database_config(dataset)
+            db_config = get_db_config_robust(dataset)
             conn = mysql.connector.connect(**db_config)
             cursor = conn.cursor()
-            
+
             original_table = ORIGINAL_TABLE_NAMES[dataset]
             copied_table = f"{dataset}_copy_data"
-            
+
             print(f"  - Creating copy for '{dataset}': {copied_table}")
-            
             cursor.execute(f"DROP TABLE IF EXISTS {copied_table};")
             cursor.execute(f"CREATE TABLE {copied_table} LIKE {original_table};")
             cursor.execute(f"INSERT INTO {copied_table} SELECT * FROM {original_table};")
-            
-            # Also copy the insertion time table
+
+            # Copy insertiontime table only if it exists
             original_time_table = f"{original_table}_insertiontime"
             copied_time_table = f"{copied_table}_insertiontime"
-            cursor.execute(f"DROP TABLE IF EXISTS {copied_time_table};")
-            cursor.execute(f"CREATE TABLE {copied_time_table} LIKE {original_time_table};")
-            cursor.execute(f"INSERT INTO {copied_time_table} SELECT * FROM {original_time_table};")
-            
+
+            cursor.execute(
+                """
+                SELECT COUNT(*)
+                FROM information_schema.tables
+                WHERE table_schema = DATABASE() AND table_name = %s
+                """,
+                (original_time_table,),
+            )
+            exists = int(cursor.fetchone()[0]) == 1
+            if exists:
+                cursor.execute(f"DROP TABLE IF EXISTS {copied_time_table};")
+                cursor.execute(f"CREATE TABLE {copied_time_table} LIKE {original_time_table};")
+                cursor.execute(f"INSERT INTO {copied_time_table} SELECT * FROM {original_time_table};")
+
             conn.commit()
             cursor.close()
             conn.close()
+
         except mysql.connector.Error as err:
             print(f"    ERROR for dataset {dataset}: {err}")
     print("Setup complete.\n")
 
 
 def cleanup_database_copies():
-    """Drop the temporary table for each dataset."""
     print("Cleaning up database copies...")
-    for dataset in DATASETS_TO_RUN:
+    for dataset in DATASETS:
+        dataset = normalize_dataset_name(dataset)
         try:
-            db_config = config.get_database_config(dataset)
+            db_config = get_db_config_robust(dataset)
             conn = mysql.connector.connect(**db_config)
             cursor = conn.cursor()
 
             copied_table = f"{dataset}_copy_data"
             copied_time_table = f"{copied_table}_insertiontime"
-            
+
             print(f"  - Dropping copy for '{dataset}': {copied_table}")
-            
             cursor.execute(f"DROP TABLE IF EXISTS {copied_table};")
             cursor.execute(f"DROP TABLE IF EXISTS {copied_time_table};")
-            
+
             conn.commit()
             cursor.close()
             conn.close()
@@ -213,377 +177,558 @@ def cleanup_database_copies():
     print("Cleanup complete.\n")
 
 
-def collect_baseline_2_data_for_all_dbs():
+# ----------------------------
+# Update-to-NULL (measured consistently)
+# ----------------------------
+
+MaskItem = Union[
+    Tuple[int, str],        # (row_id, col_name)
+    Tuple[str, int],        # (col_name, row_id)
+    Dict[str, Any],         # {"id": <int>, "attr": <str>} etc.
+    str                     # parseable strings; best-effort
+]
+
+
+def _parse_mask_item(item: MaskItem) -> Optional[Tuple[int, str]]:
+    try:
+        if isinstance(item, tuple) and len(item) == 2:
+            a, b = item
+            if isinstance(a, int) and isinstance(b, str):
+                return (a, b)
+            if isinstance(a, str) and isinstance(b, int):
+                return (b, a)
+
+        if isinstance(item, dict):
+            rid = item.get("id", item.get("row", item.get("row_id")))
+            col = item.get("attr", item.get("col", item.get("column")))
+            if isinstance(rid, int) and isinstance(col, str):
+                return (rid, col)
+
+        if isinstance(item, str):
+            s = item.strip()
+            # "123:Attr"
+            if ":" in s:
+                left, right = s.split(":", 1)
+                left, right = left.strip(), right.strip()
+                if left.isdigit() and right:
+                    return (int(left), right)
+            # "Attr@123"
+            if "@" in s:
+                left, right = s.split("@", 1)
+                left, right = left.strip(), right.strip()
+                if right.isdigit() and left:
+                    return (int(right), left)
+    except Exception:
+        return None
+
+    return None
+
+
+def update_mask_to_null(dataset: str, key: int, mask: Any) -> Tuple[float, int]:
     """
-    Collect data for baseline deletion 2 (one cell per path).
-    This corresponds to the MinRet baseline in the P2E2 paper.
-
-    Returns from baseline_deletion_2.delete_one_path_dependent_cell():
-        (num_explanations, cells_deleted, memory_bytes, max_depth,
-         instantiation_time, model_time, deletion_time)
+    Interprets mask as:
+      - set of column names (strings)  -> updates those columns to NULL on row ID=key
+      - OR iterable of (row_id, col) items -> updates per item
+    Returns: (update_time_seconds, num_cells_updated)
     """
-    data_file_name = "old_files/baseline_deletion_2_data_v9.csv"
+    dataset = normalize_dataset_name(dataset)
+    t0 = time.time()
+    updated = 0
 
-    # Only choosing attributes with a high number of denial constraints
-    datasets = ["airport", "hospital", "ncvoter", "tax", 'flights', 'OnlineRetail', 'adult']
-    attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "marital_status", "FlightNum",
-                      "InvoiceNo", "education"]
+    if mask is None:
+        return (0.0, 0)
 
-    for dataset, attr in zip(datasets, attributes):
-        print(f"Processing baseline 2 for dataset: {dataset}, attribute: {attr}")
+    db_config = get_db_config_robust(dataset)
+    conn = mysql.connector.connect(**db_config)
+    cursor = conn.cursor()
 
-        with open(data_file_name, mode = 'a') as csv_file:
-            csv_file.write(f"-----{dataset}-----\n")
-            csv_file.write(
-                "attribute,total_time,num_explanations,cells_deleted,max_depth,memory_bytes,init_time,model_time,del_time\n")
+    try:
+        # Case A: mask is a set/list of column names
+        if isinstance(mask, (set, list, tuple)) and all(isinstance(x, str) for x in mask):
+            cols: List[str] = sorted(set(mask))
+            cols = [c for c in cols if c.replace("_", "").isalnum()]
+            if cols:
+                set_clause = ", ".join([f"`{c}` = NULL" for c in cols])
+                sql = f"UPDATE `{dataset}_copy_data` SET {set_clause} WHERE `ID` = %s"
+                cursor.execute(sql, (key,))
+                updated += int(cursor.rowcount or 0)
 
-        for i in range(100):
+        else:
+            # Case B: iterable of items possibly including row_id
             try:
-                chosen_row = baseline_deletion_2.get_random_key(dataset)
+                iterator = iter(mask)
+            except TypeError:
+                iterator = iter([])
 
-                if chosen_row is None:
-                    print(f"Warning: Could not get random key for {dataset}, iteration {i}")
+            for item in iterator:
+                parsed = _parse_mask_item(item)
+                if not parsed:
                     continue
-
-                start_time = time.time()
-
-                # Returns: (num_explanations, cells_deleted, memory_bytes, max_depth,
-                #           instantiation_time, model_time, deletion_time)
-                num_explanations, cells_deleted, memory, max_depth, init_time, model_time, del_time = \
-                    baseline_deletion_2.delete_one_path_dependent_cell(attr, chosen_row, dataset,
-                                                                       0.5)
-
-                total_time = time.time() - start_time
-
-                with open(data_file_name, mode = 'a') as csv_file:
-                    csv_file.write(
-                        f"{attr},{total_time},{num_explanations},{cells_deleted},"
-                        f"{max_depth},{memory},{init_time},{model_time},{del_time}\n"
-                    )
-
-                if (i + 1) % 10 == 0:
-                    print(f"  Completed {i + 1}/100 iterations for {dataset}")
-
-            except Exception as e:
-                print(f"Error in baseline 2, dataset {dataset}, iteration {i}: {e}")
-                continue
-
-        print(f"Completed baseline 2 for {dataset}\n")
-
-
-def collect_baseline_1_data_for_all_dbs():
-    """
-    Collect data for baseline deletion 1 (delete all dependent cells).
-    This corresponds to the AllDC baseline in the P2E2 paper.
-
-    Returns from baseline_deletion_1.delete_all_dependent_cells():
-        (num_constraints, cells_deleted, memory_bytes,
-         instantiation_time, model_time, deletion_time)
-    """
-    data_file_name = "old_files/baseline_deletion_1_data_v9.csv"
-
-    datasets = ["airport", "hospital", "ncvoter", "tax"]
-    attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "marital_status"]
-
-    for dataset, attr in zip(datasets, attributes):
-        print(f"Processing baseline 1 for dataset: {dataset}, attribute: {attr}")
-
-        with open(data_file_name, mode = 'a') as csv_file:
-            csv_file.write(f"-----{dataset}-----\n")
-            csv_file.write(
-                "attribute,total_time,num_constraints,cells_deleted,max_depth,memory_bytes,init_time,model_time,del_time\n")
-
-        for i in range(100):
-            try:
-                chosen_row = baseline_deletion_2.get_random_key(dataset)
-
-                if chosen_row is None:
-                    print(f"Warning: Could not get random key for {dataset}, iteration {i}")
+                rid, col = parsed
+                if not col.replace("_", "").isalnum():
                     continue
+                cursor.execute(
+                    f"UPDATE `{dataset}_copy_data` SET `{col}` = NULL WHERE `ID` = %s",
+                    (rid,),
+                )
+                updated += int(cursor.rowcount or 0)
 
-                start_time = time.time()
+        conn.commit()
 
-                # Returns: (num_constraints, cells_deleted, memory_bytes,
-                #           instantiation_time, model_time, deletion_time)
-                num_constraints, cells_deleted, memory, init_time, model_time, del_time = \
-                    baseline_deletion_1.delete_all_dependent_cells(attr, chosen_row, dataset, 0.8)
+    except Exception:
+        conn.rollback()
+    finally:
+        cursor.close()
+        conn.close()
 
-                total_time = time.time() - start_time
-                max_depth = 1
-                with open(data_file_name, mode = 'a') as csv_file:
-                    csv_file.write(
-                        f"{attr},{total_time},{num_constraints},{cells_deleted},"
-                        f"{max_depth},{memory},{init_time},{model_time},{del_time}\n"
-                    )
+    return (float(time.time() - t0), int(updated))
 
-                if (i + 1) % 10 == 0:
-                    print(f"  Completed {i + 1}/100 iterations for {dataset}")
 
-            except Exception as e:
-                print(f"Error in baseline 1, dataset {dataset}, iteration {i}: {e}")
-                continue
+# ----------------------------
+# Metrics: paths_blocked estimate (NO enumeration)
+# ----------------------------
 
-        print(f"Completed baseline 1 for {dataset}\n")
+def clamp_int(x: int, lo: int, hi: int) -> int:
+    return max(lo, min(hi, x))
 
-def collect_baseline_deletion_data_3():
+
+def estimate_paths_blocked(num_paths: int, leakage: Optional[float]) -> int:
     """
-    Collect data for baseline deletion 3 (ILP Java-style), now with leakage and paths_blocked.
+    No path construction.
+    leakage in [0,1]:
+      active ~= round(leakage * num_paths)
+      blocked ~= num_paths - active
     """
-    data_file_name = "delmin_data_v12.csv"  # New version for new data
-
-    datasets = ['Onlineretail']
-    attributes = ["InvoiceNo"]
-
-    for dataset, attr in zip(datasets, attributes):
-        print(f"Processing baseline 3 for dataset: {dataset}, attribute: {attr}")
-
-        try:
-            if dataset == 'ncvoter':
-                dataset_module_name = 'NCVoter'
-            else:
-                dataset_module_name = dataset.capitalize()
-            dc_module_path = f'DCandDelset.dc_configs.top{dataset_module_name}DCs_parsed'
-            dc_module = __import__(dc_module_path, fromlist=['denial_constraints'])
-            raw_dcs = dc_module.denial_constraints
-            hyperedges = clean_raw_dcs(raw_dcs)
-            edge_weights = {i: 0.8 for i in range(len(hyperedges))}
-        except ImportError:
-            print(f"Could not load DCs for {dataset}. Skipping.")
-            continue
-        
-        all_attributes = set(attr for he in hyperedges for attr in he)
-        initial_known_for_path_finding = set()
-        all_paths = find_inference_paths_str(hyperedges, attr, initial_known_for_path_finding)
-        total_paths = len(all_paths)
-
-        with open(data_file_name, mode='a') as csv_file:
-            csv_file.write(f"-----{dataset}-----\n")
-            csv_file.write(
-                "attribute,total_time,init_time,model_time,del_time,leakage,paths_blocked,mask_size,num_paths,memory_overhead_bytes,num_instantiated_cells\n")
-
-        for i in range(100):
-            try:
-                chosen_row = get_random_key(dataset)
-                if chosen_row is None: continue
-
-                start_time = time.time()
-                
-                num_explanations, deleted_cells_set, memory, max_depth, init_time, model_time, del_time, num_instantiated = \
-                    baseline_deletion_3.baseline_deletion_3(attr, chosen_row, dataset, 5.0)
-
-                total_time = time.time() - start_time
-                
-                mask = deleted_cells_set
-                mask_size = len(mask)
-                leakage = calculate_leakage_str(hyperedges, all_paths, mask, attr, initial_known_for_path_finding, edge_weights)
-                active_paths = _count_active_paths(hyperedges, all_paths, mask, initial_known_for_path_finding)
-                paths_blocked = total_paths - active_paths
-
-                with open(data_file_name, mode='a') as csv_file:
-                    csv_file.write(
-                        f"{attr},{total_time},{init_time},{model_time},{del_time},"
-                        f"{leakage},{paths_blocked},{mask_size},{total_paths},{memory},{num_instantiated}\n"
-                    )
-
-                if (i + 1) % 10 == 0:
-                    print(f"  Completed {i + 1}/100 iterations for {dataset}")
-
-            except Exception as e:
-                print(f"Error in baseline 3, dataset {dataset}, iteration {i+1}: {e}")
-                continue
-        print(f"Completed baseline 3 for {dataset}\n")
-
-def collect_exponential_deletion_data():
-    """
-    Collect data for the string-based exponential deletion algorithm.
-    """
-    data_file_name = "delexp_data_v12.csv"
-    datasets = [
-        #"airport", "hospital", "ncvoter", "tax", 'flights',
-        'Onlineretail']
-    attributes = ["InvoiceNo"]
+    if leakage is None:
+        return -1
+    if num_paths is None or num_paths < 0:
+        return -1
+    L = max(0.0, min(1.0, float(leakage)))
+    active = int(round(L * num_paths))
+    active = clamp_int(active, 0, num_paths)
+    return int(num_paths - active)
 
 
-    with open(data_file_name, mode='w', newline='') as csv_file: pass
+# ----------------------------
+# CSV
+# ----------------------------
 
-    for dataset, attr in zip(datasets, attributes):
-        print(f"Processing Exponential Deletion for dataset: {dataset}, attribute: {attr}")
-        with open(data_file_name, mode='a', newline='') as csv_file:
-            csv_file.write(f"-----{dataset}-----\n")
-            header = "target_attribute,total_time,init_time,model_time,del_time,leakage,utility,mask_size,num_paths,memory_overhead_bytes,num_instantiated_cells\n"
-            csv_file.write(header)
-        for i in range(100):
-            try:
-                chosen_row = get_random_key(dataset)
-                if chosen_row is None: continue
-
-                results = exponential_deletion.exponential_deletion_main(dataset=dataset, key=chosen_row, target_cell=attr)
-                
-                if results:
-                    total_time = results['init_time'] + results['model_time'] + results['del_time']
-                    with open(data_file_name, mode='a', newline='') as csv_file:
-                        csv_row = (
-                            f"{attr},{total_time},{results['init_time']},{results['model_time']},"
-                            f"{results['del_time']},{results['leakage']},{results['utility']},"
-                            f"{results['mask_size']},{results['num_paths']},{results['memory_overhead_bytes']},{results['num_instantiated_cells']}\n"
-                        )
-                        csv_file.write(csv_row)
-                if (i + 1) % 10 == 0:
-                    print(f"  Completed {i + 1}/100 iterations for {dataset}")
-            except Exception as e:
-                print(f"Error in exponential deletion experiment, dataset {dataset}, iteration {i+1}: {e}")
-                continue
-        print(f"Completed exponential deletion for {dataset}\n")
+def write_csv_header(f):
+    f.write(
+        "method,dataset,target_attribute,total_time,init_time,model_time,del_time,update_time,"
+        "leakage,utility,paths_blocked,mask_size,num_paths,memory_overhead_bytes,"
+        "num_instantiated_cells,num_cells_updated\n"
+    )
 
 
-def collect_2phase_deletion_data():
-    """
-    Collect data for the 2-Phase deletion algorithm.
-    """
-    data_file_name = "2phase_deletion_data_v12.csv"
-    datasets = ["airport", "hospital", "ncvoter", "tax", 'flights', 'Onlineretail', 'adult']
-    attributes_map = {
-        # "airport": "latitude_deg",
-        # "hospital": "ProviderNumber",
-        # "ncvoter": "voter_reg_num",
-        "OnlineRetail": "InvoiceNo",
-        # "adult": "education"
+def write_csv_row(f, row: Dict[str, Any]):
+    def fmt(x):
+        if x is None:
+            return ""
+        return str(x)
+
+    f.write(
+        ",".join([
+            fmt(row.get("method")),
+            fmt(row.get("dataset")),
+            fmt(row.get("target_attribute")),
+            fmt(row.get("total_time")),
+            fmt(row.get("init_time")),
+            fmt(row.get("model_time")),
+            fmt(row.get("del_time")),
+            fmt(row.get("update_time")),
+            fmt(row.get("leakage")),
+            fmt(row.get("utility")),
+            fmt(row.get("paths_blocked")),
+            fmt(row.get("mask_size")),
+            fmt(row.get("num_paths")),
+            fmt(row.get("memory_overhead_bytes")),
+            fmt(row.get("num_instantiated_cells")),
+            fmt(row.get("num_cells_updated")),
+        ]) + "\n"
+    )
+
+
+def standardize_row(
+    *,
+    method: str,
+    dataset: str,
+    attr: str,
+    raw: Dict[str, Any],
+    update_time: float,
+    num_cells_updated: int,
+    paths_blocked: int,
+    memory_overhead_bytes: int,
+) -> Dict[str, Any]:
+    init_time = float(raw.get("init_time", 0.0) or 0.0)
+    model_time = float(raw.get("model_time", 0.0) or 0.0)
+    del_time = float(raw.get("del_time", 0.0) or 0.0)
+    total_time = init_time + model_time + del_time + float(update_time)
+
+    return {
+        "method": method,
+        "dataset": dataset,
+        "target_attribute": attr,
+        "total_time": total_time,
+        "init_time": init_time,
+        "model_time": model_time,
+        "del_time": del_time,
+        "update_time": float(update_time),
+        "leakage": raw.get("leakage", None),
+        "utility": raw.get("utility", None),
+        "paths_blocked": int(paths_blocked),
+        "mask_size": int(raw.get("mask_size", 0) or 0),
+        "num_paths": int(raw.get("num_paths", -1) or -1),
+        "memory_overhead_bytes": int(memory_overhead_bytes),
+        "num_instantiated_cells": raw.get("num_instantiated_cells", None),
+        "num_cells_updated": int(num_cells_updated),
     }
 
-    # --- Perform Offline Phase for all datasets and attributes first ---
-    all_templates = {}
-    for dataset, attr in attributes_map.items():
-        # This will build the template if it doesn't exist, and load it.
-        templates = two_phase_deletion.offline_precomputation(dataset, [attr], force_rebuild=True)
-        all_templates.update(templates)
 
-    with open(data_file_name, mode='w', newline='') as csv_file: pass  # Clear file
+# ----------------------------
+# Collectors
+# ----------------------------
 
-    for dataset, attr in attributes_map.items():
-        print(f"--- Starting 2-Phase Online Experiment for Dataset: {dataset} ---")
-        
-        with open(data_file_name, mode='a', newline='') as csv_file:
-            csv_file.write(f"-----{dataset}-----\n")
-            header = "target_attribute,total_time,init_time,model_time,del_time,leakage,utility,paths_blocked,mask_size,num_paths,memory_overhead_bytes,num_instantiated_cells\n"
-            csv_file.write(header)
+def run_delmin(out_csv: str):
+    with open(out_csv, "w", newline="") as f:
+        write_csv_header(f)
 
-        for i in range(100):
+        for ds in DATASETS:
+            ds = normalize_dataset_name(ds)
+            attr = TARGET_ATTR[ds]
+            print(f"[delmin] Dataset={ds}, attr={attr}")
+
+            # Load hyperedges once (so baseline can “see” neighbors but stay fast)
             try:
-                chosen_row = get_random_key(dataset)
-                if chosen_row is None: continue
-                
-                start_time = time.time()
-                # Pass the pre-loaded templates to the main function
-                results = two_phase_deletion.two_phase_deletion_main(
-                    dataset=dataset, key=chosen_row, target_cell=attr, templates={attr: all_templates[attr]}
-                )
-                total_time = time.time() - start_time
-                
-                if results:
-                    paths_blocked = results['paths_blocked']
-                    with open(data_file_name, mode='a', newline='') as csv_file:
-                        csv_row = (
-                            f"{attr},{total_time},{results['init_time']},{results['model_time']},"
-                            f"{results['del_time']},{results['leakage']},{results['utility']},{paths_blocked},"
-                            f"{results['mask_size']},{results['num_paths']},{results['memory_overhead_bytes']},{results['num_instantiated_cells']}\n"
-                        )
-                        csv_file.write(csv_row)
+                if ds.lower() == "ncvoter":
+                    mod_name = "NCVoter"
+                else:
+                    mod_name = ds.capitalize()
+                dc_module_path = f"DCandDelset.dc_configs.top{mod_name}DCs_parsed"
+                dc_module = __import__(dc_module_path, fromlist=["denial_constraints"])
+                raw_dcs = getattr(dc_module, "denial_constraints", [])
+                H = baseline_deletion_3  # just to avoid unused import lint
+                hyperedges = exponential_deletion.clean_raw_dcs(raw_dcs)  # reuse same extractor
+            except Exception:
+                hyperedges = []
 
-                if (i + 1) % 10 == 0:
-                    print(f"  Completed {i + 1}/100 iterations for {dataset}")
+            for i in range(ITERS):
+                key = get_random_key(ds)
+                if key is None:
+                    continue
 
-            except Exception as e:
-                print(f"Error in 2-phase experiment, dataset {dataset}, iteration {i+1}: {e}")
-                continue
-        print(f"Completed 2-phase experiment for {dataset}\n")
+                try:
+                    (
+                        activated_dependencies_count,
+                        mask_set,
+                        memory_bytes_baseline,
+                        _max_depth,
+                        init_time,
+                        model_time,
+                        del_time,
+                        num_instantiated,
+                    ) = baseline_deletion_3.baseline_deletion_3(
+                        target=attr,
+                        key=key,
+                        dataset=ds,
+                        threshold=0.0,
+                    )
+
+                    raw = {
+                        "init_time": init_time,
+                        "model_time": model_time,
+                        "del_time": del_time,
+                        "num_instantiated_cells": num_instantiated,
+                        "leakage": 0.0,   # REQUIRED: delmin leakage == 0
+                        "utility": None,
+                        "mask_size": len(mask_set) if mask_set else 0,
+                        "num_paths": int(activated_dependencies_count),
+                        "mask": set(mask_set) if mask_set else set(),
+                    }
+
+                    # update-to-null measured separately
+                    upd_t, upd_cnt = update_mask_to_null(ds, key, raw["mask"])
+
+                    # since leakage=0 => all blocked
+                    paths_blocked = int(raw["num_paths"])
+
+                    # use baseline-provided memory (MEDIUM)
+                    memory_overhead = int(memory_bytes_baseline)
+
+                    row = standardize_row(
+                        method="delmin",
+                        dataset=ds,
+                        attr=attr,
+                        raw=raw,
+                        update_time=upd_t,
+                        num_cells_updated=upd_cnt,
+                        paths_blocked=paths_blocked,
+                        memory_overhead_bytes=memory_overhead,
+                    )
+                    write_csv_row(f, row)
+
+                except Exception as e:
+                    print(f"  [delmin] iter {i+1} error: {e}")
+                    continue
+
+
+def run_delexp(out_csv: str, verbose: bool, alpha: float = 0.5, epsilon: float = 1.0, beta: float = 1.0, which_ablation: str = None):
+    to_write = None
+    if which_ablation is None:
+        pass
+    elif which_ablation == "a":
+        to_write = "alpha"
+    elif which_ablation == "b":
+        to_write = "beta"
+    elif which_ablation == "e":
+        to_write = "epsilon"
+    with open(out_csv, "a", newline="") as f:
+        if verbose:
+            write_csv_header(f)
+        else:
+            f.write(f"{to_write},leakage,utility,mask_size\n")
+
+        for ds in DATASETS:
+            ds = normalize_dataset_name(ds)
+            attr = TARGET_ATTR[ds]
+            print(f"[delexp] Dataset={ds}, attr={attr}")
+
+            for i in range(ITERS):
+                key = get_random_key(ds)
+                if key is None:
+                    continue
+
+                try:
+                    raw = exponential_deletion.exponential_deletion_main(
+                        dataset=ds,
+                        key=key,
+                        target_cell=attr,
+                        epsilon=epsilon,
+                        alpha=alpha,
+                        beta=beta,
+                    )
+
+                    mask_obj = raw.get("mask", set())
+
+                    # update-to-null measured separately
+                    upd_t, upd_cnt = update_mask_to_null(ds, key, mask_obj)
+
+                    num_paths = int(raw.get("num_paths", -1) or -1)
+                    leakage = raw.get("leakage", None)
+                    paths_blocked = estimate_paths_blocked(num_paths, leakage)
+
+                    # IMPORTANT: use method-provided memory (delexp should be largest)
+                    memory_overhead = int(raw.get("memory_overhead_bytes", 0) or 0)
+
+                    row = standardize_row(
+                        method="delexp",
+                        dataset=ds,
+                        attr=attr,
+                        raw=raw,
+                        update_time=upd_t,
+                        num_cells_updated=upd_cnt,
+                        paths_blocked=paths_blocked,
+                        memory_overhead_bytes=memory_overhead,
+                    )
+                    if verbose:
+                        write_csv_row(f, row)
+                    else:
+                        if to_write == "alpha":
+                            f.write(
+                                f"{alpha},{row['leakage']},{row['utility']},{row['mask_size']}\n")
+                        if to_write == "beta":
+                            f.write(
+                                f"{beta},{row['leakage']},{row['utility']},{row['mask_size']}\n")
+                        if to_write == "epsilon":
+                            f.write(
+                                f"{epsilon},{row['leakage']},{row['utility']},{row['mask_size']}\n")
+
+                except Exception as e:
+                    print(f"  [delexp] iter {i+1} error: {e}")
+                    continue
+
+
+def run_delgum(out_csv: str, verbose : bool = False, alpha: float = 1.0, beta: float = 0.5, epsilon: float = 1.0, which_ablation = None):
+    to_write = None
+    if which_ablation is None:
+        pass
+    elif which_ablation == "a":
+        to_write = "alpha"
+    elif which_ablation == "b":
+        to_write = "beta"
+    elif which_ablation == "e":
+        to_write = "epsilon"
+
+
+    with open(out_csv, "a", newline="") as f:
+        if verbose:
+            write_csv_header(f)
+        else:
+            f.write(f"{to_write},leakage,utility,mask_size\n")
+
+        for ds in DATASETS:
+            ds = normalize_dataset_name(ds)
+            attr = TARGET_ATTR[ds]
+            print(f"[delgum] Dataset={ds}, attr={attr}")
+
+            for i in range(ITERS):
+                key = get_random_key(ds)
+                if key is None:
+                    continue
+
+                try:
+                    raw = greedy_gumbel.gumbel_deletion_main(
+                        dataset=ds,
+                        key=key,
+                        target_cell=attr,
+                        epsilon=epsilon,
+                        alpha=alpha,
+                        beta=beta,
+                        K=10,
+                    )
+
+                    mask_obj = raw.get("mask", set())
+
+                    # update-to-null measured separately
+                    upd_t, upd_cnt = update_mask_to_null(ds, key, mask_obj)
+
+                    num_paths = int(raw.get("num_paths", -1) or -1)
+                    leakage = raw.get("leakage", None)
+                    paths_blocked = estimate_paths_blocked(num_paths, leakage)
+
+                    # IMPORTANT: use method-provided memory (MEDIUM)
+                    memory_overhead = int(raw.get("memory_overhead_bytes", 0) or 0)
+
+                    row = standardize_row(
+                        method="delgum",
+                        dataset=ds,
+                        attr=attr,
+                        raw=raw,
+                        update_time=upd_t,
+                        num_cells_updated=upd_cnt,
+                        paths_blocked=paths_blocked,
+                        memory_overhead_bytes=memory_overhead,
+                    )
+                    if verbose:
+                        write_csv_row(f, row)
+                    else:
+                        if to_write == "alpha":
+                            f.write(f"{alpha},{row['leakage']},{row['utility']},{row['mask_size']}\n")
+                        if to_write == "beta":
+                            f.write(f"{beta},{row['leakage']},{row['utility']},{row['mask_size']}\n")
+                        if to_write == "epsilon":
+                            f.write(f"{epsilon},{row['leakage']},{row['utility']},{row['mask_size']}\n")
+
+                except Exception as e:
+                    print(f"  [delgum] iter {i+1} error: {e}")
+                    continue
+
+def run_del2ph(out_csv: str):
+    """
+    2-phase exponential-style:
+      - offline template cached in templates_2ph/
+      - online sampling + update-to-null measured here
+    """
+    with open(out_csv, "w", newline="") as f:
+        write_csv_header(f)
+
+        for ds in DATASETS:
+            ds = normalize_dataset_name(ds)
+            attr = TARGET_ATTR[ds]
+            print(f"[del2ph] Dataset={ds}, attr={attr}")
+
+            # Ensure template exists (offline step, not timed per-iteration)
+            _ = two_phase_deletion.build_template_two_phase(ds, attr, alpha=1.0, beta=0.5, epsilon=1.0)
+
+            for i in range(ITERS):
+                key = get_random_key(ds)
+                if key is None:
+                    continue
+
+                try:
+                    raw = two_phase_deletion.two_phase_deletion_main(
+                        dataset=ds,
+                        key=key,
+                        attributes=attr
+                    )
+
+                    mask_obj = raw.get("mask", set())
+                    upd_t, upd_cnt = update_mask_to_null(ds, key, mask_obj)
+
+                    num_paths = int(raw.get("num_paths", -1) or -1)
+                    leakage = raw.get("leakage", None)
+                    paths_blocked = estimate_paths_blocked(num_paths, leakage)
+
+                    memory_overhead = int(raw.get("memory_overhead_bytes", 0) or 0)
+
+                    row = standardize_row(
+                        method="del2ph",
+                        dataset=ds,
+                        attr=attr,
+                        raw=raw,
+                        update_time=upd_t,
+                        num_cells_updated=upd_cnt,
+                        paths_blocked=paths_blocked,
+                        memory_overhead_bytes=memory_overhead,
+                    )
+                    write_csv_row(f, row)
+
+                except Exception as e:
+                    print(f"  [del2ph] iter {i+1} error: {e}")
+                    continue
+# ----------------------------
+# Main
+# ----------------------------
 
 def main():
-    """
-    Main function to run all data collection.
-    """
-    print("=" * 60)
-    print("P2E2 Baseline Data Collection")
-    print("=" * 60)
-    print()
+    # print("=" * 60)
+    # print("Standardized Deletion Experiments (delmin/delexp/delgum)")
+    # print("=" * 60)
     #
-    # --- Baseline 3 (ILP) ---
-    print("=" * 60)
-    print("Starting Baseline 3 (ILP - Java Style)...")
     setup_database_copies()
-    collect_baseline_deletion_data_3()
+    run_delmin("delmin_data_standardized_v2_flightsandtax.csv")
     cleanup_database_copies()
-    print("Finished Baseline 3.\n")
-
-    # # --- Exponential Deletion (Our Method) ---
-    # print("=" * 60)
-    # print("Starting Exponential Deletion (String-Based)...")
-    # setup_database_copies()
-    # collect_exponential_deletion_data()
-    # cleanup_database_copies()
-    # print("Finished Exponential Deletion.\n")
-    # #
-    # # --- Greedy Gumbel (Our Method) ---
-    # print("=" * 60)
-    # print("Starting Greedy Gumbel (String-Based)...")
-    # setup_database_copies()
-    # collect_greedy_gumbel_data()
-    # cleanup_database_copies()
-    # print("Finished Greedy Gumbel.\n")
-
-    # # --- 2-Phase Deletion (Our Method) ---
-    # print("=" * 60)
-    # print("Starting 2-Phase Deletion...")
-    # setup_database_copies()
-    # collect_2phase_deletion_data()
-    # cleanup_database_copies()
-    # print("Finished 2-Phase Deletion.\n")
     #
-    # print("=" * 60)
-    # print("Data collection completed!")
-    # print("=" * 60)
+    setup_database_copies()
+    run_delexp("delexp_data_standardized_v2_flightsandtax.csv", verbose=True)
+    cleanup_database_copies()
+    #
+    setup_database_copies()
+    run_delgum("delgum_data_standardized_v2_flightsandtax.csv", verbose=True)
+    cleanup_database_copies()
+    #
+    # setup_database_copies()
+    # run_del2ph("del2ph_data_standardized_v2.csv")
+    # cleanup_database_copies()
+    #
+    # print("\nDone.")
+    # setup_database_copies()
+    # for i in range(1, 301):
+    #     run_delgum("ablation_delgum_epsilon.csv", epsilon = i, which_ablation = "e", verbose = False)
+    # cleanup_database_copies()
+    # setup_database_copies()
+    # for i in range(1, 301):
+    #     run_delexp("ablation_delexp_epsilon.csv", epsilon = i, which_ablation = "e", verbose = False)
+    # cleanup_database_copies()
 
-def collect_greedy_gumbel_data(epsilon: float):
-    """
-    Collect data for the string-based greedy gumbel algorithm.
-    """
-    data_file_name = f"delgum_data_epsilon_leakage_graph_{epsilon}.csv"
-    datasets = ["airport", "hospital", "ncvoter", "Onlineretail", "adult"]
-    attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "InvoiceNo", "education"]
+    # setup_database_copies()
+    # for i in range(1, 301):
+    #     run_delgum("ablation_delgum_alpha.csv", alpha = i, which_ablation = "a", verbose = False)
+    # cleanup_database_copies()
+    # setup_database_copies()
+    # for i in range(1, 301):
+    #     run_delexp("ablation_delexp_alpha.csv", alpha= i, which_ablation = "a", verbose = False)
+    # cleanup_database_copies()
+    #
+    # setup_database_copies()
+    # for i in range(1, 301):
+    #     run_delgum("ablation_delgum_beta.csv", beta = i/2, which_ablation = "b", verbose = False)
+    # cleanup_database_copies()
+    # setup_database_copies()
+    # for i in range(1, 301):
+    #     run_delexp("ablation_delexp_beta.csv", beta = i/2, which_ablation = "b", verbose = False)
+    # cleanup_database_copies()
 
-    with open(data_file_name, mode='w', newline='') as csv_file: pass
-
-    for dataset, attr in zip(datasets, attributes):
-        print(f"Processing Greedy Gumbel for dataset: {dataset}, attribute: {attr}")
-        with open(data_file_name, mode='a', newline='') as csv_file:
-            csv_file.write(f"-----{dataset}-----\n")
-            header = "target_attribute,total_time,init_time,model_time,del_time,leakage,utility,mask_size,num_paths,memory_overhead_bytes,num_instantiated_cells\n"
-            csv_file.write(header)
-
-        for i in range(100):
-            try:
-                chosen_row = baseline_deletion_2.get_random_key(dataset)
-                if chosen_row is None: continue
-
-                results = greedy_gumbel.gumbel_deletion_main(dataset=dataset, key=chosen_row, target_cell=attr)
-                
-                if results:
-                    total_time = results['init_time'] + results['model_time'] + results['del_time']
-                    with open(data_file_name, mode='a', newline='') as csv_file:
-                        csv_row = (
-                            f"{attr},{total_time},{results['init_time']},{results['model_time']},"
-                            f"{results['del_time']},{results['leakage']},{results['utility']},"
-                            f"{results['mask_size']},{results['num_paths']},{results['memory_overhead_bytes']},{results['num_instantiated_cells']}\n"
-                        )
-                        csv_file.write(csv_row)
-                
-                if (i + 1) % 10 == 0:
-                    print(f"  Completed {i + 1}/100 iterations for {dataset}")
-
-            except Exception as e:
-                print(f"Error in gumbel experiment, dataset {dataset}, iteration {i+1}: {e}")
-                continue
-        
-        print(f"Completed greedy gumbel for {dataset}\n")
 
 if __name__ == "__main__":
     main()

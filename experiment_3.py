@@ -427,7 +427,8 @@ def collect_exponential_deletion_data(epsilon, verbose: bool = False):
 
         # Load weights
         try:
-            weights_module = __import__(f"weights.weights_corrected.{dataset}_weights", fromlist=["WEIGHTS"])
+            weights_module = __import__(f"weights.weights_corrected.{dataset}_weights",
+                                        fromlist = ["WEIGHTS"])
             weights_list = weights_module.WEIGHTS
             edge_weights = {i: weights_list[i] for i in range(len(weights_list))}
         except (ImportError, IndexError):
@@ -441,8 +442,9 @@ def collect_exponential_deletion_data(epsilon, verbose: bool = False):
 
                 results = exponential_deletion.exponential_deletion_main(dataset = dataset,
                                                                          key = chosen_row,
-                                                                         target_cell = attr,epsilon=epsilon,
-                                                                         edge_weights=edge_weights)
+                                                                         target_cell = attr,
+                                                                         epsilon = epsilon,
+                                                                         edge_weights = edge_weights)
 
                 if results:
                     total_time = results['init_time'] + results['model_time'] + results['del_time']
@@ -582,30 +584,32 @@ def main():
 
 import csv
 
+
 def collect_greedy_gumbel_data(epsilon: float, verbose: bool = False):
-    data_file_name = "delgum_data_epsilon_leakage_graph_v4.csv"
+    data_file_name = "delgum_data_epsilon_leakage_graph_v8_gpt_fixed_script.csv"
     datasets = ["airport", "hospital", "ncvoter", "Onlineretail", "adult"]
     attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "InvoiceNo", "education"]
 
     for dataset, attr in zip(datasets, attributes):
         print(f"Processing Greedy Gumbel for dataset: {dataset}, attribute: {attr}")
 
-        with open(data_file_name, mode="a", newline="") as f:
+        with open(data_file_name, mode = "a", newline = "") as f:
             writer = csv.writer(f)
             writer.writerow([f"-----{dataset}-----"])
 
             if verbose:
                 writer.writerow([
-                    "target_attribute","total_time","init_time","model_time","del_time",
-                    "leakage","utility","mask_size","num_paths","memory_overhead_bytes",
+                    "target_attribute", "total_time", "init_time", "model_time", "del_time",
+                    "leakage", "utility", "mask_size", "num_paths", "memory_overhead_bytes",
                     "num_instantiated_cells"
                 ])
             else:
-                writer.writerow(["epsilon","leakage","utility","mask_size"])
-        
+                writer.writerow(["epsilon", "leakage", "utility", "mask_size"])
+
         # Load weights
         try:
-            weights_module = __import__(f"weights.weights_corrected.{dataset}_weights", fromlist=["WEIGHTS"])
+            weights_module = __import__(f"weights.weights_corrected.{dataset}_weights",
+                                        fromlist = ["WEIGHTS"])
             weights_list = weights_module.WEIGHTS
             edge_weights = {i: weights_list[i] for i in range(len(weights_list))}
         except (ImportError, IndexError):
@@ -619,17 +623,17 @@ def collect_greedy_gumbel_data(epsilon: float, verbose: bool = False):
                     continue
 
                 results = greedy_gumbel.gumbel_deletion_main(
-                    dataset=dataset,
-                    key=chosen_row,
-                    target_cell=attr,
-                    epsilon=epsilon,
-                    edge_weights=edge_weights
+                    dataset = dataset,
+                    key = chosen_row,
+                    target_cell = attr,
+                    epsilon = epsilon,
+                    edge_weights = edge_weights
                 )
 
                 if results:
                     total_time = results["init_time"] + results["model_time"] + results["del_time"]
 
-                    with open(data_file_name, mode="a", newline="") as f:
+                    with open(data_file_name, mode = "a", newline = "") as f:
                         writer = csv.writer(f)
                         if verbose:
                             writer.writerow([
@@ -641,7 +645,8 @@ def collect_greedy_gumbel_data(epsilon: float, verbose: bool = False):
                             ])
                         else:
                             writer.writerow([
-                                epsilon, results["leakage"], results["utility"], results["mask_size"]
+                                epsilon, results["leakage"], results["utility"],
+                                results["mask_size"]
                             ])
 
             except Exception as e:

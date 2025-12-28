@@ -68,4 +68,4 @@ def convert_constraints(input_file, output_file_py):
 os.makedirs('dc_configs', exist_ok=True)
 
 # Convert flights DC file
-convert_constraints('DCandDelset/dc_configs/raw_constraints/flights_0.0_dcs', 'DCandDelset/dc_configs/topFlightsDCs_parsed.py')
+convert_constraints('DCandDelset/dc_configs/raw_constraints/flights_0.0_dcs', 'DCandDelset/dc_configs/topFlightDCs_parsed.py')

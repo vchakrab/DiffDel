@@ -10,14 +10,42 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="$USER_HOME$/Downloads/hospital_ALL_DCs_weights_CORRECTED.csv">
+        <entry key="/ablation_delexp_alpha.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="$USER_HOME$/Downloads/onlineretail_ALL_DCs_weights.csv">
+        <entry key="/ablation_delexp_beta.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/ablation_delexp_epsilon.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/ablation_delgum_alpha.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/ablation_delgum_beta.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/ablation_delgum_epsilon.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -52,6 +80,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/csv_files/ncvoter.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/delexp_data_collect_epsilon.csv">
           <value>
             <Attribute>
@@ -73,7 +108,35 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/delexp_data_standardized.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delexp_data_standardized_v2.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/delexp_data_v12.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delexp_data_v13.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delexp_data_v14.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -108,7 +171,70 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/delgum_data_epsilon_leakage_graph_v5.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delgum_data_epsilon_leakage_graph_v8_gpt_fixed_script.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delgum_data_standardized.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delgum_data_standardized_v2.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/delgum_data_v12.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delgum_data_v13.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delgum_data_v14.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delmin_data_standardized.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delmin_data_standardized_v1.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delmin_data_standardized_v2.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -122,7 +248,35 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/delmin_data_v13.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delmin_data_v14.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/experiment_2_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/old_files/baseline_deletion_3_data_v11.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/plots/epsilon_sweep_summary.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -151,6 +305,13 @@
           </value>
         </entry>
         <entry key="/weights/ncvoter_ALL_DCs_weights.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/weights/onlineretail_ALL_DCs_weights.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
