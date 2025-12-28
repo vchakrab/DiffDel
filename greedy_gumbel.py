@@ -368,7 +368,7 @@ def gumbel_deletion_main(
     epsilon: float = 1.0,
     alpha: float = 1.0,
     beta: float = 0.5,
-    K: int = 10,
+    K: int = 40,
 ) -> Dict[str, Any]:
     # -------------------------
     # INIT (timed)

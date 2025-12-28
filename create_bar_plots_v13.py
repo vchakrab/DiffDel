@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-
-import csv
-import matplotlib.pyplot as plt
-import numpy as np
 import os
+import csv
+import numpy as np
+import matplotlib.pyplot as plt
 
 # ------------------------------------------------------------------
-# Global matplotlib + LaTeX configuration (ALL TEXT IN })
+# Global matplotlib configuration
 # ------------------------------------------------------------------
 plt.rcParams.update({
     "text.usetex": False,
@@ -19,159 +18,219 @@ plt.rcParams.update({
 })
 
 # ------------------------------------------------------------------
-# CSV Parsing
+# CSV Parsing (NEW format: one header, with method + dataset columns)
 # ------------------------------------------------------------------
-def parse_csv_for_bar_plots(file_path):
-    data = {}
+REQUIRED_COLS = {
+    "method", "dataset",
+    "init_time", "model_time", "update_time",
+    "memory_overhead_bytes"
+}
+
+def parse_standardized_csv(file_path: str):
+    """
+    Reads a 'standardized' CSV with columns like:
+      method,dataset,...,init_time,model_time,del_time,update_time,...,memory_overhead_bytes,...
+    Returns: list of dict rows with normalized method/dataset and numeric metrics.
+    """
     if not os.path.exists(file_path):
-        print(f"Warning: File not found, skipping: {file_path}")
-        return data
+        print(f"[WARN] File not found: {file_path}")
+        return []
 
-    with open(file_path, 'r') as f:
-        reader = csv.reader(f)
-        current_dataset = None
-        header_map = {}
+    rows = []
+    with open(file_path, "r", encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        if reader.fieldnames is None:
+            print(f"[WARN] No header found in: {file_path}")
+            return []
 
-        for row in reader:
-            if not row:
-                continue
+        fieldnames = [h.strip() for h in reader.fieldnames]
+        fieldset = set(fieldnames)
 
-            if row[0].startswith('-----'):
-                current_dataset = row[0].strip('-').lower()
-                data.setdefault(current_dataset, [])
-                header_map = {}
-                continue
+        missing = REQUIRED_COLS - fieldset
+        if missing:
+            print(f"[WARN] Missing required columns in {file_path}: {sorted(missing)}")
+            # still try to read; but metrics may be zeros
 
-            if not current_dataset:
-                continue
-
-            if not header_map:
-                header_map = {h.strip(): i for i, h in enumerate(row)}
-                continue
-
+        for r in reader:
             try:
-                init_time = float(row[header_map['init_time']]) if 'init_time' in header_map else 0.0
-                model_time = float(row[header_map['model_time']]) if 'model_time' in header_map else 0.0
-                del_time = float(row[header_map['del_time']]) if 'del_time' in header_map else 0.0
+                method = (r.get("method") or "").strip().lower()
+                dataset = (r.get("dataset") or "").strip().lower()
 
-                mem_key = next((k for k in ['memory_overhead_bytes', 'memory_bytes'] if k in header_map), None)
-                memory = float(row[header_map[mem_key]]) if mem_key else 0.0
+                if not method or not dataset:
+                    continue
 
-                data[current_dataset].append({
-                    'init_time': init_time,
-                    'model_time': model_time,
-                    'del_time': del_time,
-                    'memory': memory
+                def fnum(key, default=0.0):
+                    v = r.get(key, "")
+                    if v is None:
+                        return default
+                    v = str(v).strip()
+                    if v == "":
+                        return default
+                    return float(v)
+
+                init_time = fnum("init_time", 0.0)
+                model_time = fnum("model_time", 0.0)
+                update_time = fnum("update_time", 0.0)
+
+                mem_bytes = fnum("memory_overhead_bytes", 0.0)
+
+                rows.append({
+                    "method": method,
+                    "dataset": dataset,
+                    "init_time": init_time,
+                    "model_time": model_time,
+                    "update_time": update_time,
+                    "memory_overhead_bytes": mem_bytes
                 })
             except Exception:
+                # skip malformed row
                 continue
 
-    return data
+    return rows
 
 # ------------------------------------------------------------------
-# Averaging
+# Aggregation
 # ------------------------------------------------------------------
-def calculate_average_metrics(dataset_data):
-    if not dataset_data:
-        return dict(init_time_avg=0, model_time_avg=0, del_time_avg=0, memory_avg=0)
+def mean_of(arr):
+    arr = np.asarray(arr, dtype=float)
+    if arr.size == 0:
+        return 0.0
+    return float(np.mean(arr))
 
-    n = len(dataset_data)
-    return {
-        'init_time_avg': sum(d['init_time'] for d in dataset_data) / n,
-        'model_time_avg': sum(d['model_time'] for d in dataset_data) / n,
-        'del_time_avg': sum(d['del_time'] for d in dataset_data) / n,
-        'memory_avg': sum(d['memory'] for d in dataset_data) / n,
-    }
+def aggregate_metrics(rows, datasets, methods):
+    """
+    Returns:
+      metrics[method][dataset] = dict(init_time_avg, model_time_avg, update_time_avg, memory_mb_avg)
+    """
+    metrics = {m: {ds: {
+        "init_time_avg": 0.0,
+        "model_time_avg": 0.0,
+        "update_time_avg": 0.0,
+        "memory_mb_avg": 0.0,
+    } for ds in datasets} for m in methods}
+
+    # bucket
+    buckets = {(m, ds): [] for m in methods for ds in datasets}
+    for r in rows:
+        m = r["method"]
+        ds = r["dataset"]
+        if m in methods and ds in datasets:
+            buckets[(m, ds)].append(r)
+
+    # compute means
+    for m in methods:
+        for ds in datasets:
+            b = buckets[(m, ds)]
+            metrics[m][ds] = {
+                "init_time_avg": mean_of([x["init_time"] for x in b]),
+                "model_time_avg": mean_of([x["model_time"] for x in b]),
+                "update_time_avg": mean_of([x["update_time"] for x in b]),
+                "memory_mb_avg": mean_of([x["memory_overhead_bytes"] for x in b]) / (1024.0 ** 2),
+            }
+
+    return metrics
 
 # ------------------------------------------------------------------
 # Plotting
 # ------------------------------------------------------------------
-def create_combined_bar_plot(all_metrics, datasets, baselines):
-    fig, axes = plt.subplots(1, len(datasets), figsize=(20, 8))
-    axes = axes.flatten()
+def create_combined_bar_plot(metrics, datasets, method_order):
+    fig, axes = plt.subplots(1, len(datasets), figsize=(3.8 * len(datasets), 7))
+    if len(datasets) == 1:
+        axes = [axes]
+    else:
+        axes = axes.flatten()
 
     colors = {
-        'Instantiation Time': '#56B4E9',
-        'Modeling Time': '#D55E00',
-        'Update to NULL Time': '#009E73',
-        'Model Size': 'brown'
+        "Instantiation Time": "#56B4E9",
+        "Modeling Time": "#D55E00",
+        "Update to NULL Time": "#009E73",
+        "Model Size": "brown",
     }
 
+    # display labels for methods
     label_map = {
-        "Greedy Gumbel": r"DelGum",
-        "Exponential Deletion": r"DelExp",
-        "Baseline 3": r"DelMin",
-        # "2-Phase Deletion": r"Del2Ph",
+        "delgum": r"DelGum",
+        "delexp": r"DelExp",
+        "delmin": r"DelMin",
     }
-
-    # Fixed order of baselines for plotting the bars
-    fixed_plot_order = ['Baseline 3', 'Exponential Deletion', 'Greedy Gumbel']
 
     for i, dataset in enumerate(datasets):
         ax1 = axes[i]
         ax2 = ax1.twinx()
 
-        # Reorder dataset_data according to fixed_plot_order
-        dataset_data = {b: all_metrics[b].get(dataset, {}) for b in fixed_plot_order}
+        labels = [label_map.get(m, m) for m in method_order]
 
-        labels = [label_map[b] for b in fixed_plot_order]
-
-        # Pull metrics in the same fixed order
-        init = np.array([dataset_data[b]['init_time_avg'] for b in fixed_plot_order])
-        model = np.array([dataset_data[b]['model_time_avg'] for b in fixed_plot_order])
-        delete = np.array([dataset_data[b]['del_time_avg'] for b in fixed_plot_order])
-        memory = np.array([dataset_data[b]['memory_avg'] for b in fixed_plot_order]) / (1024 ** 2)
+        init = np.array([metrics[m][dataset]["init_time_avg"] for m in method_order], dtype=float)
+        model = np.array([metrics[m][dataset]["model_time_avg"] for m in method_order], dtype=float)
+        update = np.array([metrics[m][dataset]["update_time_avg"] for m in method_order], dtype=float)
+        memory = np.array([metrics[m][dataset]["memory_mb_avg"] for m in method_order], dtype=float)
 
         x = np.arange(len(labels))
         w = 0.35
-        eps = 1e-9
+        eps = 1e-12
 
-        # Plot bars in fixed order
-        ax1.bar(x - w / 2, init + eps, w, bottom = 0, color = colors['Instantiation Time'],
-                label = "Instantiation Time")
-        ax1.bar(x - w / 2, model + eps, w, bottom = init + eps, color = colors['Modeling Time'],
-                label = "Modeling Time")
-        ax1.bar(x - w / 2, delete + eps, w, bottom = init + model + eps,
-                color = colors['Update to NULL Time'], label = "Update to Null Time")
+        # stacked time bar (left axis)
+        ax1.bar(x - w/2, init + eps, w, bottom=0, color=colors["Instantiation Time"], label="Instantiation Time")
+        ax1.bar(x - w/2, model + eps, w, bottom=init + eps, color=colors["Modeling Time"], label="Modeling Time")
+        ax1.bar(
+            x - w/2, update + eps, w,
+            bottom=init + model + eps,
+            color=colors["Update to NULL Time"],
+            label="Update to Null Time"
+        )
 
-        ax2.bar(x + w / 2, memory + eps, w, color = colors['Model Size'], label = "Model Size")
+        # memory bar (right axis)
+        ax2.bar(x + w/2, memory + eps, w, color=colors["Model Size"], label="Model Size")
 
         ax1.set_xticks(x)
         ax1.set_xticklabels(labels, rotation=0)
 
-        ax1.set_ylabel(r"Average Time (s)")
-        ax2.set_ylabel(r"Model Size (MB)")
+        ax1.set_ylabel("Average Time (s)")
+        ax2.set_ylabel("Model Size (MB)")
 
         if dataset == "ncvoter":
-            title = r"NCVoter"
+            title = "NCVoter"
+        elif dataset == "onlineretail":
+            title = "Onlineretail"
         else:
-            title = rf"{dataset.title()}"
-
+            title = dataset.title()
         ax1.set_title(title)
 
-        ax1.grid(axis='y', linestyle='--', alpha=0.6)
+        ax1.grid(axis="y", linestyle="--", alpha=0.6)
 
-    # Legend
+        # ----------------------------------------------------------
+        # FIX: force y-max to equal the max plotted value (no padding)
+        # ----------------------------------------------------------
+        time_stack = init + model + update
+        max_time = float(np.max(time_stack)) if time_stack.size else 0.0
+        max_mem = float(np.max(memory)) if memory.size else 0.0
+
+        # Avoid a zero-height axis if everything is 0
+        if max_time <= 0.0:
+            ax1.set_ylim(0.0, 1.0)
+        else:
+            ax1.set_ylim(0.0, max_time)
+
+        if max_mem <= 0.0:
+            ax2.set_ylim(0.0, 1.0)
+        else:
+            ax2.set_ylim(0.0, max_mem)
+
+    # global legend (dedupe)
     handles, labels = [], []
     for ax in fig.axes:
         h, l = ax.get_legend_handles_labels()
         for hh, ll in zip(h, l):
             if ll not in labels:
-                handles.append(hh)
                 labels.append(ll)
+                handles.append(hh)
 
-    order = [
-        r"Instantiation Time",
-        r"Modeling Time",
-        r"Update to Null Time",
-        r"Model Size",
-    ]
-
-    ordered_handles = [handles[labels.index(l)] for l in order if l in labels]
+    desired_order = ["Instantiation Time", "Modeling Time", "Update to Null Time", "Model Size"]
+    ordered_handles = [handles[labels.index(l)] for l in desired_order if l in labels]
 
     fig.legend(
         ordered_handles,
-        order,
+        desired_order,
         loc="upper center",
         ncol=4,
         bbox_to_anchor=(0.5, 0.99)
@@ -180,39 +239,30 @@ def create_combined_bar_plot(all_metrics, datasets, baselines):
     fig.tight_layout(rect=[0, 0, 1, 0.95])
     return fig
 
-
 # ------------------------------------------------------------------
 # Main
 # ------------------------------------------------------------------
 def main():
-    file_paths = {
-        'Greedy Gumbel': 'delgum_data_standardized_v2.csv',
-        'Exponential Deletion': 'delexp_data_standardized_v2.csv',
-        'Baseline 3': 'delmin_data_standardized_v2.csv',
-        # '2-Phase Deletion': '2phase_deletion_data_v12.csv',
-    }
-
-    datasets = ['airport', 'hospital', 'ncvoter', 'onlineretail', 'adult']
-
-    all_data = {k: parse_csv_for_bar_plots(v) for k, v in file_paths.items()}
-    all_metrics = {
-        b: {ds: calculate_average_metrics(all_data[b].get(ds, [])) for ds in datasets}
-        for b in file_paths
-    }
-
-    baselines_ordered = [
-        'Greedy Gumbel',
-        'Exponential Deletion',
-        'Baseline 3',
-        '2-Phase Deletion'
+    file_paths = [
+        "delgum_data_standardized_v2.csv",
+        "delexp_data_standardized_v2.csv",
+        "delmin_data_standardized_v2.csv",
     ]
 
-    fig = create_combined_bar_plot(all_metrics, datasets, baselines_ordered)
-    fig.savefig("bar_plot_AllBaselines_NoTax_v13.pdf", bbox_inches="tight")
+    datasets = ["airport", "hospital", "ncvoter", "onlineretail", "adult", "tax"]
+    method_order = ["delmin", "delexp", "delgum"]  # fixed plot order
+
+    all_rows = []
+    for p in file_paths:
+        all_rows.extend(parse_standardized_csv(p))
+
+    metrics = aggregate_metrics(all_rows, datasets, set(method_order))
+
+    fig = create_combined_bar_plot(metrics, datasets, method_order)
+    out = "bar_plot_standardized_times_and_memory.pdf"
+    fig.savefig(out, bbox_inches="tight")
     plt.close(fig)
-
-    print("Saved bar_plot_AllBaselines_NoTax_v13.pdf")
-
+    print(f"Saved {out}")
 
 if __name__ == "__main__":
     main()

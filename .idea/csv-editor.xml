@@ -122,6 +122,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/delexp_data_standardized_v2_flightsandtax.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/delexp_data_v12.csv">
           <value>
             <Attribute>
@@ -199,6 +206,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/delgum_data_standardized_v2_flightsandtax.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delgum_data_standardized_v3.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/delgum_data_v12.csv">
           <value>
             <Attribute>
@@ -235,6 +256,13 @@
           </value>
         </entry>
         <entry key="/delmin_data_standardized_v2.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delmin_data_standardized_v2_flightsandtax.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

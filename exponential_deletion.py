@@ -276,10 +276,9 @@ class InferableLeakageModel:
 def compute_possible_mask_set_str(target_cell: str, hyperedges: List[Tuple[str, ...]]) -> List[Set[str]]:
     neigh: Set[str] = set()
     for e in hyperedges:
-        if target_cell in e:
-            for v in e:
-                if v != target_cell:
-                    neigh.add(v)
+        for v in e:
+            if v != target_cell:
+                neigh.add(v)
     return [set(s) for s in powerset(sorted(neigh))]
 
 
@@ -456,9 +455,11 @@ def exponential_deletion_main(
     model = InferableLeakageModel(H, W, target=target_cell)
 
     candidates = compute_possible_mask_set_str(target_cell, H)
+    print(f"DEBUG: Number of candidate masks (2^neighbors) for '{target_cell}': {len(candidates)}")
     # if no candidates (target has no neighbors), just empty mask
     if not candidates:
         candidates = [set()]
+    print(f"DEBUG: Instantiated cells for '{target_cell}': {instantiated_cells} (Total: {len(instantiated_cells)})")
 
     final_mask, util_val = exponential_mechanism_sample(
         candidates,

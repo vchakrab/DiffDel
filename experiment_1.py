@@ -35,7 +35,7 @@ import two_phase_deletion
 # Config (NO flights / tax)
 # ----------------------------
 
-DATASETS = ["flight", "tax"]
+DATASETS = ["airport", "hospital", "ncvoter", "Onlineretail", "adult", "tax"]
 
 ORIGINAL_TABLE_NAMES = {
     "airport": "airports",
@@ -53,7 +53,7 @@ TARGET_ATTR = {
     "ncvoter": "voter_reg_num",
     "Onlineretail": "InvoiceNo",
     "adult": "education",
-    "flight": "FlightNo",
+    "flight": "FlightNum",
     "tax": "marital_status",
 }
 
@@ -685,16 +685,16 @@ def main():
     # print("Standardized Deletion Experiments (delmin/delexp/delgum)")
     # print("=" * 60)
     #
+    # setup_database_copies()
+    # run_delmin("delmin_data_standardized_v3.csv")
+    # cleanup_database_copies()
+    # #
     setup_database_copies()
-    run_delmin("delmin_data_standardized_v2_flightsandtax.csv")
+    run_delexp("delexp_data_standardized_v2.csv", verbose=True)
     cleanup_database_copies()
     #
     setup_database_copies()
-    run_delexp("delexp_data_standardized_v2_flightsandtax.csv", verbose=True)
-    cleanup_database_copies()
-    #
-    setup_database_copies()
-    run_delgum("delgum_data_standardized_v2_flightsandtax.csv", verbose=True)
+    run_delgum("delgum_data_standardized_v3.csv", verbose=True)
     cleanup_database_copies()
     #
     # setup_database_copies()

@@ -37,16 +37,16 @@ CATEGORIES = [
 BASELINE_DISPLAY = {
     "Baseline 3": "DelMin",
     "Exponential Deletion": "DelExp",
-    "Greedy Gumbel": "DelGum",
-    "2-Phase Deletion": "Del2Ph",
+    "Greedy Gumbel": "DelGum"
+    #"2-Phase Deletion": "Del2Ph",
 }
 
 # Styles
 LINE_STYLE = {
     "DelMin": dict(color="red",      linestyle=":",  linewidth=1.6),
     "DelExp": dict(color="blue",     linestyle="--", linewidth=1.6),
-    "DelGum": dict(color="#006400",  linestyle="-",  linewidth=1.6),  # deep green
-    "Del2Ph": dict(color="black",    linestyle="-.", linewidth=1.6),
+    "DelGum": dict(color="#006400",  linestyle="-",  linewidth=1.6)  # deep green
+    #"Del2Ph": dict(color="black",    linestyle="-.", linewidth=1.6),
 }
 
 FILL_ALPHA = 0.06
@@ -320,7 +320,7 @@ if __name__ == "__main__":
         # "2-Phase Deletion": "2phase_data_standardized.csv",
     }
 
-    datasets_to_plot = ["airport", "hospital", "ncvoter", "onlineretail", "adult"]
+    datasets_to_plot = ["airport", "hospital", "ncvoter", "onlineretail", "adult", "tax"]
 
     all_data = {name: parse_standardized_csv(path) for name, path in baseline_files.items()}
 

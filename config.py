@@ -75,7 +75,7 @@ DATASETS = {
         'domain_file': 'flight_domain_map.json',
         'dc_file': 'topFlightDCs_parsed.py',
         'dc_raw_file': 'topFlightDCs.txt',
-        'dc_config_module': 'DCandDelset.dc_configs.topFlightsDCs_parsed'
+        'dc_config_module': 'DCandDelset.dc_configs.topFlightDCs_parsed'
     },
     'adult': {
         'name': 'adult',
