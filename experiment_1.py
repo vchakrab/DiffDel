@@ -46,7 +46,14 @@ ORIGINAL_TABLE_NAMES = {
     "flight" : "flight_data",
     "tax" : "tax_data",
 }
-
+K_SIZE = {
+    "airport": 15,
+    "hospital": 12,
+    "ncvoter": 14,
+    "adult": 6,
+    "tax": 6,
+    "Onlineretail": 8,
+}
 TARGET_ATTR = {
     "airport": "latitude_deg",
     "hospital": "ProviderNumber",
@@ -57,7 +64,7 @@ TARGET_ATTR = {
     "tax": "marital_status",
 }
 
-ITERS = 100
+ITERS = 50
 
 
 # ----------------------------
@@ -472,16 +479,29 @@ def run_delmin(out_csv: str):
                     continue
 
 
-def run_delexp(out_csv: str, verbose: bool, alpha: float = 0.5, epsilon: float = 1.0, beta: float = 1.0, which_ablation: str = None):
+def run_delexp(
+    out_csv: str,
+    verbose: bool,
+    lam: float = 0.5,
+    epsilon: float = 50,
+    which_ablation: str = None
+):
+    """
+    which_ablation:
+      None  -> full standardized CSV
+      "l"   -> lambda ablation
+      "e"   -> epsilon ablation
+    """
     to_write = None
     if which_ablation is None:
         pass
-    elif which_ablation == "a":
-        to_write = "alpha"
-    elif which_ablation == "b":
-        to_write = "beta"
+    elif which_ablation == "l":
+        to_write = "lambda"
     elif which_ablation == "e":
         to_write = "epsilon"
+    else:
+        raise ValueError("which_ablation must be None, 'l', or 'e'")
+
     with open(out_csv, "a", newline="") as f:
         if verbose:
             write_csv_header(f)
@@ -504,8 +524,7 @@ def run_delexp(out_csv: str, verbose: bool, alpha: float = 0.5, epsilon: float =
                         key=key,
                         target_cell=attr,
                         epsilon=epsilon,
-                        alpha=alpha,
-                        beta=beta,
+                        lam=lam,
                     )
 
                     mask_obj = raw.get("mask", set())
@@ -517,7 +536,7 @@ def run_delexp(out_csv: str, verbose: bool, alpha: float = 0.5, epsilon: float =
                     leakage = raw.get("leakage", None)
                     paths_blocked = estimate_paths_blocked(num_paths, leakage)
 
-                    # IMPORTANT: use method-provided memory (delexp should be largest)
+                    # IMPORTANT: delexp supplies its own (largest) memory estimate
                     memory_overhead = int(raw.get("memory_overhead_bytes", 0) or 0)
 
                     row = standardize_row(
@@ -530,35 +549,47 @@ def run_delexp(out_csv: str, verbose: bool, alpha: float = 0.5, epsilon: float =
                         paths_blocked=paths_blocked,
                         memory_overhead_bytes=memory_overhead,
                     )
+
                     if verbose:
                         write_csv_row(f, row)
                     else:
-                        if to_write == "alpha":
+                        if to_write == "lambda":
                             f.write(
-                                f"{alpha},{row['leakage']},{row['utility']},{row['mask_size']}\n")
-                        if to_write == "beta":
+                                f"{lam},{row['leakage']},{row['utility']},{row['mask_size']}\n"
+                            )
+                        elif to_write == "epsilon":
                             f.write(
-                                f"{beta},{row['leakage']},{row['utility']},{row['mask_size']}\n")
-                        if to_write == "epsilon":
-                            f.write(
-                                f"{epsilon},{row['leakage']},{row['utility']},{row['mask_size']}\n")
+                                f"{epsilon},{row['leakage']},{row['utility']},{row['mask_size']}\n"
+                            )
 
                 except Exception as e:
                     print(f"  [delexp] iter {i+1} error: {e}")
                     continue
 
 
-def run_delgum(out_csv: str, verbose : bool = False, alpha: float = 1.0, beta: float = 0.5, epsilon: float = 1.0, which_ablation = None):
+
+def run_delgum(
+    out_csv: str,
+    verbose: bool = False,
+    lam: float = 0.5,
+    epsilon: float = 50,
+    K: int = 1,
+    which_ablation=None,
+):
+    """
+    Ablation now supports ONLY:
+      - which_ablation == "l"  -> ablate lambda
+      - which_ablation == "e"  -> ablate epsilon
+    """
     to_write = None
     if which_ablation is None:
         pass
-    elif which_ablation == "a":
-        to_write = "alpha"
-    elif which_ablation == "b":
-        to_write = "beta"
+    elif which_ablation == "l":
+        to_write = "lambda"
     elif which_ablation == "e":
         to_write = "epsilon"
-
+    else:
+        raise ValueError("which_ablation must be one of: None, 'l' (lambda), 'e' (epsilon)")
 
     with open(out_csv, "a", newline="") as f:
         if verbose:
@@ -582,9 +613,8 @@ def run_delgum(out_csv: str, verbose : bool = False, alpha: float = 1.0, beta: f
                         key=key,
                         target_cell=attr,
                         epsilon=epsilon,
-                        alpha=alpha,
-                        beta=beta,
-                        K=10,
+                        lam=lam,
+                        K=K_SIZE[ds]
                     )
 
                     mask_obj = raw.get("mask", set())
@@ -609,26 +639,33 @@ def run_delgum(out_csv: str, verbose : bool = False, alpha: float = 1.0, beta: f
                         paths_blocked=paths_blocked,
                         memory_overhead_bytes=memory_overhead,
                     )
+
                     if verbose:
                         write_csv_row(f, row)
                     else:
-                        if to_write == "alpha":
-                            f.write(f"{alpha},{row['leakage']},{row['utility']},{row['mask_size']}\n")
-                        if to_write == "beta":
-                            f.write(f"{beta},{row['leakage']},{row['utility']},{row['mask_size']}\n")
-                        if to_write == "epsilon":
+                        if to_write == "lambda":
+                            f.write(f"{lam},{row['leakage']},{row['utility']},{row['mask_size']}\n")
+                        elif to_write == "epsilon":
                             f.write(f"{epsilon},{row['leakage']},{row['utility']},{row['mask_size']}\n")
 
                 except Exception as e:
                     print(f"  [delgum] iter {i+1} error: {e}")
                     continue
 
-def run_del2ph(out_csv: str):
+
+def run_del2ph(out_csv: str, *, epsilon: float = 50.0, lam: float = 0.5):
     """
-    2-phase exponential-style:
-      - offline template cached in templates_2ph/
-      - online sampling + update-to-null measured here
+    2-phase exponential-style (NEW λ/ε):
+      - offline template cached in templates_2ph/  (not timed per-iteration)
+      - online sampling returns mask/leakage/utility fast
+      - update-to-null measured here for fairness (same as others)
+
+    Uses:
+      epsilon = 50
+      lam = 0.5
     """
+    TEMPLATE_DIR = "templates_2ph"
+
     with open(out_csv, "w", newline="") as f:
         write_csv_header(f)
 
@@ -637,8 +674,14 @@ def run_del2ph(out_csv: str):
             attr = TARGET_ATTR[ds]
             print(f"[del2ph] Dataset={ds}, attr={attr}")
 
-            # Ensure template exists (offline step, not timed per-iteration)
-            _ = two_phase_deletion.build_template_two_phase(ds, attr, alpha=1.0, beta=0.5, epsilon=1.0)
+            # OFFLINE build once per dataset+attr (not per iteration)
+            _ = two_phase_deletion.build_template_two_phase(
+                ds,
+                attr,
+                save_dir=TEMPLATE_DIR,
+                epsilon=float(epsilon),
+                lam=float(lam),
+            )
 
             for i in range(ITERS):
                 key = get_random_key(ds)
@@ -649,7 +692,10 @@ def run_del2ph(out_csv: str):
                     raw = two_phase_deletion.two_phase_deletion_main(
                         dataset=ds,
                         key=key,
-                        attributes=attr
+                        target_cell=attr,
+                        epsilon=float(epsilon),
+                        lam=float(lam),
+                        template_dir=TEMPLATE_DIR,
                     )
 
                     mask_obj = raw.get("mask", set())
@@ -676,6 +722,7 @@ def run_del2ph(out_csv: str):
                 except Exception as e:
                     print(f"  [del2ph] iter {i+1} error: {e}")
                     continue
+
 # ----------------------------
 # Main
 # ----------------------------
@@ -685,22 +732,53 @@ def main():
     # print("Standardized Deletion Experiments (delmin/delexp/delgum)")
     # print("=" * 60)
     #
+    setup_database_copies()
+    run_del2ph("del2ph_data_standardized_vFinal.csv")
+    cleanup_database_copies()
+    # #
     # setup_database_copies()
-    # run_delmin("delmin_data_standardized_v3.csv")
+    # run_delexp("delexp_data_standardized_vFinal.csv", verbose=True)
     # cleanup_database_copies()
     # #
-    setup_database_copies()
-    run_delexp("delexp_data_standardized_v2.csv", verbose=True)
-    cleanup_database_copies()
-    #
-    setup_database_copies()
-    run_delgum("delgum_data_standardized_v3.csv", verbose=True)
-    cleanup_database_copies()
-    #
+    # setup_database_copies()
+    # run_delgum("delgum_data_standardized_vFinal.csv", verbose=True)
+    # cleanup_database_copies()
+    # #
     # setup_database_copies()
     # run_del2ph("del2ph_data_standardized_v2.csv")
     # cleanup_database_copies()
     #
+
+    #ablation studies
+    #exp 1
+    # cleanup_database_copies()
+    # setup_database_copies()
+    # for i in range(5, 100, 5):
+    #     lam = i/100
+    #     run_delgum("ablation_delgum_lambda_v1.csv", lam=lam, which_ablation="l", epsilon=50)
+    # cleanup_database_copies()
+    # setup_database_copies()
+    # for i in range(5, 100, 5):
+    #     lam = i / 100
+    #     run_delexp("ablation_delexp_lambda_v1.csv", lam = lam, which_ablation = "l", verbose = False, epsilon=50)
+    # cleanup_database_copies()
+    # #
+    # # #exp 2
+    # setup_database_copies()
+    # VALUES = [0.1, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300]
+    # for i in VALUES:
+    #     run_delgum("ablation_delgum_epsilon_v1.csv", lam = 0.5, which_ablation = "e", epsilon = i)
+    # cleanup_database_copies()
+    # setup_database_copies()
+    # for i in VALUES:
+    #     run_delexp("ablation_delexp_epsilon_v1.csv", lam = 0.5, which_ablation = "e", verbose = False, epsilon = i)
+    # cleanup_database_copies()
+
+    # setup_database_copies()
+    # for i in [1, 2, 5, 10, 15, 20]:
+    #     run_delgum("ablation_delexp_epsilon.csv", lam = 2 / 3, which_ablation = "k",
+    #                K = i)
+    # cleanup_database_copies()
     # print("\nDone.")
     # setup_database_copies()
     # for i in range(1, 301):

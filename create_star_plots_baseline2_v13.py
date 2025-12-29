@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import csv
 from math import pi
+import math
 import os
 import sys
 import numpy as np
@@ -24,11 +25,33 @@ plt.rcParams.update({
     "legend.fontsize": 12,
 })
 
+# -----------------------------
+# Surprisal settings
+# -----------------------------
+# Surprisal = -log(1 - leakage)
+# Use natural log by default (units = nats). If you want bits, set SURPRISAL_LOG_BASE = 2.
+SURPRISAL_LOG_BASE = math.e
+
+# Numerical safety for leakage very close to 1
+LEAKAGE_EPS = 1e-12
+
+def leakage_to_surprisal(leakage: float) -> float:
+    """Convert leakage in [0,1] to surprisal = -log(1-leakage)."""
+    l = float(leakage)
+    l = max(0.0, min(1.0, l))
+    one_minus = max(1.0 - l, LEAKAGE_EPS)  # avoid log(0)
+    if SURPRISAL_LOG_BASE == 2:
+        return float(-math.log2(one_minus))
+    if SURPRISAL_LOG_BASE == 10:
+        return float(-math.log10(one_minus))
+    return float(-math.log(one_minus))  # natural log
+
+
 # Clockwise order (as requested):
-# Avg Mask Size, Leakage, Avg Time, Avg Model Size, Avg Paths
+# Avg Mask Size, Surprisal, Avg Time, Avg Model Size, Avg Paths
 CATEGORIES = [
     ("Avg Mask Size", "cells_sum",          "log"),     # log
-    ("Leakage",       "leakage",            "linear"),  # linear (0..1)
+    ("Surprisal",     "surprisal",          "log"),     # log (unbounded-ish, use log scaling)
     ("Avg Time",      "total_time",         "log"),     # log
     ("Avg Model Size","space_overhead_sum", "log"),     # log (MB)
     ("Avg Paths",     "dependencies",       "log"),     # log
@@ -38,15 +61,15 @@ BASELINE_DISPLAY = {
     "Baseline 3": "DelMin",
     "Exponential Deletion": "DelExp",
     "Greedy Gumbel": "DelGum"
-    #"2-Phase Deletion": "Del2Ph",
+    # "2-Phase Deletion": "Del2Ph",
 }
 
 # Styles
 LINE_STYLE = {
     "DelMin": dict(color="red",      linestyle=":",  linewidth=1.6),
     "DelExp": dict(color="blue",     linestyle="--", linewidth=1.6),
-    "DelGum": dict(color="#006400",  linestyle="-",  linewidth=1.6)  # deep green
-    #"Del2Ph": dict(color="black",    linestyle="-.", linewidth=1.6),
+    "DelGum": dict(color="#006400",  linestyle="-",  linewidth=1.6),  # deep green
+    # "Del2Ph": dict(color="black",    linestyle="-.", linewidth=1.6),
 }
 
 FILL_ALPHA = 0.06
@@ -106,12 +129,9 @@ def parse_standardized_csv(file_path: str):
                 continue
             data.setdefault(ds, [])
 
-            # standardized columns
             time_val = _safe_float(row.get("total_time"), 0.0)
 
-            # "Avg Paths" in your star plot previously used "dependencies".
-            # In standardized CSV, the closest equivalent is num_paths.
-            # (If you want to visualize "paths_blocked" instead, swap it here.)
+            # In standardized CSV, use num_paths as "Avg Paths"
             num_paths = _safe_int(row.get("num_paths"), 0)
 
             cells = _safe_int(row.get("mask_size"), 0)
@@ -120,7 +140,6 @@ def parse_standardized_csv(file_path: str):
             memory_mb = mem_bytes / (1024 ** 2)
 
             leakage = _safe_float(row.get("leakage"), 0.0)
-            # keep leakage sane
             leakage = max(0.0, min(1.0, leakage))
 
             data[ds].append({
@@ -145,19 +164,21 @@ def calculate_aggregated_metrics(dataset_data):
             "space_overhead_sum": 0.0,
             "cells_sum": 0.0,
             "dependencies": 0.0,
-            "leakage": 0.0,
+            "surprisal": 0.0,
         }
 
     leakage_avg = sum(d["leakage"] for d in dataset_data) / n
     leakage_avg = max(0.0, min(1.0, leakage_avg))
+    surprisal = leakage_to_surprisal(leakage_avg)
 
     return {
         "total_time": sum(d["time"] for d in dataset_data) / n,
         "space_overhead_sum": sum(d["space_overhead"] for d in dataset_data) / n,
         "cells_sum": sum(d["cells"] for d in dataset_data) / n,
         "dependencies": sum(d["dependencies"] for d in dataset_data) / n,
-        "leakage": leakage_avg,
+        "surprisal": float(max(0.0, surprisal)),
     }
+
 
 # -----------------------------
 # Scaling helpers
@@ -194,6 +215,7 @@ def fmt_tick(v: float) -> str:
         return f"{v:.0f}"
     return f"{v:.2g}"
 
+
 # -----------------------------
 # Plot
 # -----------------------------
@@ -222,16 +244,12 @@ def create_star_plot(ax, metrics_data, dataset_name, axis_max):
 
         for i, (title, key, scale) in enumerate(CATEGORIES):
             vmax = axis_max[title]
-            if title == "Leakage":
-                v = lin_inv(r, vmax)
-                txt = f"{v:.2f}"
+            if scale == "log":
+                v = log_inv(r, vmax)
+                txt = fmt_tick(v)
             else:
-                if scale == "log":
-                    v = log_inv(r, vmax)
-                    txt = fmt_tick(v)
-                else:
-                    v = lin_inv(r, vmax)
-                    txt = fmt_tick(v)
+                v = lin_inv(r, vmax)
+                txt = fmt_tick(v)
 
             ax.text(
                 angles[i], r, txt,
@@ -256,10 +274,7 @@ def create_star_plot(ax, metrics_data, dataset_name, axis_max):
         norm = []
         for val, (title, key, scale) in zip(raw, CATEGORIES):
             vmax = axis_max[title]
-            if title == "Leakage":
-                norm.append(lin_norm(max(0.0, min(1.0, val)), vmax))
-            else:
-                norm.append(log_norm(val, vmax) if scale == "log" else lin_norm(val, vmax))
+            norm.append(log_norm(val, vmax) if scale == "log" else lin_norm(val, vmax))
 
         norm_closed = norm + norm[:1]
 
@@ -298,13 +313,7 @@ def compute_axis_max_for_dataset(metrics_data):
                 continue
             vals.append(float(m.get(key, 0.0)))
         observed = max(vals) if vals else 0.0
-
-        if title == "Leakage":
-            observed = max(0.0, min(1.0, observed))
-            axis_max[title] = observed if observed > 0 else 1.0
-        else:
-            axis_max[title] = observed if observed > 0 else 1.0
-
+        axis_max[title] = observed if observed > 0 else 1.0
     return axis_max
 
 
@@ -314,9 +323,9 @@ def compute_axis_max_for_dataset(metrics_data):
 if __name__ == "__main__":
     # Point these to your standardized outputs
     baseline_files = {
-        "Baseline 3": "delmin_data_standardized_v2.csv",
-        "Exponential Deletion": "delexp_data_standardized_v2.csv",
-        "Greedy Gumbel": "delgum_data_standardized_v2.csv",
+        "Baseline 3": "delmin_data_standardized_vFinal.csv",
+        "Exponential Deletion": "delexp_data_standardized_vFinal.csv",
+        "Greedy Gumbel": "delgum_data_standardized_vFinal.csv",
         # "2-Phase Deletion": "2phase_data_standardized.csv",
     }
 
@@ -364,7 +373,7 @@ if __name__ == "__main__":
 
     plt.tight_layout(rect=[0, 0.02, 1, 0.93])
 
-    out = "star_plots_standardized_avg.pdf"
+    out = "star_plots_standardized_avg_surprisal.pdf"
     plt.savefig(out, bbox_inches="tight")
     plt.close(fig)
     print(f"Comparison star plot saved to {out}")

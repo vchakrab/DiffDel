@@ -31,6 +31,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/ablation_delexp_lambda.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/ablation_delexp_lambda_v1.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/ablation_delgum_alpha.csv">
           <value>
             <Attribute>
@@ -46,6 +60,20 @@
           </value>
         </entry>
         <entry key="/ablation_delgum_epsilon.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/ablation_delgum_lambda.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/ablation_delgum_lambda_v1.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -81,6 +109,13 @@
           </value>
         </entry>
         <entry key="/csv_files/ncvoter.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/del2ph_data_standardized_vFinal.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -123,6 +158,13 @@
           </value>
         </entry>
         <entry key="/delexp_data_standardized_v2_flightsandtax.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delexp_data_standardized_vFinal.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -263,6 +305,20 @@
           </value>
         </entry>
         <entry key="/delmin_data_standardized_v2_flightsandtax.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delmin_data_standardized_v3.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delmin_data_standardized_vFinal.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

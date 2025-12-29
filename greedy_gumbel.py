@@ -10,8 +10,13 @@ Fixes / guarantees:
 - Memory_overhead_bytes is MEDIUM:
   counts hypergraph + inferable model + mask (NO candidate mask enumeration).
 
-Expected trends:
-- delgum: time and memory between delexp and delmin.
+UPDATED (per your table):
+- Replaces alpha/beta with lambda (λ).
+- Marginal utility:
+    Δu(c) = λ·(L_curr - L_new) - (1-λ)/( |I(c*)| - 1 )
+- Gumbel scale uses sensitivity 2λ:
+    scale = (2λ) / ε'
+- Input parameters: λ, ε, K (plus your existing l for final utility reporting).
 """
 
 from __future__ import annotations
@@ -22,10 +27,12 @@ from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional, Set, Sequence, Tuple
 from itertools import chain, combinations
 from collections import deque
+import importlib
+
+import numpy as np
 
 import weights.weights_corrected.adult_weights
-from weights.weights_corrected import *
-import numpy as np
+from weights.weights_corrected import *  # dataset WEIGHTS live here
 
 
 # ============================================================
@@ -78,13 +85,10 @@ def clean_raw_dcs(raw_dcs: List[List[Tuple[str, str, str]]]) -> List[Tuple[str, 
 # ============================================================
 # Inferable leakage model (same as delexp)
 # ============================================================
-import importlib
-
 
 def get_dataset_weights(dataset: str):
     dataset = dataset.lower()
     module_name = f"weights.weights_corrected.{dataset}_weights"
-
     try:
         weights_module = importlib.import_module(module_name)
         return weights_module.WEIGHTS
@@ -241,7 +245,7 @@ def inference_zone_union(target: str, hyperedges: Sequence[Iterable[str]]) -> Li
 
 
 # ============================================================
-# Gumbel greedy selection
+# Gumbel greedy selection (UPDATED for lambda mechanism)
 # ============================================================
 
 def marginal_gain(
@@ -249,12 +253,21 @@ def marginal_gain(
     c: str,
     M_curr: Set[str],
     model: InferableLeakageModel,
-    alpha: float,
-    beta: float,
+    lam: float,
+    denom_I_minus_1: int,
 ) -> Tuple[float, float, float]:
+    """
+    NEW:
+      Δu(c) = λ·(L_curr - L_new) - (1-λ)/( |I(c*)| - 1 )
+
+    denom_I_minus_1 is computed once per run from the target's inference zone size:
+      denom_I_minus_1 = max(1, len(I) - 1)
+    """
     L_curr = model.leakage(M_curr)
     L_new = model.leakage(M_curr | {c})
-    delta_u = alpha * (L_curr - L_new) - beta
+
+    penalty = (1.0 - float(lam)) / float(denom_I_minus_1)
+    delta_u = float(lam) * (L_curr - L_new) - penalty
     return float(delta_u), float(L_curr), float(L_new)
 
 
@@ -263,11 +276,17 @@ def greedy_gumbel_max_deletion(
     model: InferableLeakageModel,
     hyperedges: List[Tuple[str, ...]],
     target_cell: str,
-    alpha: float,
-    beta: float,
+    lam: float,
     epsilon: float,
     K: int,
 ) -> Tuple[Set[str], float]:
+    """
+    NEW input params: (λ, ε, K)
+
+    Gumbel scale per table:
+      ε' = ε / K
+      scale = (2λ) / ε'
+    """
     t0 = time.time()
     I = set(inference_zone_union(target_cell, hyperedges))
     M: Set[str] = set()
@@ -275,9 +294,13 @@ def greedy_gumbel_max_deletion(
     if K <= 0 or epsilon <= 0:
         return M, float(time.time() - t0)
 
+    # denom from your new formula (|I(c*)| - 1)
+    denom_I_minus_1 = max(1, len(I) - 1)
+
     epsilon_prime = float(epsilon) / float(K)
-    b_cell = 4.0 * float(alpha) / max(1e-12, epsilon_prime)
-    b_stop = 2.0 * float(alpha) / max(1e-12, epsilon_prime)
+
+    # NEW gumbel scale: 2λ/ε'
+    g_scale = (2.0 * float(lam)) / max(1e-12, epsilon_prime)
 
     for _k in range(1, K + 1):
         candidates = list(I - M)
@@ -288,13 +311,20 @@ def greedy_gumbel_max_deletion(
         best_score = -1e300
 
         for c in candidates:
-            delta_u, _Lc, _Ln = marginal_gain(c=c, M_curr=M, model=model, alpha=alpha, beta=beta)
-            score = float(delta_u) + gumbel_noise(b_cell)
+            delta_u, _Lc, _Ln = marginal_gain(
+                c=c,
+                M_curr=M,
+                model=model,
+                lam=lam,
+                denom_I_minus_1=denom_I_minus_1,
+            )
+            score = float(delta_u) + gumbel_noise(g_scale)
             if score > best_score:
                 best_score = score
                 best_c = c
 
-        s_stop = gumbel_noise(b_stop)
+        # Stop decision: same gumbel scale (table gives one scale; old code used a different stop-scale)
+        s_stop = gumbel_noise(g_scale)
         if best_c is None:
             break
         if s_stop > best_score:
@@ -334,7 +364,7 @@ def estimate_memory_overhead_bytes_delgum(
 
     est += BYTES_PER_MASK_SET + mask_size * BYTES_PER_MASK_MEMBER
 
-    # inferable model footprint (kept for delgum)
+    # inferable model footprint
     est += num_edges * BYTES_PER_EDGE_STRUCT
     est += num_vertices * BYTES_PER_FLOAT
     est += num_edges * BYTES_PER_FLOAT
@@ -366,8 +396,7 @@ def gumbel_deletion_main(
     target_cell: str,
     *,
     epsilon: float = 1.0,
-    alpha: float = 1.0,
-    beta: float = 0.5,
+    lam: float = 0.5,     # NEW: lambda for gumbel mechanism
     K: int = 40,
 ) -> Dict[str, Any]:
     # -------------------------
@@ -387,7 +416,6 @@ def gumbel_deletion_main(
 
     H_raw = clean_raw_dcs(raw_dcs)
     H = _normalize_hyperedges(H_raw)
-
     W = _normalize_edge_weights(H, get_dataset_weights(dataset))
 
     instantiated: Set[str] = set()
@@ -403,18 +431,22 @@ def gumbel_deletion_main(
     model_start = time.time()
 
     model = InferableLeakageModel(H, W, target=target_cell)
+
     final_mask, _greedy_time = greedy_gumbel_max_deletion(
         model=model,
         hyperedges=H,
         target_cell=target_cell,
-        alpha=alpha,
-        beta=beta,
+        lam=lam,
         epsilon=epsilon,
         K=K,
     )
 
+    inference_zone = inference_zone_union(target_cell, H)
     leakage = float(model.leakage(final_mask))
-    utility = float(-(alpha * leakage) - (beta * len(final_mask)))
+
+    # keep your existing utility reporting formula
+    denom = max(1, len(inference_zone))
+    utility = float(-1 * lam * leakage - ((1 - lam) * len(final_mask)) / denom)
 
     L_empty = float(model.leakage(set()))
     num_channel_edges = int(len(model.channel_edges))
@@ -458,4 +490,9 @@ def gumbel_deletion_main(
         "num_instantiated_cells": int(num_instantiated_cells),
         "num_channel_edges": int(num_channel_edges),
         "baseline_leakage_empty_mask": float(L_empty),
+
+        # helpful to log / verify the new mechanism
+        "lambda": float(lam),
+        "denom_I_minus_1": int(max(1, len(set(inference_zone)) - 1)),
+        "inference_zone_size": int(len(set(inference_zone))),
     }
