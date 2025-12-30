@@ -795,7 +795,7 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
             ssl_disabled=db.get('ssl_disabled', True),
         )
         cursor = conn.cursor()
-        table = f"airports"
+        table = f"{dataset}_copy_data"
 
 
         target_time = get_insertion_time(cursor, table, key, target)

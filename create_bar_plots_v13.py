@@ -244,13 +244,12 @@ def create_combined_bar_plot(metrics, datasets, method_order):
 # ------------------------------------------------------------------
 def main():
     file_paths = [
-        "delgum_data_standardized_vFinal.csv",
-        "delexp_data_standardized_vFinal.csv",
-        "delmin_data_standardized_vFinal.csv",
+        "delmin_data_standarized_f3.csv",
+        "delexp_data_standardized_non_canonical.csv",
     ]
 
     datasets = ["airport", "hospital", "ncvoter", "onlineretail", "adult", "tax"]
-    method_order = ["delmin", "delexp", "delgum"]  # fixed plot order
+    method_order = ["delmin", "delexp"]  # fixed plot order
 
     all_rows = []
     for p in file_paths:

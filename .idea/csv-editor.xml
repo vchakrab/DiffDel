@@ -164,6 +164,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/delexp_data_standardized_vF1.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/delexp_data_standardized_vFinal.csv">
           <value>
             <Attribute>
@@ -319,6 +326,13 @@
           </value>
         </entry>
         <entry key="/delmin_data_standardized_vFinal.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delmin_data_standarized_f3.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

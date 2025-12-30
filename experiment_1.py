@@ -64,7 +64,7 @@ TARGET_ATTR = {
     "tax": "marital_status",
 }
 
-ITERS = 50
+ITERS = 25
 
 
 # ----------------------------
@@ -434,20 +434,21 @@ def run_delmin(out_csv: str):
                         model_time,
                         del_time,
                         num_instantiated,
+                        leakage,
+                        utility,
                     ) = baseline_deletion_3.baseline_deletion_3(
                         target=attr,
                         key=key,
                         dataset=ds,
                         threshold=0.0,
                     )
-
                     raw = {
                         "init_time": init_time,
                         "model_time": model_time,
                         "del_time": del_time,
                         "num_instantiated_cells": num_instantiated,
-                        "leakage": 0.0,   # REQUIRED: delmin leakage == 0
-                        "utility": None,
+                        "leakage": leakage,   # REQUIRED: delmin leakage == 0
+                        "utility": utility,
                         "mask_size": len(mask_set) if mask_set else 0,
                         "num_paths": int(activated_dependencies_count),
                         "mask": set(mask_set) if mask_set else set(),
@@ -732,13 +733,13 @@ def main():
     # print("Standardized Deletion Experiments (delmin/delexp/delgum)")
     # print("=" * 60)
     #
-    setup_database_copies()
-    run_del2ph("del2ph_data_standardized_vFinal.csv")
-    cleanup_database_copies()
-    # #
     # setup_database_copies()
-    # run_delexp("delexp_data_standardized_vFinal.csv", verbose=True)
+    # run_delmin("delmin_data_standarized_f3.csv")
     # cleanup_database_copies()
+    # #
+    setup_database_copies()
+    run_delexp("delexp_data_standardized_non_canonical.csv", verbose=True)
+    cleanup_database_copies()
     # #
     # setup_database_copies()
     # run_delgum("delgum_data_standardized_vFinal.csv", verbose=True)
