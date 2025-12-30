@@ -1,0 +1,22 @@
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{l rr rrrr}
+\toprule
+ & \multicolumn{2}{c}{\textbf{Offline phase}} & \multicolumn{4}{c}{\textbf{Online phase}} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-7}
+\textbf{Dataset} & \textbf{Build time (s)} & \textbf{Mem (MB)} & \textbf{Leakage} & \textbf{Mask size} & \textbf{Utility} & \textbf{Paths blocked} \\
+\midrule
+Onlineretail & -- & -- & 0.000 & 3.040 & -0.253 & 11.000 \\
+adult & 0.002 & 0.64 & 0.000 & 2.000 & -0.250 & 5.000 \\
+airport & 1.532 & 2275.52 & 0.000 & 5.300 & -0.204 & 24.000 \\
+hospital & 0.002 & 1.60 & 1.000 & 0.580 & -0.529 & 0.000 \\
+ncvoter & 0.002 & 1.60 & 0.960 & 1.600 & -0.547 & 0.640 \\
+onlineretail & 0.009 & 1.28 & -- & -- & -- & -- \\
+tax & 0.002 & 0.96 & 0.000 & 2.000 & -0.250 & 15.000 \\
+\bottomrule
+\end{tabular}
+\caption{Per-dataset averages for offline template construction and online deletion evaluation.}
+\label{tab:offline-online}
+\end{table}

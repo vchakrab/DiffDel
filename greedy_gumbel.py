@@ -197,7 +197,7 @@ class InferableLeakageModel:
                 return 1.0
         return 1.0 - prod_fail
 
-    def leakage(self, mask: Set[str], *, tau: float = 1e-10, max_updates: int = 2_000_000) -> float:
+    def leakage(self, mask: Set[str], *, tau: float = 0, max_updates: int = 2_000_000) -> float:
         mask_ids = {self.cell_to_id[c] for c in mask if c in self.cell_to_id}
         if self.tid in mask_ids:
             raise ValueError("mask includes target")

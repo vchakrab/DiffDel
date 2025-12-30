@@ -15,6 +15,7 @@ Fixes requested:
 
 from __future__ import annotations
 
+import importlib
 import os
 import sys
 import time
@@ -39,11 +40,261 @@ try:
     import config  # type: ignore
 except Exception:
     config = None
-DELETION_QUERY = (
-    "UPDATE {table_name} "
-    "SET {column_name} = NULL "
-    "WHERE ID = {key}"
-)
+# =========================
+LAM = 0.5  # set this to the same λ you use for delexp
+
+DELETION_QUERY = """
+UPDATE {table_name}
+SET `{column_name}` = NULL
+WHERE id = {key};
+"""
+
+
+# ============================================================
+# Edge weights loading (NO DEFAULTS; error if missing)
+# ============================================================
+
+def get_dataset_weights_strict(dataset: str) -> Any:
+    """
+    Loads edge weights using the same convention as delexp:
+      weights.weights_corrected.<dataset>_weights with a WEIGHTS object.
+
+    Raises FileNotFoundError if the module or WEIGHTS is missing.
+    """
+    import importlib
+
+    ds = str(dataset).lower()
+    module_name = f"weights.weights_corrected.{ds}_weights"
+    try:
+        mod = importlib.import_module(module_name)
+    except ModuleNotFoundError as e:
+        raise FileNotFoundError(
+            f"Missing edge-weight module '{module_name}'. "
+            f"Expected a file like: weights/weights_corrected/{ds}_weights.py "
+            f"next to your delexp weights directory."
+        ) from e
+
+    if not hasattr(mod, "WEIGHTS"):
+        raise FileNotFoundError(
+            f"Module '{module_name}' exists but does not define WEIGHTS."
+        )
+
+    weights_obj = getattr(mod, "WEIGHTS")
+    if weights_obj is None:
+        raise FileNotFoundError(
+            f"Module '{module_name}' defines WEIGHTS=None; expected actual weights."
+        )
+    return weights_obj
+
+
+
+
+
+# ============================================================
+# Leakage + Utility (delexp-style)
+# ============================================================
+
+def compute_utility_new(*, leakage: float, mask_size: int, lam: float, zone_size: int) -> float:
+    """
+    u(M) = -λ L(M) - (1-λ) * |M|/(|I(c*)|-1)
+    """
+    denom = max(1, int(zone_size) - 1)  # avoids division by 0 when zone_size <= 1
+    norm = float(mask_size) / float(denom)
+    return float(-(lam * float(leakage)) - ((1.0 - lam) * norm))
+
+
+Cell = str
+
+
+@dataclass(frozen=True)
+class Edge:
+    verts: Tuple[int, ...]
+    w: float
+
+
+class InferableLeakageModel:
+    """
+    Hypergraph leakage model:
+      - observed[v]=True => adversary knows v with prob 1
+      - masked cells and target are unknown initially
+      - update rule:
+          p[v] = 1 - Π_{edges containing v}(1 - w_e * Π_{u in e\{v}} p[u])
+      - fixed point via queue relaxation
+      - leakage L := p[target]
+    """
+    def __init__(self, hyperedges: Sequence[Iterable[Cell]], weights: Sequence[float], target: Cell):
+        hyperedges = list(hyperedges)
+        weights = list(weights)
+        if len(hyperedges) != len(weights):
+            raise ValueError("hyperedges and weights must have the same length")
+
+        self.target = target
+
+        verts_set: Set[Cell] = set()
+        for e in hyperedges:
+            verts_set |= set(e)
+        verts_set.add(target)
+
+        self.verts: List[Cell] = sorted(verts_set)
+        self.vid: Dict[Cell, int] = {v: i for i, v in enumerate(self.verts)}
+        self.n = len(self.verts)
+        self.tid = self.vid[target]
+
+        self.edges: List[Edge] = []
+        for e, w in zip(hyperedges, weights):
+            vv = tuple(sorted({self.vid[v] for v in set(e) if v in self.vid}))
+            if len(vv) >= 2:
+                self.edges.append(Edge(vv, float(w)))
+
+        self.neigh: List[Set[int]] = [set() for _ in range(self.n)]
+        for ed in self.edges:
+            for a in ed.verts:
+                for b in ed.verts:
+                    if a != b:
+                        self.neigh[a].add(b)
+
+    def _recompute_pv(self, v: int, observed: List[bool], p: List[float]) -> float:
+        if observed[v]:
+            return 1.0
+
+        prod_fail = 1.0
+        for ed in self.edges:
+            if v not in ed.verts:
+                continue
+
+            other = [u for u in ed.verts if u != v]
+            if not other:
+                continue
+
+            term = 1.0
+            for u in other:
+                term *= float(p[u])
+
+            infer_prob = float(ed.w) * term
+            prod_fail *= (1.0 - infer_prob)
+
+        return float(1.0 - prod_fail)
+
+    def leakage(self, mask: Set[Cell], *, tau: float = 1e-9, max_updates: int = 1_000_000) -> float:
+        observed = [True] * self.n
+        observed[self.tid] = False  # target is unknown
+
+        for m in mask:
+            if m in self.vid:
+                observed[self.vid[m]] = False
+
+        p = [1.0 if observed[v] else 0.0 for v in range(self.n)]
+        Q = deque(range(self.n))
+        in_q = [True] * self.n
+        pops = 0
+
+        while Q and pops < max_updates:
+            v = Q.popleft()
+            in_q[v] = False
+            pops += 1
+
+            if observed[v]:
+                continue
+
+            new_p = self._recompute_pv(v, observed, p)
+            if abs(new_p - p[v]) > tau:
+                p[v] = new_p
+                for u in self.neigh[v]:
+                    if not in_q[u]:
+                        Q.append(u)
+                        in_q[u] = True
+
+        L = float(p[self.tid])
+        return float(max(0.0, min(1.0, L)))
+def load_parsed_dcs(dataset: str) -> List[List[Tuple[str, str, str]]]:
+    """
+    Imports DCandDelset.dc_configs.top{Dataset}DCs_parsed and returns denial_constraints (or []).
+    """
+    try:
+        dataset_module_name = "NCVoter" if dataset.lower() == "ncvoter" else dataset.capitalize()
+        dc_module_path = f"DCandDelset.dc_configs.top{dataset_module_name}DCs_parsed"
+        dc_module = __import__(dc_module_path, fromlist=["denial_constraints"])
+        return getattr(dc_module, "denial_constraints", [])
+    except Exception:
+        return []
+
+def map_dc_to_weight(init_manager, dc, weights):
+    return 1.0
+    # return weights[init_manager.denial_constraints.index(dc)]
+def get_dataset_weights(dataset: str) -> Optional[Any]:
+    """
+    Optional: if you have per-dataset edge weights modules, load them.
+    Expected module: weights.weights_corrected.<dataset>_weights with WEIGHTS inside.
+    Returns None if missing, which falls back to a constant edge_weight.
+    """
+    dataset = dataset.lower()
+    module_name = f"weights.weights_corrected.{dataset}_weights"
+    try:
+        mod = importlib.import_module(module_name)
+        return getattr(mod, "WEIGHTS", None)
+    except ModuleNotFoundError:
+        return None
+def dc_to_hyperedges(init_manager) -> List[Tuple[str, ...]]:
+    """
+    Convert init_manager.denial_constraints into hyperedges over attribute names
+    (attributes only: e.g., "type", not "t1.type").
+    """
+
+    hyperedges: List[Tuple[str, ...]] = []
+    hyperedge_weights: List[float] = []
+
+    for dc in getattr(init_manager, "denial_constraints", []):
+        attrs: Set[str] = set()
+        weight = map_dc_to_weight(init_manager, dc, get_dataset_weights(init_manager.dataset))
+        for pred in dc:
+            if isinstance(pred, (list, tuple)) and len(pred) >= 1:
+                token = pred[0]
+                if isinstance(token, str) and "." in token:
+                    attrs.add(token.split(".")[-1])
+        if len(attrs) >= 2:
+            hyperedges.append(tuple(sorted(attrs)))
+            hyperedge_weights.append(weight)
+    return hyperedges, hyperedge_weights
+
+
+def inference_zone_for_target(hyperedges: Sequence[Tuple[str, ...]], target: str) -> List[str]:
+    zone: Set[str] = set()
+    for e in hyperedges:
+        if target in e:
+            for v in e:
+                if v != target:
+                    zone.add(v)
+    return sorted(zone)
+
+
+def compute_leakage_and_utility_for_mask(
+    *,
+    init_manager,
+    dataset: str,
+    target: str,
+    mask_cols: Set[str],
+    lam: float,
+) -> Tuple[float, float, int]:
+    """
+    Returns (leakage, utility, zone_size) for this mask under the delexp leakage model.
+    Strictly requires weights file to exist.
+    """
+    weights: List[float]
+    hyperedges: List[Tuple[str, ...]]
+    hyperedges,weights = dc_to_hyperedges(init_manager)
+
+
+    # Load and normalize edge weights STRICTLY (no defaults)
+
+    model = InferableLeakageModel(hyperedges, weights, target)
+
+    zone = inference_zone_for_target(hyperedges, target)
+    zone_size = len(zone)
+
+    L = model.leakage(set(mask_cols))
+    U = compute_utility_new(leakage=L, mask_size=len(mask_cols), lam=float(lam), zone_size=zone_size)
+    return float(L), float(U), int(zone_size)
+
 
 # ============================================================
 # SAFE PATH ESTIMATOR (NO int64 OVERFLOW)
@@ -322,7 +573,6 @@ def ilp_approach_matching_java(
     target_attr,
     target_time,
     hypergraph: Dict[Tuple[str, ...], float],
-    boundaries
 ):
     if not GUROBI_AVAILABLE:
         raise RuntimeError("Gurobi required")
@@ -365,7 +615,8 @@ def ilp_approach_matching_java(
         aj = cell_to_var[curr]
         obj += aj
 
-        edges = instantiate_edges_with_time_filter(cursor, table, key, curr.attribute, target_time, hypergraph)
+        curr_attr = curr.attribute.split(".")[-1]
+        edges = instantiate_edges_with_time_filter(cursor, table, key, curr_attr, target_time, hypergraph)
 
         for edge in edges:
             frozenset_edge = frozenset(edge)
@@ -439,6 +690,46 @@ def ilp_approach_matching_java(
 
     return to_delete, total_ilp_time, max_depth, len(cell_to_id), activated_dependencies_count, ilp_num_vars, ilp_num_constrs
 
+def compute_metrics_from_mask(
+    *,
+    init_manager,
+    dataset: str,
+    target: str,
+    to_del: set[str],   # <-- THE MASK
+    lam: float,
+):
+    """
+    Given a mask (to_del), compute:
+      - inferable leakage L(M)
+      - utility u(M)
+    """
+
+    # 1. Build hypergraph + weights (STRICT: same as delexp)
+    hyperedges, weights = dc_to_hyperedges(init_manager)
+
+    # 2. Build inferable leakage model
+    model = InferableLeakageModel(
+        hyperedges=hyperedges,
+        weights=weights,
+        target=target,
+    )
+
+    # 3. Inference zone size |I(c*)|
+    zone = inference_zone_for_target(hyperedges, target)
+    zone_size = len(zone)
+
+    # 4. Leakage L(M)
+    leakage = model.leakage(to_del)
+
+    # 5. Utility u(M)
+    utility = compute_utility_new(
+        leakage=leakage,
+        mask_size=len(to_del),
+        lam=lam,
+        zone_size=zone_size,
+    )
+
+    return leakage, utility
 
 def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
     """
@@ -471,9 +762,13 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
         if target in attrs:
             target_dcs.append(dc)
 
-    b_edges, i_edges, orig_bounds = explanations.build_graph_data(target_dcs)
-    bounds = {c for c in orig_bounds if not c.startswith('t1.')}
-    hyper = explanations.set_edge_weight(i_edges)
+    weights: List[float]
+    hyper: List[Tuple[str]]
+    hyper, weights = dc_to_hyperedges(init_mgr)
+    hyperedge_dict = {}
+    for edge, i in zip(hyper, range(len(hyper))):
+        hyperedge_dict[edge] = weights[i]
+
 
     instantiation_time = time.time() - instantiation_start
 
@@ -500,13 +795,15 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
             ssl_disabled=db.get('ssl_disabled', True),
         )
         cursor = conn.cursor()
-        table = f"{dataset}_copy_data"
+        table = f"airports"
+
 
         target_time = get_insertion_time(cursor, table, key, target)
 
         to_del, total_ilp_time, max_depth, num_cells, activated_dependencies_count, ilp_num_vars, ilp_num_constrs = (
-            ilp_approach_matching_java(cursor, table, key, target, target_time, hyper, bounds)
+            ilp_approach_matching_java(cursor, table, key, target, target_time, hyperedge_dict)
         )
+
         model_time = float(total_ilp_time)
 
         # Update-to-null for ILP-selected cells
@@ -519,10 +816,17 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
         deletion_time = (time.time() - deletion_start) - model_time
 
         final_mask = {cell.attribute.split('.')[-1] for cell in to_del}
+        leakage, utility = compute_metrics_from_mask(
+            init_manager = init_mgr,
+            dataset = dataset,
+            target = target,
+            to_del = final_mask - {"latitude_deg"},
+            lam = LAM,
+        )
 
         # standardized memory: ILP scale + mask + hypergraph rough size
         # Hypergraph size:
-        hyper_edges = list(hyper.keys())
+        hyper_edges = list(hyperedge_dict.keys())
         num_edges = len(hyper_edges)
         edge_members = sum(len(e) for e in hyper_edges)
         num_vertices = len({a for e in hyper_edges for a in e})
@@ -559,7 +863,9 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
         float(instantiation_time),
         float(model_time),
         float(deletion_time),
-        int(num_cells),
+        float(leakage),
+        float(utility),
+        int(num_cells) - 2, #because id, and target cell should not be included in auxillary cells
     )
 
 
@@ -572,5 +878,9 @@ if __name__ == '__main__':
     # results = gumbel_deletion_main(dataset='adult', key=2, target_cell='education', method='gumbel')
 
     # Example: baseline 3 (requires rtf_core + gurobi + mysql + config)
-    # out = baseline_deletion_3(target='education', key=2, dataset='adult', threshold=0.5)
-    pass
+    print(baseline_deletion_3("latitude_deg", 500, "airport", 0))
+    # print(baseline_deletion_3("ProviderNumber", 500, "hospital", 0))
+    # print(baseline_deletion_3("marital_status", 500, "tax", 0))
+    # # print(delete_all_dependent_cells("voter_reg_num", 500, "ncvoter", 0))
+    # print(baseline_deletion_3("education", 500, "adult", 0))
+    # print(baseline_deletion_3("InvoiceNo", 500, "Onlineretail", 0))

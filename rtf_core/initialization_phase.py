@@ -2,8 +2,10 @@
 
 import sys
 import os
+from collections import deque
 from importlib import import_module
-from typing import Set, Dict, Any, List
+from typing import Set, Dict, Any, List, Optional
+
 
 # Add project root to path for imports
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -90,28 +92,150 @@ class InitializationManager:
         with RTFDatabaseManager(self.dataset) as db:
             row = db.fetch_row(self.target_cell_info['key'])
         return row
-    
+    #
+    # def _discover_constraint_cells(self, row_data: Dict[str, Any]):
+    #     """Discover and store all cells that have constraints with the target."""
+    #     ##print("Discovering constraint cells...")
+    #     target_attr = self.target_cell.attribute.col
+    #     related_attrs = set()
+    #     self.target_denial_constraints = []
+    #     for dc in self.denial_constraints:
+    #         attrs_in_dc = set(pred.split('.')[-1] for pred in [p[0] for p in dc] + [p[2] for p in dc if isinstance(p[2], str)])
+    #         if target_attr in attrs_in_dc:
+    #             related_attrs.update(attrs_in_dc)
+    #             self.target_denial_constraints.append(dc)
+    #
+    #     related_attrs.discard(target_attr)
+    #
+    #     for attr in related_attrs:
+    #         if attr in row_data:
+    #             constraint_cell = Cell(Attribute(self.table_name, attr), self.target_cell_info['key'], row_data[attr])
+    #             self.constraint_cells.add(constraint_cell)
+    #
+    #     print(f"Found {len(self.constraint_cells)} constraint cells: {[c.attribute.col for c in self.constraint_cells]}")
+    #
+    from collections import deque
+    from typing import Any, Dict, Set, Optional
+
     def _discover_constraint_cells(self, row_data: Dict[str, Any]):
-        """Discover and store all cells that have constraints with the target."""
-        ##print("Discovering constraint cells...")
+        """Discover and store all cells transitively connected to the target via DCs (same row)."""
         target_attr = self.target_cell.attribute.col
-        related_attrs = set()
-        self.target_denial_constraints = []
+        self.constraint_cells.clear()
+
+        # --------------------------
+        # 1) Extract attrs from a token
+        # --------------------------
+        def _tok_to_attr(tok: Any) -> Optional[str]:
+            if not isinstance(tok, str):
+                return None
+            # Common format: "t1.attr" or "table.attr"
+            if "." in tok:
+                return tok.split(".")[-1]
+            # Sometimes DCs may already store just "attr"
+            return tok
+
+        # --------------------------
+        # 2) Build undirected graph: attrs co-occurring in the same DC connect
+        # --------------------------
+        adj: Dict[str, Set[str]] = {}
+
+        def _add_edge(a: str, b: str):
+            if a == b:
+                return
+            adj.setdefault(a, set()).add(b)
+            adj.setdefault(b, set()).add(a)
+
+        all_dc_attrs: list[set[str]] = []
         for dc in self.denial_constraints:
-            attrs_in_dc = set(pred.split('.')[-1] for pred in [p[0] for p in dc] + [p[2] for p in dc if isinstance(p[2], str)])
-            if target_attr in attrs_in_dc:
-                related_attrs.update(attrs_in_dc)
+            attrs_in_dc: Set[str] = set()
+            for pred in dc:
+                if not isinstance(pred, (list, tuple)) or len(pred) < 1:
+                    continue
+
+                # Your DC tuples look like (lhs, op, rhs)
+                # We try to pull attrs from lhs and rhs if they are strings.
+                lhs = pred[0] if len(pred) >= 1 else None
+                rhs = pred[2] if len(pred) >= 3 else None
+
+                a = _tok_to_attr(lhs)
+                b = _tok_to_attr(rhs)
+
+                if a:
+                    attrs_in_dc.add(a)
+                if b:
+                    attrs_in_dc.add(b)
+
+            if len(attrs_in_dc) >= 2:
+                all_dc_attrs.append(attrs_in_dc)
+                attrs_list = list(attrs_in_dc)
+                # connect all pairs in this DC (clique)
+                for i in range(len(attrs_list)):
+                    for j in range(i + 1, len(attrs_list)):
+                        _add_edge(attrs_list[i], attrs_list[j])
+
+        # --------------------------
+        # 3) Transitive closure from target_attr
+        # --------------------------
+        closure: Set[str] = set()
+        q = deque([target_attr])
+        closure.add(target_attr)
+
+        while q:
+            cur = q.popleft()
+            for nxt in adj.get(cur, ()):
+                if nxt not in closure:
+                    closure.add(nxt)
+                    q.append(nxt)
+
+        closure.discard(target_attr)
+
+        # --------------------------
+        # 4) Keep the DCs relevant to the closure (optional but useful)
+        #    - include any DC that touches anything in closure U {target}
+        # --------------------------
+        touched = closure | {target_attr}
+        self.target_denial_constraints = []
+        for dc, attrs_in_dc in zip(
+                (d for d in self.denial_constraints if True),
+                (None for _ in [])
+                # placeholder; we rebuild below to avoid relying on zip alignment
+        ):
+            pass
+
+        # Rebuild cleanly (no zip alignment assumptions)
+        for dc in self.denial_constraints:
+            attrs_in_dc: Set[str] = set()
+            for pred in dc:
+                if not isinstance(pred, (list, tuple)) or len(pred) < 1:
+                    continue
+                lhs = pred[0] if len(pred) >= 1 else None
+                rhs = pred[2] if len(pred) >= 3 else None
+                a = _tok_to_attr(lhs)
+                b = _tok_to_attr(rhs)
+                if a:
+                    attrs_in_dc.add(a)
+                if b:
+                    attrs_in_dc.add(b)
+            if attrs_in_dc & touched:
                 self.target_denial_constraints.append(dc)
 
-        related_attrs.discard(target_attr)
-        
-        for attr in related_attrs:
+        # --------------------------
+        # 5) Instantiate cells for attrs present in the row
+        # --------------------------
+        for attr in closure:
             if attr in row_data:
-                constraint_cell = Cell(Attribute(self.table_name, attr), self.target_cell_info['key'], row_data[attr])
+                constraint_cell = Cell(
+                    Attribute(self.table_name, attr),
+                    self.target_cell_info["key"],
+                    row_data[attr],
+                )
                 self.constraint_cells.add(constraint_cell)
 
-        ##print(f"Found {len(self.constraint_cells)} constraint cells: {[c.attribute.col for c in self.constraint_cells]}")
-    
+        print(
+            f"Found {len(self.constraint_cells)} constraint cells (transitive): "
+            f"{sorted([c.attribute.col for c in self.constraint_cells])}"
+        )
+
     def get_original_domain_size(self) -> int:
         """Get original domain size of the target attribute."""
         try:

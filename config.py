@@ -117,7 +117,7 @@ DATASETS = {
         'key_column': 'id',
         'tables': ['ncvoter_data'],
         'domain_file': 'ncvoter_domain_map.json',
-        'dc_file': 'ncvoter_dcs.py',
+        'dc_file': 'topNCVoterDCs_parsed',
         'dc_raw_file': 'ncvoter_dcs',
         'dc_config_module': 'DCandDelset.dc_configs.topNCVoterDCs_parsed'
     },

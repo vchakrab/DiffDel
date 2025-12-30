@@ -267,9 +267,8 @@ def bench_one(out_csv: str) -> None:
             print(msg)
 
 def main():
-    out_csv = input(f"Output CSV filename (blank => {DEFAULT_OUT_CSV}): ").strip()
-    if not out_csv:
-        out_csv = DEFAULT_OUT_CSV
+
+    out_csv = DEFAULT_OUT_CSV
 
     print("\nNotes:")
     print("- RSS memory requires psutil. If you see -1, run: pip install psutil")
