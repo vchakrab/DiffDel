@@ -738,7 +738,7 @@ def main():
     # cleanup_database_copies()
     # #
     setup_database_copies()
-    run_delexp("delexp_data_standardized_non_canonical.csv", verbose=True)
+    run_delexp("delexp_data_standardized_non_canonical_v3.csv", verbose=True)
     cleanup_database_copies()
     # #
     # setup_database_copies()

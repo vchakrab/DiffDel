@@ -204,7 +204,7 @@ def compute_axis_max(metrics_data):
 if __name__ == "__main__":
     baseline_files = {
         "Baseline 3": "delmin_data_standarized_f3.csv",
-        "Exponential Deletion": "delexp_data_standardized_non_canonical.csv",
+        "Exponential Deletion": "delexp_data_standardized_non_canonical_v3.csv",
         "Greedy Gumbel": "delgum_data_standardized_vFinal.csv",
     }
 
