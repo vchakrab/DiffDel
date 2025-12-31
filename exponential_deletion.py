@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 """
-exponential_deletion.py (EXACT SCHEMA - UPDATED LEAKAGE LOGIC)
+exponential_deletion.py (OR-BLOCKING LEAKAGE MODEL) + WEIGHT DAMPENING
 
-Matches the full diagnostic output of your original script while
-fixing the Leakage Model to strictly follow Algorithm 1 (MPE/Max inference).
+Replaces MaskedMPELeakageModel with OR-blocking semantics:
+- A channel is blocked if ANY prerequisite has Pr = 0
+- Degradation: masked cells with inference paths have 0 < Pr < 1
+- Leakage = mean of (w*_e / w_e) across all channels
+
+NEW:
+- Weight dampening: compress weights toward a center (default 0.5)
+  to reduce brittleness where products go to 0 too easily.
 """
 
 from __future__ import annotations
@@ -12,11 +18,48 @@ import time
 import importlib
 from typing import Any, Dict, Iterable, List, Optional, Set, Sequence, Tuple
 from itertools import combinations
-from collections import deque
+from collections import defaultdict
 
 import numpy as np
 
 from rtf_core import initialization_phase
+
+
+# ============================================================
+# USER TUNABLES (Weight Dampening)
+# ============================================================
+
+# Dampening strength in [0, 1].
+# 0.0 => no change. 1.0 => all weights become WEIGHT_DAMPEN_CENTER.
+WEIGHT_DAMPEN_ALPHA = 0.35
+
+# The "center" we dampen toward (usually 0.5).
+WEIGHT_DAMPEN_CENTER = 0.5
+
+# Clip weights to avoid exact 0 or 1, which can make products collapse / saturate.
+WEIGHT_CLIP_MIN = 1e-6
+WEIGHT_CLIP_MAX = 1.0 - 1e-6
+
+
+def dampen_weight(w: float) -> float:
+    """
+    Compress weight toward a center:
+        w' = (1-a)*w + a*center
+    then clip away from {0,1}.
+    """
+    ww = float(w)
+    # First clamp to [0,1] (raw safety)
+    ww = max(0.0, min(1.0, ww))
+
+    a = float(WEIGHT_DAMPEN_ALPHA)
+    c = float(WEIGHT_DAMPEN_CENTER)
+
+    if a > 0.0:
+        ww = (1.0 - a) * ww + a * c
+
+    # Final clip away from exact 0/1
+    ww = max(WEIGHT_CLIP_MIN, min(WEIGHT_CLIP_MAX, ww))
+    return ww
 
 
 # ============================================================
@@ -44,16 +87,16 @@ def get_dataset_weights(dataset: str):
 
 
 # ============================================================
-# Leakage model EXACTLY as specified in Algorithm 1
+# OR-Blocking Leakage Model
 # ============================================================
 
-class MaskedMPELeakageModel:
+class ORBlockingLeakageModel:
     """
-    Implements the leakage computation exactly as described in the user's text:
-    - Observations: O(M) = V \ (M ∪ {c*})
-    - Inferability: Pr(x) = max_{e ∋ x, e ∉ E*} w(e) * Π_{y in e\{x}} Pr(y)
-    - Monotone fixpoint iteration with a worklist.
-    - Leakage: L(M) = (1/|E*|) Σ_{e in E*} w*_e(M) / w*_e(∅)
+    OR-blocking leakage computation:
+    - Channels: edges containing target c*
+    - Prerequisites: other cells in each channel
+    - Inferability via fixpoint iteration (product semantics)
+    - Leakage: mean ratio of effective/baseline weights across channels
     """
 
     def __init__(self, hyperedges: Sequence[Iterable[str]], weights: Sequence[float], target: str):
@@ -62,6 +105,7 @@ class MaskedMPELeakageModel:
         if len(H) != len(W):
             raise ValueError("hyperedges and weights must have same length")
 
+        # Build cell set and normalize
         V: Set[str] = {target}
         hedges: List[Set[str]] = []
         for e in H:
@@ -69,114 +113,134 @@ class MaskedMPELeakageModel:
             V |= s
             hedges.append(s)
 
-        ordered = sorted(V)
-        self.cell_to_id: Dict[str, int] = {c: i for i, c in enumerate(ordered)}
-        self.id_to_cell: List[str] = ordered
-        self.n = len(ordered)
         self.target = target
-        self.tid = self.cell_to_id[target]
+        self.edges: List[Tuple[Set[str], float]] = []
 
-        self.edges: List[Tuple[Tuple[int, ...], float]] = []
         for s, w in zip(hedges, W):
-            ww = float(w)
-            # Clamp to [0, 1] as per model assumptions
-            ww = max(0.0, min(1.0, ww))
-            verts = tuple(sorted(self.cell_to_id[c] for c in s))
-            self.edges.append((verts, ww))
+            # Apply dampening + clipping
+            ww = dampen_weight(w)
+            self.edges.append((s, ww))
 
-        self.inc: List[List[int]] = [[] for _ in range(self.n)]
-        neigh_sets: List[Set[int]] = [set() for _ in range(self.n)]
-        for ei, (verts, _w) in enumerate(self.edges):
-            for v in verts:
-                self.inc[v].append(ei)
-                neigh_sets[v].update(verts)
-
-        self.neigh: List[Tuple[int, ...]] = [tuple(sorted(s - {i})) for i, s in
-                                             enumerate(neigh_sets)]
-
-        self.channel_edges: List[int] = [
-            ei for ei, (verts, _w) in enumerate(self.edges) if self.tid in verts
+        # Identify channels (edges containing target)
+        self.channels: List[Tuple[Set[str], float]] = [
+            (e, w) for e, w in self.edges if target in e
         ]
-        self._channel_edge_set: Set[int] = set(self.channel_edges)
+        self.non_channels: List[Tuple[Set[str], float]] = [
+            (e, w) for e, w in self.edges if target not in e
+        ]
 
-    def _prod_except(self, verts: Tuple[int, ...], skip_v: int, pr: List[float]) -> float:
-        out = 1.0
-        for y in verts:
-            if y == skip_v: continue
-            out *= pr[y]
-            if out == 0.0: return 0.0
-        return out
+        # Build index: cell -> list of (edge, weight) for non-channel edges
+        self.cell_to_edges: Dict[str, List[Tuple[Set[str], float]]] = defaultdict(list)
+        for e, w in self.non_channels:
+            for cell in e:
+                self.cell_to_edges[cell].append((e, w))
+
+        # All cells in the hypergraph
+        self.all_cells: Set[str] = set()
+        for e, _w in self.edges:
+            self.all_cells.update(e)
+
+    def _product(self, values) -> float:
+        """Compute product of values."""
+        result = 1.0
+        for v in values:
+            result *= v
+            if result == 0.0:
+                return 0.0
+        return result
+
+    def _compute_inferability(self, mask: Set[str], relevant_cells: Set[str]) -> Dict[str, float]:
+        """
+        Compute inferability Pr(x) for all cells via fixpoint iteration.
+
+        Args:
+            mask: set of masked cells
+            relevant_cells: cells we need inferability for (kept for interface; we compute all)
+
+        Returns:
+            dict mapping cell -> inferability in [0, 1]
+        """
+        # Initialize: visible cells have Pr=1, masked cells have Pr=0
+        pr: Dict[str, float] = {}
+        for cell in self.all_cells:
+            pr[cell] = 0.0 if cell in mask else 1.0
+
+        # Fixpoint iteration for masked cells
+        changed = True
+        max_iterations = len(self.all_cells) * len(self.all_cells) + 1  # Safety bound
+        iteration = 0
+
+        while changed and iteration < max_iterations:
+            changed = False
+            iteration += 1
+
+            for x in mask:
+                best_prob = pr.get(x, 0.0)
+
+                # Try to infer x via each non-channel edge containing x
+                for e, w in self.cell_to_edges.get(x, []):
+                    other_cells = e - {x}
+                    prob = w * self._product(pr.get(y, 0.0) for y in other_cells)
+
+                    if prob > best_prob:
+                        best_prob = prob
+
+                if best_prob > pr.get(x, 0.0):
+                    pr[x] = best_prob
+                    changed = True
+
+        return pr
 
     def leakage_with_diagnostics(
             self,
             mask: Set[str],
             *,
             max_updates: int = 10_000_000,
-    ) -> Tuple[float, List[float], Dict[int, float]]:
-        mask_ids = {self.cell_to_id[c] for c in mask if c in self.cell_to_id}
+    ) -> Tuple[float, Dict[str, float], Dict[int, float]]:
+        """
+        Compute leakage with full diagnostics.
 
-        # O(M) = V \ (M ∪ {c*})
-        observed = [True] * self.n
-        observed[self.tid] = False
-        for mid in mask_ids:
-            observed[mid] = False
+        Returns:
+            (leakage, inferability_dict, channel_weights_dict)
+        """
+        if self.target in mask:
+            raise ValueError("Target cell cannot be in mask")
 
-        # Pr(x) = 1 if x in O else 0
-        pr = [1.0 if observed[v] else 0.0 for v in range(self.n)]
-        Q = deque(range(self.n))
-        in_q = [True] * self.n
-        pops = 0
+        if not self.channels:
+            # No channels = no leakage
+            return 0.0, {}, {}
 
-        while Q and pops < max_updates:
-            v = Q.popleft()
-            in_q[v] = False
-            pops += 1
-            if observed[v]: continue
+        # Get all prerequisites across all channels
+        all_prerequisites: Set[str] = set()
+        for channel, _ in self.channels:
+            prerequisites = channel - {self.target}
+            all_prerequisites.update(prerequisites)
 
-            # Pr_new(v) = max_{e ∋ v, e ∉ E*} w(e) * Π Pr(y)
-            best = 0.0
-            for ei in self.inc[v]:
-                if ei in self._channel_edge_set: continue
-                verts, w = self.edges[ei]
-                candidate = w * self._prod_except(verts, v, pr)
-                if candidate > best:
-                    best = candidate
+        pr = self._compute_inferability(mask, all_prerequisites)
 
-            if best > pr[v]:
-                pr[v] = best
-                for u in self.neigh[v]:
-                    if not in_q[u]:
-                        Q.append(u)
-                        in_q[u] = True
-
+        total_ratio = 0.0
         channel_wstar: Dict[int, float] = {}
-        if not self.channel_edges:
-            return 0.0, pr, {}
 
-        acc = 0.0
-        for ei in self.channel_edges:
-            verts, w = self.edges[ei]
-            # w*_e(M) = w(e) * Π Pr(y)
-            prod = self._prod_except(verts, self.tid, pr)
-            w_star_M = w * prod
-            channel_wstar[ei] = w_star_M
+        for channel_idx, (channel, channel_weight) in enumerate(self.channels):
+            prerequisites = channel - {self.target}
+            w_star = channel_weight * self._product(pr.get(y, 0.0) for y in prerequisites)
+            channel_wstar[channel_idx] = w_star
 
-            # Ratio = w*_e(M) / w*_e(empty). Since w*_e(empty) = w(e):
-            if w > 0:
-                acc += (w_star_M / w)
-            else:
-                acc += 0.0
+            w_baseline = channel_weight
+            ratio = w_star / w_baseline if w_baseline > 0 else 0.0
+            total_ratio += ratio
 
-        L = acc / len(self.channel_edges)
-        return float(L), pr, channel_wstar
+        leakage = total_ratio / len(self.channels)
+        return float(leakage), pr, channel_wstar
 
     def leakage(self, mask: Set[str]) -> float:
+        """Compute leakage for given mask."""
         L, _, _ = self.leakage_with_diagnostics(mask)
         return L
 
 
 # ============================================================
-# Utilities, Paths Proxy, Memory Estimate (ORIGINAL LOGIC)
+# Utilities, Paths Proxy, Memory Estimate
 # ============================================================
 
 def enumerate_masks_powerset(neigh: List[str]) -> List[Set[str]]:
@@ -193,8 +257,7 @@ def compute_utility(mask: Set[str], leakage: float, lam: float,
     return float(-(lam * leakage) - ((1.0 - lam) * norm))
 
 
-def estimate_paths_proxy_from_channels(num_channel_edges: int, L_empty: float, L_mask: float) -> \
-Dict[str, int]:
+def estimate_paths_proxy_from_channels(num_channel_edges: int, L_empty: float, L_mask: float) -> Dict[str, int]:
     total = int(max(0, num_channel_edges))
     if total == 0 or L_empty <= 1e-15:
         return {"num_paths_est": total, "paths_blocked_est": 0}
@@ -208,7 +271,7 @@ def estimate_memory_overhead_bytes_delexp(
         num_vertices: int,
         mask_size: int,
         num_candidates: int,
-        candidate_mask_members: int,  # Ensure this matches the keyword in the call
+        candidate_mask_members: int,
         includes_channel_map: bool = True
 ) -> int:
     num_edges = len(hyperedges)
@@ -261,19 +324,21 @@ def exponential_deletion_main(dataset: str, key: int, target_cell: str, epsilon:
     H, W = dc_to_hyperedges(init_manager)
 
     instantiated_cells = set()
-    for e in H: instantiated_cells.update(e)
+    for e in H:
+        instantiated_cells.update(e)
     num_instantiated_cells = len(instantiated_cells)
     init_time = time.time() - init_start
 
     model_start = time.time()
-    model = MaskedMPELeakageModel(H, W, target = target_cell)
+    model = ORBlockingLeakageModel(H, W, target=target_cell)
 
     # I(c*) = direct neighbors
     neigh = set()
     for e in H:
         if target_cell in e:
             for v in e:
-                if v != target_cell: neigh.add(v)
+                if v != target_cell:
+                    neigh.add(v)
     neigh_list = sorted(neigh)
 
     candidates = enumerate_masks_powerset(neigh_list)
@@ -285,12 +350,14 @@ def exponential_deletion_main(dataset: str, key: int, target_cell: str, epsilon:
         L = model.leakage(M)
         utilities.append(compute_utility(M, L, lam, denom))
 
-    utilities = np.array(utilities)
+    utilities = np.array(utilities, dtype=float)
+
+    # NOTE: leaving your exponential mechanism math unchanged
     scores = (epsilon * utilities) / (2.0 * lam)
     probs = np.exp(scores - np.max(scores))
     probs /= probs.sum()
 
-    idx = np.random.choice(len(candidates), p = probs)
+    idx = np.random.choice(len(candidates), p=probs)
     final_mask = candidates[idx]
     util_val = utilities[idx]
 
@@ -298,21 +365,20 @@ def exponential_deletion_main(dataset: str, key: int, target_cell: str, epsilon:
     leakage_final = model.leakage(final_mask)
 
     paths_proxy = estimate_paths_proxy_from_channels(
-        num_channel_edges = len(model.channel_edges),
-        L_empty = leakage_base,
-        L_mask = leakage_final
+        num_channel_edges=len(model.channels),
+        L_empty=leakage_base,
+        L_mask=leakage_final
     )
 
     model_time = time.time() - model_start
     cand_members = sum(len(s) for s in candidates)
 
-    # FIXED: Keywords now match the definition signature exactly
     memory_overhead = estimate_memory_overhead_bytes_delexp(
-        hyperedges = H,
-        num_vertices = model.n,
-        mask_size = len(final_mask),
-        num_candidates = len(candidates),
-        candidate_mask_members = cand_members
+        hyperedges=H,
+        num_vertices=len(model.all_cells),
+        mask_size=len(final_mask),
+        num_candidates=len(candidates),
+        candidate_mask_members=cand_members
     )
 
     return {
@@ -327,10 +393,14 @@ def exponential_deletion_main(dataset: str, key: int, target_cell: str, epsilon:
         "paths_blocked": int(paths_proxy["paths_blocked_est"]),
         "memory_overhead_bytes": int(memory_overhead),
         "num_instantiated_cells": int(num_instantiated_cells),
-        "num_channel_edges": int(len(model.channel_edges)),
+        "num_channel_edges": int(len(model.channels)),
         "baseline_leakage_empty_mask": float(leakage_base),
+        # Helpful debug so you can confirm dampening is active
+        "weight_dampen_alpha": float(WEIGHT_DAMPEN_ALPHA),
+        "weight_dampen_center": float(WEIGHT_DAMPEN_CENTER),
+        "weight_clip_min": float(WEIGHT_CLIP_MIN),
+        "weight_clip_max": float(WEIGHT_CLIP_MAX),
     }
-
 
 
 if __name__ == "__main__":

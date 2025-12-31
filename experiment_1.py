@@ -1,813 +1,431 @@
 #!/usr/bin/env python3
 """
-run_standardized_experiments.py
+exponential_deletion.py (OR-BLOCKING LEAKAGE MODEL)
 
-Runs:
-- delmin  (baseline_deletion_3.baseline_deletion_3)
-- delexp  (exponential_deletion.exponential_deletion_main)
-- delgum  (greedy_gumbel.gumbel_deletion_main)
-
-Fixes / guarantees:
-- paths_blocked is an ESTIMATE (NO path construction).
-- paths_blocked/memory computations are NOT counted in init/model/del times.
-- update-to-NULL is measured separately as update_time + num_cells_updated.
-- standardized CSV schema across all methods.
-- skips flights and tax datasets (per your request).
+Replaces MaskedMPELeakageModel with OR-blocking semantics:
+- A channel is blocked if ANY prerequisite has Pr = 0
+- Degradation: masked cells with inference paths have 0 < Pr < 1
+- Leakage = mean of (w*_e / w_e) across all channels
 """
 
 from __future__ import annotations
 
-import sys
 import time
-from typing import Any, Dict, Optional, Tuple, Union, List
+import importlib
+from typing import Any, Dict, Iterable, List, Optional, Set, Sequence, Tuple
+from itertools import combinations
+from collections import defaultdict
 
-import mysql.connector
+import numpy as np
 
-import config
-
-import exponential_deletion
-import greedy_gumbel
-import baseline_deletion_3
-import two_phase_deletion
+from rtf_core import initialization_phase
 
 
-# ----------------------------
-# Config (NO flights / tax)
-# ----------------------------
+# ============================================================
+# Helpers
+# ============================================================
 
-DATASETS = ["airport", "hospital", "ncvoter", "Onlineretail", "adult", "tax"]
-
-ORIGINAL_TABLE_NAMES = {
-    "airport": "airports",
-    "hospital": "hospital_data",
-    "ncvoter": "ncvoter_data",
-    "adult": "adult_data",
-    "Onlineretail": "onlineretail_data",
-    "flight" : "flight_data",
-    "tax" : "tax_data",
-}
-K_SIZE = {
-    "airport": 15,
-    "hospital": 12,
-    "ncvoter": 14,
-    "adult": 6,
-    "tax": 6,
-    "Onlineretail": 8,
-}
-TARGET_ATTR = {
-    "airport": "latitude_deg",
-    "hospital": "ProviderNumber",
-    "ncvoter": "voter_reg_num",
-    "Onlineretail": "InvoiceNo",
-    "adult": "education",
-    "flight": "FlightNum",
-    "tax": "marital_status",
-}
-
-ITERS = 25
+def _normalize_hyperedges(hyperedges: Sequence[Iterable[str]]) -> List[Tuple[str, ...]]:
+    out: List[Tuple[str, ...]] = []
+    for e in hyperedges:
+        s = tuple(sorted(set(e)))
+        if len(s) >= 2:
+            out.append(s)
+    return out
 
 
-# ----------------------------
-# Small utilities
-# ----------------------------
-
-def normalize_dataset_name(ds: str) -> str:
-    if ds.lower() in ("onlineretail", "online_retail", "online-retail"):
-        return "Onlineretail"
-    return ds
-
-
-def get_db_config_robust(dataset: str) -> Dict[str, Any]:
-    """
-    config.get_database_config sometimes uses 'database' vs 'database_name'.
-    Normalize it so mysql.connector.connect works.
-    """
-    cfg = config.get_database_config(dataset)
-    if "database" not in cfg and "database_name" in cfg:
-        cfg["database"] = cfg["database_name"]
-    return cfg
-
-
-def get_random_key(dataset: str) -> Optional[int]:
-    dataset = normalize_dataset_name(dataset)
-    db_details = get_db_config_robust(dataset)
-
-    conn = mysql.connector.connect(
-        host=db_details.get("host", "localhost"),
-        user=db_details.get("user", "root"),
-        password=db_details.get("password", ""),
-        database=db_details.get("database"),
-        ssl_disabled=db_details.get("ssl_disabled", True),
-    )
-    cursor = conn.cursor()
+def get_dataset_weights(dataset: str):
+    dataset = dataset.lower()
+    module_name = f"weights.weights_corrected.{dataset}_weights"
     try:
-        cursor.execute(
-            f"SELECT ID FROM {dataset}_copy_data ORDER BY RAND() LIMIT 1;"
-        )
-        row = cursor.fetchone()
-        return int(row[0]) if row else None
-    finally:
-        cursor.close()
-        conn.close()
-
-
-def setup_database_copies():
-    """
-    Create:
-      - <dataset>_copy_data LIKE <original_table>
-      - <dataset>_copy_data_insertiontime LIKE <original_table>_insertiontime (if exists)
-    """
-    print("Setting up database copies...")
-    for dataset in DATASETS:
-        dataset = normalize_dataset_name(dataset)
-        try:
-            db_config = get_db_config_robust(dataset)
-            conn = mysql.connector.connect(**db_config)
-            cursor = conn.cursor()
-
-            original_table = ORIGINAL_TABLE_NAMES[dataset]
-            copied_table = f"{dataset}_copy_data"
-
-            print(f"  - Creating copy for '{dataset}': {copied_table}")
-            cursor.execute(f"DROP TABLE IF EXISTS {copied_table};")
-            cursor.execute(f"CREATE TABLE {copied_table} LIKE {original_table};")
-            cursor.execute(f"INSERT INTO {copied_table} SELECT * FROM {original_table};")
-
-            # Copy insertiontime table only if it exists
-            original_time_table = f"{original_table}_insertiontime"
-            copied_time_table = f"{copied_table}_insertiontime"
-
-            cursor.execute(
-                """
-                SELECT COUNT(*)
-                FROM information_schema.tables
-                WHERE table_schema = DATABASE() AND table_name = %s
-                """,
-                (original_time_table,),
-            )
-            exists = int(cursor.fetchone()[0]) == 1
-            if exists:
-                cursor.execute(f"DROP TABLE IF EXISTS {copied_time_table};")
-                cursor.execute(f"CREATE TABLE {copied_time_table} LIKE {original_time_table};")
-                cursor.execute(f"INSERT INTO {copied_time_table} SELECT * FROM {original_time_table};")
-
-            conn.commit()
-            cursor.close()
-            conn.close()
-
-        except mysql.connector.Error as err:
-            print(f"    ERROR for dataset {dataset}: {err}")
-    print("Setup complete.\n")
-
-
-def cleanup_database_copies():
-    print("Cleaning up database copies...")
-    for dataset in DATASETS:
-        dataset = normalize_dataset_name(dataset)
-        try:
-            db_config = get_db_config_robust(dataset)
-            conn = mysql.connector.connect(**db_config)
-            cursor = conn.cursor()
-
-            copied_table = f"{dataset}_copy_data"
-            copied_time_table = f"{copied_table}_insertiontime"
-
-            print(f"  - Dropping copy for '{dataset}': {copied_table}")
-            cursor.execute(f"DROP TABLE IF EXISTS {copied_table};")
-            cursor.execute(f"DROP TABLE IF EXISTS {copied_time_table};")
-
-            conn.commit()
-            cursor.close()
-            conn.close()
-        except mysql.connector.Error as err:
-            print(f"    ERROR for dataset {dataset}: {err}")
-    print("Cleanup complete.\n")
-
-
-# ----------------------------
-# Update-to-NULL (measured consistently)
-# ----------------------------
-
-MaskItem = Union[
-    Tuple[int, str],        # (row_id, col_name)
-    Tuple[str, int],        # (col_name, row_id)
-    Dict[str, Any],         # {"id": <int>, "attr": <str>} etc.
-    str                     # parseable strings; best-effort
-]
-
-
-def _parse_mask_item(item: MaskItem) -> Optional[Tuple[int, str]]:
-    try:
-        if isinstance(item, tuple) and len(item) == 2:
-            a, b = item
-            if isinstance(a, int) and isinstance(b, str):
-                return (a, b)
-            if isinstance(a, str) and isinstance(b, int):
-                return (b, a)
-
-        if isinstance(item, dict):
-            rid = item.get("id", item.get("row", item.get("row_id")))
-            col = item.get("attr", item.get("col", item.get("column")))
-            if isinstance(rid, int) and isinstance(col, str):
-                return (rid, col)
-
-        if isinstance(item, str):
-            s = item.strip()
-            # "123:Attr"
-            if ":" in s:
-                left, right = s.split(":", 1)
-                left, right = left.strip(), right.strip()
-                if left.isdigit() and right:
-                    return (int(left), right)
-            # "Attr@123"
-            if "@" in s:
-                left, right = s.split("@", 1)
-                left, right = left.strip(), right.strip()
-                if right.isdigit() and left:
-                    return (int(right), left)
-    except Exception:
+        weights_module = importlib.import_module(module_name)
+        return weights_module.WEIGHTS
+    except ModuleNotFoundError:
+        print(f"[WARN] No weights module found for dataset: {dataset}")
         return None
 
-    return None
 
+# ============================================================
+# OR-Blocking Leakage Model
+# ============================================================
 
-def update_mask_to_null(dataset: str, key: int, mask: Any) -> Tuple[float, int]:
+class ORBlockingLeakageModel:
     """
-    Interprets mask as:
-      - set of column names (strings)  -> updates those columns to NULL on row ID=key
-      - OR iterable of (row_id, col) items -> updates per item
-    Returns: (update_time_seconds, num_cells_updated)
+    OR-blocking leakage computation:
+    - Channels: edges containing target c*
+    - Prerequisites: other cells in each channel
+    - Inferability via fixpoint iteration (product semantics)
+    - Leakage: mean ratio of effective/baseline weights across channels
     """
-    dataset = normalize_dataset_name(dataset)
-    t0 = time.time()
-    updated = 0
 
-    if mask is None:
-        return (0.0, 0)
+    def __init__(self, hyperedges: Sequence[Iterable[str]], weights: Sequence[float], target: str):
+        H = _normalize_hyperedges(hyperedges)
+        W = list(weights)
+        if len(H) != len(W):
+            raise ValueError("hyperedges and weights must have same length")
 
-    db_config = get_db_config_robust(dataset)
-    conn = mysql.connector.connect(**db_config)
-    cursor = conn.cursor()
+        # Build cell set and normalize
+        V: Set[str] = {target}
+        hedges: List[Set[str]] = []
+        for e in H:
+            s = set(e)
+            V |= s
+            hedges.append(s)
 
-    try:
-        # Case A: mask is a set/list of column names
-        if isinstance(mask, (set, list, tuple)) and all(isinstance(x, str) for x in mask):
-            cols: List[str] = sorted(set(mask))
-            cols = [c for c in cols if c.replace("_", "").isalnum()]
-            if cols:
-                set_clause = ", ".join([f"`{c}` = NULL" for c in cols])
-                sql = f"UPDATE `{dataset}_copy_data` SET {set_clause} WHERE `ID` = %s"
-                cursor.execute(sql, (key,))
-                updated += int(cursor.rowcount or 0)
+        self.target = target
+        self.edges: List[Tuple[Set[str], float]] = []
 
-        else:
-            # Case B: iterable of items possibly including row_id
-            try:
-                iterator = iter(mask)
-            except TypeError:
-                iterator = iter([])
+        for s, w in zip(hedges, W):
+            ww = float(w)
+            # Clamp to [0, 1]
+            ww = max(0.0, min(1.0, ww))
+            self.edges.append((s, ww))
 
-            for item in iterator:
-                parsed = _parse_mask_item(item)
-                if not parsed:
-                    continue
-                rid, col = parsed
-                if not col.replace("_", "").isalnum():
-                    continue
-                cursor.execute(
-                    f"UPDATE `{dataset}_copy_data` SET `{col}` = NULL WHERE `ID` = %s",
-                    (rid,),
-                )
-                updated += int(cursor.rowcount or 0)
+        # Identify channels (edges containing target)
+        self.channels: List[Tuple[Set[str], float]] = [
+            (e, w) for e, w in self.edges if target in e
+        ]
+        self.non_channels: List[Tuple[Set[str], float]] = [
+            (e, w) for e, w in self.edges if target not in e
+        ]
 
-        conn.commit()
+        # Build index: cell -> list of (edge, weight) for non-channel edges
+        self.cell_to_edges: Dict[str, List[Tuple[Set[str], float]]] = defaultdict(list)
+        for e, w in self.non_channels:
+            for cell in e:
+                self.cell_to_edges[cell].append((e, w))
 
-    except Exception:
-        conn.rollback()
-    finally:
-        cursor.close()
-        conn.close()
+        # All cells in the hypergraph
+        self.all_cells: Set[str] = set()
+        for e, w in self.edges:
+            self.all_cells.update(e)
 
-    return (float(time.time() - t0), int(updated))
+    def _product(self, values) -> float:
+        """Compute product of values."""
+        result = 1.0
+        for v in values:
+            result *= v
+            if result == 0.0:
+                return 0.0
+        return result
+
+    def _compute_inferability(self, mask: Set[str], relevant_cells: Set[str]) -> Dict[str, float]:
+        """
+        Compute inferability Pr(x) for all cells via fixpoint iteration.
+
+        Args:
+            mask: set of masked cells
+            relevant_cells: cells we need inferability for
+
+        Returns:
+            dict mapping cell -> inferability in [0, 1]
+        """
+        # Initialize: visible cells have Pr=1, masked cells have Pr=0
+        pr: Dict[str, float] = {}
+
+        for cell in self.all_cells:
+            pr[cell] = 0.0 if cell in mask else 1.0
+
+        # Fixpoint iteration for masked cells
+        changed = True
+        max_iterations = len(self.all_cells) * len(self.all_cells) + 1  # Safety bound
+        iteration = 0
+
+        while changed and iteration < max_iterations:
+            changed = False
+            iteration += 1
+
+            for x in mask:
+                # Try to infer x via each edge containing x
+                best_prob = pr.get(x, 0.0)
+
+                for e, w in self.cell_to_edges.get(x, []):
+                    # To infer x via edge e: need all other cells in e
+                    other_cells = e - {x}
+
+                    # Probability = w * product of Pr(y) for y in other_cells
+                    prob = w * self._product(pr.get(y, 0.0) for y in other_cells)
+
+                    if prob > best_prob:
+                        best_prob = prob
+
+                if best_prob > pr.get(x, 0.0):
+                    pr[x] = best_prob
+                    changed = True
+
+        return pr
+
+    def leakage_with_diagnostics(
+            self,
+            mask: Set[str],
+            *,
+            max_updates: int = 10_000_000,
+    ) -> Tuple[float, Dict[str, float], Dict[int, float]]:
+        """
+        Compute leakage with full diagnostics.
+
+        Returns:
+            (leakage, inferability_dict, channel_weights_dict)
+        """
+        if self.target in mask:
+            raise ValueError("Target cell cannot be in mask")
+
+        if not self.channels:
+            # No channels = no leakage
+            return 0.0, {}, {}
+
+        # Get all prerequisites across all channels
+        all_prerequisites: Set[str] = set()
+        for channel, _ in self.channels:
+            prerequisites = channel - {self.target}
+            all_prerequisites.update(prerequisites)
+
+        # Compute inferability for all cells
+        pr = self._compute_inferability(mask, all_prerequisites)
+
+        total_ratio = 0.0
+        channel_wstar: Dict[int, float] = {}
+
+        for channel_idx, (channel, channel_weight) in enumerate(self.channels):
+            # Prerequisites: cells in channel except target
+            prerequisites = channel - {self.target}
+
+            # Channel effective weight: w * product(Pr(y) for y in prerequisites)
+            w_star = channel_weight * self._product(pr.get(y, 0.0) for y in prerequisites)
+            channel_wstar[channel_idx] = w_star
+
+            # Baseline weight (no mask)
+            w_baseline = channel_weight
+
+            # Ratio
+            ratio = w_star / w_baseline if w_baseline > 0 else 0.0
+            total_ratio += ratio
+
+        # Mean of ratios
+        leakage = total_ratio / len(self.channels)
+        return float(leakage), pr, channel_wstar
+
+    def leakage(self, mask: Set[str]) -> float:
+        """Compute leakage for given mask."""
+        L, _, _ = self.leakage_with_diagnostics(mask)
+        return L
 
 
-# ----------------------------
-# Metrics: paths_blocked estimate (NO enumeration)
-# ----------------------------
+# ============================================================
+# Utilities, Paths Proxy, Memory Estimate
+# ============================================================
 
-def clamp_int(x: int, lo: int, hi: int) -> int:
-    return max(lo, min(hi, x))
-
-
-def estimate_paths_blocked(num_paths: int, leakage: Optional[float]) -> int:
-    """
-    No path construction.
-    leakage in [0,1]:
-      active ~= round(leakage * num_paths)
-      blocked ~= num_paths - active
-    """
-    if leakage is None:
-        return -1
-    if num_paths is None or num_paths < 0:
-        return -1
-    L = max(0.0, min(1.0, float(leakage)))
-    active = int(round(L * num_paths))
-    active = clamp_int(active, 0, num_paths)
-    return int(num_paths - active)
+def enumerate_masks_powerset(neigh: List[str]) -> List[Set[str]]:
+    out: List[Set[str]] = []
+    for k in range(len(neigh) + 1):
+        for comb in combinations(neigh, k):
+            out.append(set(comb))
+    return out
 
 
-# ----------------------------
-# CSV
-# ----------------------------
+def compute_utility(mask: Set[str], leakage: float, lam: float,
+                    num_candidates_minus_one: int) -> float:
+    norm = (len(mask) / num_candidates_minus_one) if num_candidates_minus_one > 0 else 0.0
+    return float(-(lam * leakage) - ((1.0 - lam) * norm))
 
-def write_csv_header(f):
-    f.write(
-        "method,dataset,target_attribute,total_time,init_time,model_time,del_time,update_time,"
-        "leakage,utility,paths_blocked,mask_size,num_paths,memory_overhead_bytes,"
-        "num_instantiated_cells,num_cells_updated\n"
+
+def estimate_paths_proxy_from_channels(num_channel_edges: int, L_empty: float, L_mask: float) -> \
+Dict[str, int]:
+    total = int(max(0, num_channel_edges))
+    if total == 0 or L_empty <= 1e-15:
+        return {"num_paths_est": total, "paths_blocked_est": 0}
+    frac = max(0.0, min(1.0, 1.0 - (L_mask / L_empty)))
+    blocked = int(round(frac * total))
+    return {"num_paths_est": total, "paths_blocked_est": blocked}
+
+
+def estimate_memory_overhead_bytes_delexp(
+        hyperedges: List[Tuple[str, ...]],
+        num_vertices: int,
+        mask_size: int,
+        num_candidates: int,
+        candidate_mask_members: int,
+        includes_channel_map: bool = True
+) -> int:
+    num_edges = len(hyperedges)
+    edge_members = sum(len(e) for e in hyperedges)
+
+    # Constants for object sizes in bytes
+    B_V, B_E, B_EM, B_MS, B_MM, B_ES, B_F, B_I, B_CM = 112, 184, 72, 96, 72, 80, 8, 28, 96
+
+    est = (num_vertices * B_V) + (num_edges * B_E) + (edge_members * B_EM)
+    est += B_MS + (mask_size * B_MM)
+    est += (num_edges * B_ES) + (num_vertices * B_F) + (num_edges * B_F)
+
+    if includes_channel_map:
+        est += num_edges * (B_I + B_F)
+
+    est += (num_candidates * B_CM) + (candidate_mask_members * B_MM) + (num_candidates * 8)
+    return int(est)
+
+
+# ============================================================
+# Main orchestrator
+# ============================================================
+
+def map_dc_to_weight(init_manager, dc, weights):
+    return weights[init_manager.denial_constraints.index(dc)]
+
+
+def dc_to_hyperedges(init_manager) -> Tuple[List[Tuple[str, ...]], List[float]]:
+    hyperedges, weights = [], []
+    W = get_dataset_weights(init_manager.dataset)
+    for dc in getattr(init_manager, "denial_constraints", []):
+        attrs = set()
+        weight = map_dc_to_weight(init_manager, dc, W) if W else 1.0
+        for pred in dc:
+            if isinstance(pred, (list, tuple)) and len(pred) >= 1:
+                token = pred[0]
+                if isinstance(token, str) and "." in token:
+                    attrs.add(token.split(".")[-1])
+        if len(attrs) >= 2:
+            hyperedges.append(tuple(sorted(attrs)))
+            weights.append(float(weight))
+    return hyperedges, weights
+
+
+def exponential_deletion_main(dataset: str, key: int, target_cell: str, epsilon: float = 10,
+                              lam: float = 0.67, debug: bool = False) -> Dict[str, Any]:
+    init_start = time.time()
+    init_manager = initialization_phase.InitializationManager(
+        {"key": key, "attribute": target_cell}, dataset, 0)
+    H, W = dc_to_hyperedges(init_manager)
+
+    instantiated_cells = set()
+    for e in H:
+        instantiated_cells.update(e)
+    num_instantiated_cells = len(instantiated_cells)
+    init_time = time.time() - init_start
+
+    model_start = time.time()
+    model = ORBlockingLeakageModel(H, W, target = target_cell)
+
+    if debug:
+        print(f"\n{'=' * 60}")
+        print(f"DEBUG: {dataset} - {target_cell}")
+        print(f"{'=' * 60}")
+        print(f"Num hyperedges: {len(H)}")
+        print(f"Num channels: {len(model.channels)}")
+        print(f"Channel details:")
+        for i, (channel, w) in enumerate(model.channels):
+            prereqs = channel - {target_cell}
+            print(f"  Channel {i}: {channel} (w={w:.3f}, prereqs={prereqs})")
+
+    # I(c*) = direct neighbors
+    neigh = set()
+    for e in H:
+        if target_cell in e:
+            for v in e:
+                if v != target_cell:
+                    neigh.add(v)
+    neigh_list = sorted(neigh)
+
+    candidates = enumerate_masks_powerset(neigh_list)
+
+    # Exponential mechanism
+    denom = max(1, len(neigh_list))
+    utilities = []
+    leakages = []
+    for M in candidates:
+        L = model.leakage(M)
+        leakages.append(L)
+        utilities.append(compute_utility(M, L, lam, denom))
+
+    utilities = np.array(utilities)
+    leakages = np.array(leakages)
+    scores = (epsilon * utilities) / (2.0 * lam)
+    probs = np.exp(scores - np.max(scores))
+    probs /= probs.sum()
+
+    if debug:
+        print(f"\nCandidate analysis:")
+        print(f"  Total candidates: {len(candidates)}")
+        print(f"  Neighbor set size: {len(neigh_list)}")
+        print(f"  Neighbors: {neigh_list}")
+        print(f"\nTop 10 candidates by probability:")
+        top_indices = np.argsort(probs)[-10:][::-1]
+        for rank, idx in enumerate(top_indices, 1):
+            M = candidates[idx]
+            print(f"  {rank}. Mask size={len(M)}, L={leakages[idx]:.4f}, "
+                  f"U={utilities[idx]:.4f}, p={probs[idx]:.6f}")
+            if len(M) <= 5:
+                print(f"      Mask: {M}")
+
+    idx = np.random.choice(len(candidates), p = probs)
+    final_mask = candidates[idx]
+    util_val = utilities[idx]
+
+    leakage_base = model.leakage(set())
+    leakage_final = model.leakage(final_mask)
+
+    if debug:
+        print(f"\nLeakage baseline (empty mask): {leakage_base:.6f}")
+        print(f"Leakage with final mask: {leakage_final:.6f}")
+        print(f"Final mask: {final_mask}")
+        print(f"Final mask size: {len(final_mask)}")
+
+        # Detailed channel analysis
+        _, pr_empty, wstar_empty = model.leakage_with_diagnostics(set())
+        _, pr_final, wstar_final = model.leakage_with_diagnostics(final_mask)
+
+        print(f"\nChannel weights:")
+        for i in range(len(model.channels)):
+            print(f"  Channel {i}: w*_empty={wstar_empty.get(i, 0):.4f}, "
+                  f"w*_final={wstar_final.get(i, 0):.4f}")
+
+    paths_proxy = estimate_paths_proxy_from_channels(
+        num_channel_edges = len(model.channels),
+        L_empty = leakage_base,
+        L_mask = leakage_final
     )
 
+    if debug:
+        print(f"\nPaths proxy calculation:")
+        print(f"  num_channel_edges: {len(model.channels)}")
+        print(f"  L_empty: {leakage_base:.6f}")
+        print(f"  L_mask: {leakage_final:.6f}")
+        print(
+            f"  Fraction blocked: {1.0 - (leakage_final / leakage_base if leakage_base > 0 else 0):.6f}")
+        print(f"  Result: {paths_proxy}")
+        print(f"{'=' * 60}\n")
 
-def write_csv_row(f, row: Dict[str, Any]):
-    def fmt(x):
-        if x is None:
-            return ""
-        return str(x)
+    model_time = time.time() - model_start
+    cand_members = sum(len(s) for s in candidates)
 
-    f.write(
-        ",".join([
-            fmt(row.get("method")),
-            fmt(row.get("dataset")),
-            fmt(row.get("target_attribute")),
-            fmt(row.get("total_time")),
-            fmt(row.get("init_time")),
-            fmt(row.get("model_time")),
-            fmt(row.get("del_time")),
-            fmt(row.get("update_time")),
-            fmt(row.get("leakage")),
-            fmt(row.get("utility")),
-            fmt(row.get("paths_blocked")),
-            fmt(row.get("mask_size")),
-            fmt(row.get("num_paths")),
-            fmt(row.get("memory_overhead_bytes")),
-            fmt(row.get("num_instantiated_cells")),
-            fmt(row.get("num_cells_updated")),
-        ]) + "\n"
+    memory_overhead = estimate_memory_overhead_bytes_delexp(
+        hyperedges = H,
+        num_vertices = len(model.all_cells),
+        mask_size = len(final_mask),
+        num_candidates = len(candidates),
+        candidate_mask_members = cand_members
     )
-
-
-def standardize_row(
-    *,
-    method: str,
-    dataset: str,
-    attr: str,
-    raw: Dict[str, Any],
-    update_time: float,
-    num_cells_updated: int,
-    paths_blocked: int,
-    memory_overhead_bytes: int,
-) -> Dict[str, Any]:
-    init_time = float(raw.get("init_time", 0.0) or 0.0)
-    model_time = float(raw.get("model_time", 0.0) or 0.0)
-    del_time = float(raw.get("del_time", 0.0) or 0.0)
-    total_time = init_time + model_time + del_time + float(update_time)
 
     return {
-        "method": method,
-        "dataset": dataset,
-        "target_attribute": attr,
-        "total_time": total_time,
-        "init_time": init_time,
-        "model_time": model_time,
-        "del_time": del_time,
-        "update_time": float(update_time),
-        "leakage": raw.get("leakage", None),
-        "utility": raw.get("utility", None),
-        "paths_blocked": int(paths_blocked),
-        "mask_size": int(raw.get("mask_size", 0) or 0),
-        "num_paths": int(raw.get("num_paths", -1) or -1),
-        "memory_overhead_bytes": int(memory_overhead_bytes),
-        "num_instantiated_cells": raw.get("num_instantiated_cells", None),
-        "num_cells_updated": int(num_cells_updated),
+        "init_time": float(init_time),
+        "model_time": float(model_time),
+        "del_time": 0.0,
+        "leakage": float(leakage_final),
+        "utility": float(util_val),
+        "mask_size": int(len(final_mask)),
+        "mask": set(final_mask),
+        "num_paths": int(paths_proxy["num_paths_est"]),
+        "paths_blocked": int(paths_proxy["paths_blocked_est"]),
+        "memory_overhead_bytes": int(memory_overhead),
+        "num_instantiated_cells": int(num_instantiated_cells),
+        "num_channel_edges": int(len(model.channels)),
+        "baseline_leakage_empty_mask": float(leakage_base),
     }
 
 
-# ----------------------------
-# Collectors
-# ----------------------------
-
-def run_delmin(out_csv: str):
-    with open(out_csv, "w", newline="") as f:
-        write_csv_header(f)
-
-        for ds in DATASETS:
-            ds = normalize_dataset_name(ds)
-            attr = TARGET_ATTR[ds]
-            print(f"[delmin] Dataset={ds}, attr={attr}")
-
-            # Load hyperedges once (so baseline can “see” neighbors but stay fast)
-            try:
-                if ds.lower() == "ncvoter":
-                    mod_name = "NCVoter"
-                else:
-                    mod_name = ds.capitalize()
-                dc_module_path = f"DCandDelset.dc_configs.top{mod_name}DCs_parsed"
-                dc_module = __import__(dc_module_path, fromlist=["denial_constraints"])
-                raw_dcs = getattr(dc_module, "denial_constraints", [])
-                H = baseline_deletion_3  # just to avoid unused import lint
-                hyperedges = exponential_deletion.clean_raw_dcs(raw_dcs)  # reuse same extractor
-            except Exception:
-                hyperedges = []
-
-            for i in range(ITERS):
-                key = get_random_key(ds)
-                if key is None:
-                    continue
-
-                try:
-                    (
-                        activated_dependencies_count,
-                        mask_set,
-                        memory_bytes_baseline,
-                        _max_depth,
-                        init_time,
-                        model_time,
-                        del_time,
-                        num_instantiated,
-                        leakage,
-                        utility,
-                    ) = baseline_deletion_3.baseline_deletion_3(
-                        target=attr,
-                        key=key,
-                        dataset=ds,
-                        threshold=0.0,
-                    )
-                    raw = {
-                        "init_time": init_time,
-                        "model_time": model_time,
-                        "del_time": del_time,
-                        "num_instantiated_cells": num_instantiated,
-                        "leakage": leakage,   # REQUIRED: delmin leakage == 0
-                        "utility": utility,
-                        "mask_size": len(mask_set) if mask_set else 0,
-                        "num_paths": int(activated_dependencies_count),
-                        "mask": set(mask_set) if mask_set else set(),
-                    }
-
-                    # update-to-null measured separately
-                    upd_t, upd_cnt = update_mask_to_null(ds, key, raw["mask"])
-
-                    # since leakage=0 => all blocked
-                    paths_blocked = int(raw["num_paths"])
-
-                    # use baseline-provided memory (MEDIUM)
-                    memory_overhead = int(memory_bytes_baseline)
-
-                    row = standardize_row(
-                        method="delmin",
-                        dataset=ds,
-                        attr=attr,
-                        raw=raw,
-                        update_time=upd_t,
-                        num_cells_updated=upd_cnt,
-                        paths_blocked=paths_blocked,
-                        memory_overhead_bytes=memory_overhead,
-                    )
-                    write_csv_row(f, row)
-
-                except Exception as e:
-                    print(f"  [delmin] iter {i+1} error: {e}")
-                    continue
-
-
-def run_delexp(
-    out_csv: str,
-    verbose: bool,
-    lam: float = 0.5,
-    epsilon: float = 50,
-    which_ablation: str = None
-):
-    """
-    which_ablation:
-      None  -> full standardized CSV
-      "l"   -> lambda ablation
-      "e"   -> epsilon ablation
-    """
-    to_write = None
-    if which_ablation is None:
-        pass
-    elif which_ablation == "l":
-        to_write = "lambda"
-    elif which_ablation == "e":
-        to_write = "epsilon"
-    else:
-        raise ValueError("which_ablation must be None, 'l', or 'e'")
-
-    with open(out_csv, "a", newline="") as f:
-        if verbose:
-            write_csv_header(f)
-        else:
-            f.write(f"{to_write},leakage,utility,mask_size\n")
-
-        for ds in DATASETS:
-            ds = normalize_dataset_name(ds)
-            attr = TARGET_ATTR[ds]
-            print(f"[delexp] Dataset={ds}, attr={attr}")
-
-            for i in range(ITERS):
-                key = get_random_key(ds)
-                if key is None:
-                    continue
-
-                try:
-                    raw = exponential_deletion.exponential_deletion_main(
-                        dataset=ds,
-                        key=key,
-                        target_cell=attr,
-                        epsilon=epsilon,
-                        lam=lam,
-                    )
-
-                    mask_obj = raw.get("mask", set())
-
-                    # update-to-null measured separately
-                    upd_t, upd_cnt = update_mask_to_null(ds, key, mask_obj)
-
-                    num_paths = int(raw.get("num_paths", -1) or -1)
-                    leakage = raw.get("leakage", None)
-                    paths_blocked = estimate_paths_blocked(num_paths, leakage)
-
-                    # IMPORTANT: delexp supplies its own (largest) memory estimate
-                    memory_overhead = int(raw.get("memory_overhead_bytes", 0) or 0)
-
-                    row = standardize_row(
-                        method="delexp",
-                        dataset=ds,
-                        attr=attr,
-                        raw=raw,
-                        update_time=upd_t,
-                        num_cells_updated=upd_cnt,
-                        paths_blocked=paths_blocked,
-                        memory_overhead_bytes=memory_overhead,
-                    )
-
-                    if verbose:
-                        write_csv_row(f, row)
-                    else:
-                        if to_write == "lambda":
-                            f.write(
-                                f"{lam},{row['leakage']},{row['utility']},{row['mask_size']}\n"
-                            )
-                        elif to_write == "epsilon":
-                            f.write(
-                                f"{epsilon},{row['leakage']},{row['utility']},{row['mask_size']}\n"
-                            )
-
-                except Exception as e:
-                    print(f"  [delexp] iter {i+1} error: {e}")
-                    continue
-
-
-
-def run_delgum(
-    out_csv: str,
-    verbose: bool = False,
-    lam: float = 0.5,
-    epsilon: float = 50,
-    K: int = 1,
-    which_ablation=None,
-):
-    """
-    Ablation now supports ONLY:
-      - which_ablation == "l"  -> ablate lambda
-      - which_ablation == "e"  -> ablate epsilon
-    """
-    to_write = None
-    if which_ablation is None:
-        pass
-    elif which_ablation == "l":
-        to_write = "lambda"
-    elif which_ablation == "e":
-        to_write = "epsilon"
-    else:
-        raise ValueError("which_ablation must be one of: None, 'l' (lambda), 'e' (epsilon)")
-
-    with open(out_csv, "a", newline="") as f:
-        if verbose:
-            write_csv_header(f)
-        else:
-            f.write(f"{to_write},leakage,utility,mask_size\n")
-
-        for ds in DATASETS:
-            ds = normalize_dataset_name(ds)
-            attr = TARGET_ATTR[ds]
-            print(f"[delgum] Dataset={ds}, attr={attr}")
-
-            for i in range(ITERS):
-                key = get_random_key(ds)
-                if key is None:
-                    continue
-
-                try:
-                    raw = greedy_gumbel.gumbel_deletion_main(
-                        dataset=ds,
-                        key=key,
-                        target_cell=attr,
-                        epsilon=epsilon,
-                        lam=lam,
-                        K=K_SIZE[ds]
-                    )
-
-                    mask_obj = raw.get("mask", set())
-
-                    # update-to-null measured separately
-                    upd_t, upd_cnt = update_mask_to_null(ds, key, mask_obj)
-
-                    num_paths = int(raw.get("num_paths", -1) or -1)
-                    leakage = raw.get("leakage", None)
-                    paths_blocked = estimate_paths_blocked(num_paths, leakage)
-
-                    # IMPORTANT: use method-provided memory (MEDIUM)
-                    memory_overhead = int(raw.get("memory_overhead_bytes", 0) or 0)
-
-                    row = standardize_row(
-                        method="delgum",
-                        dataset=ds,
-                        attr=attr,
-                        raw=raw,
-                        update_time=upd_t,
-                        num_cells_updated=upd_cnt,
-                        paths_blocked=paths_blocked,
-                        memory_overhead_bytes=memory_overhead,
-                    )
-
-                    if verbose:
-                        write_csv_row(f, row)
-                    else:
-                        if to_write == "lambda":
-                            f.write(f"{lam},{row['leakage']},{row['utility']},{row['mask_size']}\n")
-                        elif to_write == "epsilon":
-                            f.write(f"{epsilon},{row['leakage']},{row['utility']},{row['mask_size']}\n")
-
-                except Exception as e:
-                    print(f"  [delgum] iter {i+1} error: {e}")
-                    continue
-
-
-def run_del2ph(out_csv: str, *, epsilon: float = 50.0, lam: float = 0.5):
-    """
-    2-phase exponential-style (NEW λ/ε):
-      - offline template cached in templates_2ph/  (not timed per-iteration)
-      - online sampling returns mask/leakage/utility fast
-      - update-to-null measured here for fairness (same as others)
-
-    Uses:
-      epsilon = 50
-      lam = 0.5
-    """
-    TEMPLATE_DIR = "templates_2ph"
-
-    with open(out_csv, "w", newline="") as f:
-        write_csv_header(f)
-
-        for ds in DATASETS:
-            ds = normalize_dataset_name(ds)
-            attr = TARGET_ATTR[ds]
-            print(f"[del2ph] Dataset={ds}, attr={attr}")
-
-            # OFFLINE build once per dataset+attr (not per iteration)
-            _ = two_phase_deletion.build_template_two_phase(
-                ds,
-                attr,
-                save_dir=TEMPLATE_DIR,
-                epsilon=float(epsilon),
-                lam=float(lam),
-            )
-
-            for i in range(ITERS):
-                key = get_random_key(ds)
-                if key is None:
-                    continue
-
-                try:
-                    raw = two_phase_deletion.two_phase_deletion_main(
-                        dataset=ds,
-                        key=key,
-                        target_cell=attr,
-                        epsilon=float(epsilon),
-                        lam=float(lam),
-                        template_dir=TEMPLATE_DIR,
-                    )
-
-                    mask_obj = raw.get("mask", set())
-                    upd_t, upd_cnt = update_mask_to_null(ds, key, mask_obj)
-
-                    num_paths = int(raw.get("num_paths", -1) or -1)
-                    leakage = raw.get("leakage", None)
-                    paths_blocked = estimate_paths_blocked(num_paths, leakage)
-
-                    memory_overhead = int(raw.get("memory_overhead_bytes", 0) or 0)
-
-                    row = standardize_row(
-                        method="del2ph",
-                        dataset=ds,
-                        attr=attr,
-                        raw=raw,
-                        update_time=upd_t,
-                        num_cells_updated=upd_cnt,
-                        paths_blocked=paths_blocked,
-                        memory_overhead_bytes=memory_overhead,
-                    )
-                    write_csv_row(f, row)
-
-                except Exception as e:
-                    print(f"  [del2ph] iter {i+1} error: {e}")
-                    continue
-
-# ----------------------------
-# Main
-# ----------------------------
-
-def main():
-    # print("=" * 60)
-    # print("Standardized Deletion Experiments (delmin/delexp/delgum)")
-    # print("=" * 60)
-    #
-    # setup_database_copies()
-    # run_delmin("delmin_data_standarized_f3.csv")
-    # cleanup_database_copies()
-    # #
-    setup_database_copies()
-    run_delexp("delexp_data_standardized_non_canonical_v3.csv", verbose=True)
-    cleanup_database_copies()
-    # #
-    # setup_database_copies()
-    # run_delgum("delgum_data_standardized_vFinal.csv", verbose=True)
-    # cleanup_database_copies()
-    # #
-    # setup_database_copies()
-    # run_del2ph("del2ph_data_standardized_v2.csv")
-    # cleanup_database_copies()
-    #
-
-    #ablation studies
-    #exp 1
-    # cleanup_database_copies()
-    # setup_database_copies()
-    # for i in range(5, 100, 5):
-    #     lam = i/100
-    #     run_delgum("ablation_delgum_lambda_v1.csv", lam=lam, which_ablation="l", epsilon=50)
-    # cleanup_database_copies()
-    # setup_database_copies()
-    # for i in range(5, 100, 5):
-    #     lam = i / 100
-    #     run_delexp("ablation_delexp_lambda_v1.csv", lam = lam, which_ablation = "l", verbose = False, epsilon=50)
-    # cleanup_database_copies()
-    # #
-    # # #exp 2
-    # setup_database_copies()
-    # VALUES = [0.1, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300]
-    # for i in VALUES:
-    #     run_delgum("ablation_delgum_epsilon_v1.csv", lam = 0.5, which_ablation = "e", epsilon = i)
-    # cleanup_database_copies()
-    # setup_database_copies()
-    # for i in VALUES:
-    #     run_delexp("ablation_delexp_epsilon_v1.csv", lam = 0.5, which_ablation = "e", verbose = False, epsilon = i)
-    # cleanup_database_copies()
-
-    # setup_database_copies()
-    # for i in [1, 2, 5, 10, 15, 20]:
-    #     run_delgum("ablation_delexp_epsilon.csv", lam = 2 / 3, which_ablation = "k",
-    #                K = i)
-    # cleanup_database_copies()
-    # print("\nDone.")
-    # setup_database_copies()
-    # for i in range(1, 301):
-    #     run_delgum("ablation_delgum_epsilon.csv", epsilon = i, which_ablation = "e", verbose = False)
-    # cleanup_database_copies()
-    # setup_database_copies()
-    # for i in range(1, 301):
-    #     run_delexp("ablation_delexp_epsilon.csv", epsilon = i, which_ablation = "e", verbose = False)
-    # cleanup_database_copies()
-
-    # setup_database_copies()
-    # for i in range(1, 301):
-    #     run_delgum("ablation_delgum_alpha.csv", alpha = i, which_ablation = "a", verbose = False)
-    # cleanup_database_copies()
-    # setup_database_copies()
-    # for i in range(1, 301):
-    #     run_delexp("ablation_delexp_alpha.csv", alpha= i, which_ablation = "a", verbose = False)
-    # cleanup_database_copies()
-    #
-    # setup_database_copies()
-    # for i in range(1, 301):
-    #     run_delgum("ablation_delgum_beta.csv", beta = i/2, which_ablation = "b", verbose = False)
-    # cleanup_database_copies()
-    # setup_database_copies()
-    # for i in range(1, 301):
-    #     run_delexp("ablation_delexp_beta.csv", beta = i/2, which_ablation = "b", verbose = False)
-    # cleanup_database_copies()
-
-
 if __name__ == "__main__":
-    main()
+    # Run with debug mode to see what's happening
+    print(exponential_deletion_main("airport", 500, "latitude_deg", debug = True))
+    print(exponential_deletion_main("hospital", 500, "ProviderNumber", debug = False))
+    print(exponential_deletion_main("tax", 500, "marital_status", debug = False))
+    print(exponential_deletion_main("adult", 500, "education", debug = False))
+    print(exponential_deletion_main("Onlineretail", 500, "InvoiceNo", debug = False))
