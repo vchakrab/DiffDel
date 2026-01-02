@@ -1,48 +1,64 @@
 #!/usr/bin/env python3
 import csv
-import sys
+
+# =========================
+# USER SETTINGS
+# =========================
+INPUT_CSV = "flights_semantic_dcs_w_norm_20251231_063113.csv"   # path to your CSV
+OUTPUT_PY = "flight_weights.py"       # output python file
+LIST_NAME = "WEIGHTS"                # name of the Python list
+WEIGHT_COL = "w_norm"                # column holding the weight
+DEDUP = False                        # usually FALSE for weights
 
 
-def main(input_file, dataset):
-    input_csv = input_file
-    dataset_name = dataset
-
+def main():
     weights = []
 
-    with open(input_csv, newline = "", encoding = "utf-8") as f:
+    with open(INPUT_CSV, newline="") as f:
         reader = csv.DictReader(f)
 
-        if "weight" not in reader.fieldnames:
-            print("Error: CSV must contain a 'weight' column")
-            sys.exit(1)
+        if WEIGHT_COL not in reader.fieldnames:
+            raise RuntimeError(
+                f"Weight column '{WEIGHT_COL}' not found. "
+                f"Found columns: {reader.fieldnames}"
+            )
 
         for row in reader:
-            raw = row.get("weight", "").strip()
+            w = row.get(WEIGHT_COL)
 
-            if raw == "":
-                # Default weight when missing
-                weights.append(1.0)
-            else:
-                try:
-                    weights.append(float(raw))
-                except ValueError:
-                    # If malformed, still default to 1.0
-                    weights.append(1.0)
+            if w is None or w == "":
+                continue
 
-    output_file = f"{dataset_name}_weights.py"
+            try:
+                w = float(w)
+            except ValueError:
+                continue
 
-    with open(output_file, "w", encoding = "utf-8") as f:
-        f.write("# Auto-generated weights file\n")
-        f.write(f"# Dataset: {dataset_name}\n\n")
-        f.write("WEIGHTS = [\n")
+            weights.append(w)
+
+    if DEDUP:
+        # preserve order
+        seen = set()
+        deduped = []
         for w in weights:
-            f.write(f"    {w},\n")
-        f.write("]\n")
+            if w not in seen:
+                seen.add(w)
+                deduped.append(w)
+        weights = deduped
 
-    print(f"Wrote {len(weights)} weights to {output_file}")
+    # -------------------------
+    # Write Python file
+    # -------------------------
+    with open(OUTPUT_PY, "w") as out:
+        out.write("# Auto-generated weights\n")
+        out.write("# Order matches generated constraints\n\n")
+        out.write(f"{LIST_NAME} = [\n")
+        for w in weights:
+            out.write(f"    {w},\n")
+        out.write("]\n")
+
+    print(f"Wrote {len(weights)} weights to {OUTPUT_PY}")
 
 
 if __name__ == "__main__":
-    main("onlineretail_ALL_DCs_weights.csv", 'onlineretail_weights.py')
-    main("hospital_ALL_DCs_weights_CORRECTED.csv", 'hospital_weights.py')
-
+    main()

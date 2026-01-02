@@ -10,6 +10,48 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/DCandDelset/dc_configs/adult_semantic_dcs_w_norm_20251231_063113.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DCandDelset/dc_configs/raw_constraints/airport_semantic_dcs_w_norm_20251231_063113.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DCandDelset/ncvoter_semantic_dcs_weights.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="$USER_HOME$/Downloads/semantic_dcs_selected_by_metric_all_datasets_20251231_063113/flights_semantic_dcs_w_norm_20251231_063113.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="$USER_HOME$/Downloads/semantic_dcs_selected_by_metric_all_datasets_20251231_063113/hospital_semantic_dcs_w_norm_20251231_063113.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="$USER_HOME$/Downloads/semantic_dcs_selected_by_metric_all_datasets_20251231_063113/ncvoter_semantic_dcs_w_norm_20251231_063113.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/ablation_delexp_alpha.csv">
           <value>
             <Attribute>
@@ -74,6 +116,41 @@
           </value>
         </entry>
         <entry key="/ablation_delgum_lambda_v1.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/ablation_study_rho_tau_grid_20251231_191026_detailed.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/ablation_study_rho_tau_grid_20251231_191026_summary.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/ablation_study_tau_threshold_20251231_190435_detailed.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/ablation_study_tau_threshold_20251231_190435_summary.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/baseline3_tau_runs.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -395,6 +472,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/old_files/baseline_deletion_1_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/old_files/baseline_deletion_1_data_v2.csv">
           <value>
             <Attribute>
@@ -424,6 +508,13 @@
           </value>
         </entry>
         <entry key="/old_files/baseline_deletion_1_data_v9.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/old_files/baseline_deletion_2_data.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -493,6 +584,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/weights/adult_semantic_dcs_w_norm_20251231_063113.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/weights/airport_ALL_DCs_COMPLETE.csv">
           <value>
             <Attribute>
@@ -500,7 +598,35 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/weights/airport_semantic_dcs_weights.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/weights/flights_semantic_dcs_w_norm_20251231_063113.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/weights/hospital_ALL_DCs_weights_CORRECTED.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/weights/ncvoter_ALL_DCs_weights.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/weights/ncvoter_semantic_dcs_w_norm_20251231_063113.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

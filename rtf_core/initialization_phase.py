@@ -64,6 +64,7 @@ class InitializationManager:
         row_data = self._get_sample_row_data()
         
         # Create target cell
+        print(row_data)
         self.target_cell = Cell(
             Attribute(self.table_name, self.target_cell_info['attribute']),
             self.target_cell_info['key'],

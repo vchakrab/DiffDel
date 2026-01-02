@@ -1,0 +1,4 @@
+not (t1.hospitaltype==t2.hospitaltype and t1.sample==t2.sample and t1.emergencyservice<>t2.emergencyservice)
+not (t1.condition==t2.condition and t1.hospitalowner==t2.hospitalowner and t1.emergencyservice<>t2.emergencyservice)
+not (t1.condition==t2.condition and t1.sample==t2.sample and t1.hospitaltype<>t2.hospitaltype)
+not (t1.state==t2.state and t1.hospitaltype<>t2.hospitaltype)
