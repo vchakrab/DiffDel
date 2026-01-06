@@ -17,6 +17,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="$USER_HOME$/Downloads/dc_weight_extraction_code_and_outputs/outputs/hospital_dcs_weights_wpos_gamma0p25.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="$USER_HOME$/Downloads/semantic_dcs_selected_by_metric_all_datasets_20251231_063113/ncvoter_semantic_dcs_w_norm_20251231_063113.csv">
           <value>
             <Attribute>
@@ -445,6 +452,48 @@
           </value>
         </entry>
         <entry key="/leakage_trends_actuals.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/leakage_trends_actuals_fixed.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/leakage_trends_actuals_fixed_1.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/leakage_trends_actuals_fixed_2.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/leakage_trends_actuals_fixed_3.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/leakage_trends_actuals_fixed_4.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/leakage_trends_actuals_fixed_5.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

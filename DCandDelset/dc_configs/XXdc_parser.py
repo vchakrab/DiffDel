@@ -30,7 +30,7 @@ def write_parsed_dcs_to_file(denial_constraints, output_file):
     print(f"Parsed {len(denial_constraints)} denial constraints and saved to {output_file}")
 
 if __name__ == "__main__":
-    input_file = "topHospitalDCs.txt"       # Rename to 'topAdultDCs.txt' if needed
+    input_file = "raw_constraints/topHospitalDCs"       # Rename to 'topAdultDCs.txt' if needed
     output_file = f"{input_file}_parsed.py"
     
     dcs = parse_denial_constraints_from_file(input_file)

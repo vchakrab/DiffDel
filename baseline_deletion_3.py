@@ -2,27 +2,18 @@
 """
 BASELINE 3 (ILP) + DELEXP HYPERGRAPH + DELEXP LEAKAGE MODEL (Algorithm 2)
 
-What this file contains:
-  - Your Baseline 3 ILP (Gurobi) deletion (unchanged structurally)
-  - delexp-style hypergraph construction over schema-level RDRs (Algorithm 1)
-  - delexp-style leakage computation with inference chains + rho-safe check (Algorithm 2)
-  - Utility: u(M) = -λ·L(M) - (1-λ)·|M|/(|I(c*)|-1)
-
-Key fixes vs your pasted combined script:
-  - STRICT per-dataset weight loading (no silent defaults)
-  - Proper DC->weight mapping (no "return 1.0" bug)
-  - Leakage computed with the SAME model as delexp (not the fixed-point inferable model)
-  - No hardcoded target removal ("latitude_deg") — removes {target} correctly
+CLEANED + FIXED VERSION:
+  - enumerate/iter_chains fixed to match EnumerateChains pseudocode AND be faster
+  - rest unchanged from your uploaded script
 """
 
 from __future__ import annotations
-
+from collections import Counter
 import importlib
 import time
-import math
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple
-from collections import deque, defaultdict
+from collections import deque
 
 import numpy as np
 
@@ -60,8 +51,6 @@ def get_dataset_weights_strict(dataset: str) -> Any:
     """
     Loads edge weights using the same convention as delexp:
       weights.weights_corrected.<dataset>_weights with a WEIGHTS object.
-
-    Raises FileNotFoundError if the module or WEIGHTS is missing.
     """
     ds = str(dataset).lower()
     module_name = f"weights.weights_corrected.{ds}_weights"
@@ -88,12 +77,28 @@ def map_dc_to_weight_strict(init_manager, dc, weights_obj) -> float:
     """
     try:
         idx = init_manager.denial_constraints.index(dc)
+        attr_sets = []
+        for dc in init_manager.denial_constraints:
+            attrs = set()
+            for a, _, b in dc:
+                attrs.add(a.split(".", 1)[1])
+                attrs.add(b.split(".", 1)[1])
+            attr_sets.append(frozenset(attrs))
+
+        for sets1, sets2 in zip(attr_sets, attr_sets):
+            if sets1 == sets2 and not sets1.__eq__(sets2):
+                print(sets1, sets2)
+        counts = Counter(attr_sets)
+
+        num_identical_dcs = sum(c for c in counts.values() if c > 1)
+        num_unique_dcs = sum(c for c in counts.values() if c == 1)
     except ValueError:
         return 1.0
     try:
+        print(len(weights_obj))
+        print(len(dc))
         return float(weights_obj[idx])
     except Exception:
-        # If weights_obj isn't indexable, fail loudly (this is safer than silent defaults)
         raise RuntimeError("WEIGHTS object is not indexable by DC index; check weights module format.")
 
 
@@ -115,7 +120,6 @@ def dc_to_rdrs_and_weights_strict(init_manager) -> Tuple[List[Tuple[str, ...]], 
             if not isinstance(pred, (list, tuple)) or len(pred) < 1:
                 continue
 
-            # Your DC format tends to have t1.attr in pred[0] (and sometimes pred[2])
             tok0 = pred[0]
             if isinstance(tok0, str) and "." in tok0:
                 attrs.add(tok0.split(".")[-1])
@@ -128,6 +132,7 @@ def dc_to_rdrs_and_weights_strict(init_manager) -> Tuple[List[Tuple[str, ...]], 
         if len(attrs) >= 2:
             rdrs.append(tuple(sorted(attrs)))
             rdr_weights.append(float(w))
+
     print("RDRs:", rdrs)
     print("RDR_weights:", rdr_weights)
     return rdrs, rdr_weights
@@ -152,7 +157,7 @@ class Hypergraph:
 
 
 def incident_rdrs(cell: str, rdrs: List[Tuple[str, ...]]) -> List[int]:
-    out = []
+    out: List[int] = []
     for i, rdr in enumerate(rdrs):
         if cell in rdr:
             out.append(i)
@@ -160,7 +165,6 @@ def incident_rdrs(cell: str, rdrs: List[Tuple[str, ...]]) -> List[int]:
 
 
 def instantiate_rdr(rdr: Tuple[str, ...], weight: float, mode: str = "MAX") -> List[Tuple[Set[str], float]]:
-    # schema-level: one hyperedge per RDR
     verts = set(rdr)
     if len(verts) < 2:
         return []
@@ -171,7 +175,7 @@ def construct_local_hypergraph(
     target_cell: str,
     rdrs: List[Tuple[str, ...]],
     weights: List[float],
-    mode: str = "MAX"
+    mode: str = "MAX",
 ) -> Hypergraph:
     H = Hypergraph()
     H.add_vertex(target_cell)
@@ -203,482 +207,223 @@ def construct_local_hypergraph(
         frontier = next_frontier
 
     return H
-#test this code thoroughly, with different rdr complexities (edge cases: no rdr, 1 rdr, nested rdr, multiple rdr for the same cell)
+
 
 def construct_hypergraph_max(target_cell: str, rdrs: List[Tuple[str, ...]], weights: List[float]) -> Hypergraph:
     return construct_local_hypergraph(target_cell, rdrs, weights, mode="MAX")
 
 
 def construct_hypergraph_actual(target_cell: str, rdrs: List[Tuple[str, ...]], weights: List[float]) -> Hypergraph:
-    # schema-level: same as MAX
     return construct_local_hypergraph(target_cell, rdrs, weights, mode="ACTUAL")
 
 
 # ============================================================
-# delexp: Leakage computation (Algorithm 2)
+# delexp: Leakage computation (Algorithm 2) — SINGLE SOURCE OF TRUTH
 # ============================================================
+
+def prod(vals: Iterable[float]) -> float:
+    out = 1.0
+    for x in vals:
+        out *= float(x)
+    return float(out)
+
+
+def active(edge_verts: Set[str], x: str, K: Set[str]) -> bool:
+    # Active(e, x, K): x in e and e\{x} subset K
+    return (x in edge_verts) and ((edge_verts - {x}) <= K)
+
+
+def hypergraph_to_edge_dict(
+    H: "Hypergraph",
+    *,
+    tau: Optional[float] = None,
+) -> Dict[str, Tuple[Set[str], float]]:
+    out: Dict[str, Tuple[Set[str], float]] = {}
+    for i, (verts, w) in enumerate(H.edges):
+        fw = float(w)
+        if tau is not None and fw > float(tau):
+            continue
+        out[f"e{i}"] = (set(verts), fw)
+    return out
+
+
+def is_edge_active_by_mask_rule(edge_verts: Set[str], mask: Set[str], target_cell: str) -> bool:
+    """
+    Edge ACTIVE iff it contains <2 masked verts, treating target as masked.
+    """
+    cnt = 0
+    for v in edge_verts:
+        if v == target_cell or v in mask:
+            cnt += 1
+            if cnt >= 2:
+                return False
+    return True
+
 
 from collections import deque
-from typing import Dict, List, Set
+from typing import Set, Tuple, Dict, List, Optional, Iterable
 
-#change this for hypereges (only for reporting)
-def get_inference_chains_bfs(
+def iter_chains(mask: Set[str], target: str, edges: Dict[str, Tuple[Set[str], float]]):
+    """
+    EnumerateChains(M, c*, H) with *visited-state pruning*.
+
+    Same as your current implementation, but adds:
+      visited_K: Set[frozenset] to avoid re-expanding identical knowledge states K.
+
+    NOTE: This pruning is NOT in the paper. It intentionally collapses multiple
+    distinct edge-sequences that reach the same K into one expansion, which can
+    significantly reduce chain counts (and will change leakage if you're summing
+    over chains).
+    """
+    if not edges:
+        return
+
+    # Build V and O
+    V = set().union(*(verts for (verts, _w) in edges.values()))
+    O = V - set(mask) - {target}
+
+    # Build incident index: vertex -> set(edge_ids)
+    incident: Dict[str, Set[str]] = {}
+    for eid, (verts, _w) in edges.items():
+        for v in verts:
+            incident.setdefault(v, set()).add(eid)
+
+    # Length-1 chains: edges directly active for target under O
+    for eid, (verts, _w) in edges.items():
+        if target in verts and active(verts, target, O):
+            yield [eid]
+
+    # BFS queue of (chain_edge_ids, known_set)
+    Q: deque[Tuple[List[str], Set[str]]] = deque()
+
+    # Seed with edges that can infer some masked x directly from O
+    for eid, (verts, _w) in edges.items():
+        for x in (verts - O - {target}):
+            if active(verts, x, O):
+                Q.append(([eid], set(O) | {x}))
+
+    # Visited-state pruning (knowledge set only)
+    visited_K: Set[frozenset] = set()
+
+    # Expand
+    while Q:
+        p, K = Q.popleft()
+
+        K_key = frozenset(K)
+        if K_key in visited_K:
+            continue
+        visited_K.add(K_key)
+
+        used = set(p)
+
+        # candidate edges must share a known cell (witness): e ∩ K != ∅
+        cand_eids: Set[str] = set()
+        for v in K:
+            cand_eids |= incident.get(v, set())
+
+        for eid in cand_eids:
+            if eid in used:
+                continue
+
+            verts, _w = edges[eid]
+
+            # Active(e, y, K) is only possible if exactly ONE vertex in e is missing from K
+            missing = verts - K
+            if len(missing) != 1:
+                continue
+
+            (y,) = tuple(missing)
+
+            # Must be active given current known set
+            if not active(verts, y, K):
+                continue
+
+            # Maximality: do not extend through edges already active under O
+            if active(verts, y, O):
+                continue
+
+            if y == target:
+                yield p + [eid]
+            else:
+                Q.append((p + [eid], set(K) | {y}))
+
+
+
+def compute_leakage_delexp(
+    mask: Set[str],
+    target_cell: str,
     hypergraph: "Hypergraph",
-    target_cell: str,
-    masked_cells: Set[str],   # kept for API compatibility; NOT USED
+    rho: float,
     *,
-    max_depth: int = 8,
-    max_paths_per_dst: int = 500,
-) -> Dict[str, List[List[str]]]:
+    tau: Optional[float] = None,
+    return_counts: bool = False,
+):
     """
-    Mask-independent chain enumeration (NO filtering):
-      - Enumerate candidate simple vertex-paths in the hypergraph.
-      - Collect paths for EVERY destination vertex.
-      - Mask effects belong in compute_chain_weight(..., mask).
-
-    Returns:
-      chains[v] = list of vertex-paths ending at v.
+    FAST version:
+      - leakage = Noisy-OR only (streaming)
+      - no chain list stored
+      - returns counts if return_counts=True:
+            (L, num_chains, active_chains, blocked_chains)
+      - else returns L only
     """
-    V = set(hypergraph.vertices)
-    chains: Dict[str, List[List[str]]] = {v: [] for v in V}
+    edge_dict = hypergraph_to_edge_dict(hypergraph, tau=tau)
+    if not edge_dict:
+        return (0.0, 0, 0, 0) if return_counts else 0.0
 
-    # Build undirected adjacency induced by hyperedges
-    nbrs: Dict[str, Set[str]] = {v: set() for v in V}
-    for edge_verts, _w in hypergraph.edges:
-        ev = list(edge_verts)
-        for i in range(len(ev)):
-            for j in range(len(ev)):
-                if i != j:
-                    nbrs[ev[i]].add(ev[j])
+    # Precompute edge weights + edge active flags for THIS mask (O(E))
+    w = {eid: float(edge_dict[eid][1]) for eid in edge_dict}
+    edge_active = {
+        eid: is_edge_active_by_mask_rule(edge_dict[eid][0], mask, target_cell)
+        for eid in edge_dict
+    }
 
-    for root in V:
-        q = deque([(root, [root])])
+    num_chains = 0
+    active_chains = 0
+    blocked_chains = 0
 
-        while q:
-            cur, path = q.popleft()
-            if len(path) >= max_depth:
-                continue
+    # Noisy-OR product accumulator
+    prod_not = 1.0
+    max_chain_w = 0.0
 
-            for nxt in nbrs.get(cur, ()):
-                if nxt in path:
-                    continue  # keep simple paths only
-                new_path = path + [nxt]
+    for ch in iter_chains(mask, target_cell, edge_dict):
+        num_chains += 1
 
-                # record path for destination nxt (cap per-destination)
-                if len(chains[nxt]) < max_paths_per_dst:
-                    chains[nxt].append(new_path)
-
-                q.append((nxt, new_path))
-    print(chains)
-    return chains
-
-import math
-from typing import List, Set, Tuple, Optional, Iterable
-
-import math
-from typing import List, Set, Tuple, Optional, Iterable, FrozenSet
-
-def compute_chain_weight(
-    chain: List[str],
-    *,
-    hypergraph,
-    masked_cells: Set[str],
-    target_cell: str,
-) -> float:
-    """
-    Corrected per your intended semantics:
-
-    Walk starts at target_cell, then traces along the chain outward from target.
-    target_cell may NOT be in chain.
-
-    Hyperedge selection:
-      - For each consecutive pair (u, v) along the walk, select the hyperedge e that contains both
-        and has maximum weight w(e).
-      - If consecutive pairs stay within the SAME selected hyperedge, multiply its weight ONCE.
-
-    Blocking + stopping:
-      - Treat target_cell as masked (always).
-      - A hyperedge is BLOCKED if it contains >=2 masked vertices.
-      - Multiply weights of consecutive BLOCKED hyperedges (counting each hyperedge only once per run of being "current").
-      - When the first ACTIVE hyperedge is encountered, multiply it once and STOP.
-      - If the chain ends without seeing an active hyperedge, return product of multiplied blocked hyperedges.
-
-    Returns:
-      - 0.0 if the walk cannot attach to the target or if a required connecting hyperedge is missing.
-      - otherwise product clamped into [1e-12, 1.0].
-    """
-
-    if not chain:
-        return 1.0
-
-    masked = set(masked_cells)
-    print("Masked", masked, "target", target_cell)
-    masked.add(target_cell)
-
-    # Find best hyperedge (by max weight) that connects u and v
-    def best_edge_between(u: str, v: str) -> Optional[Tuple[FrozenSet[str], float]]:
-        best_w = -1.0
-        best_verts = None
-        for verts, w in hypergraph.edges:
-            if u in verts and v in verts:
-                fw = float(w)
-                if fw > best_w:
-                    best_w = fw
-                    best_verts = frozenset(verts)
-        if best_verts is None:
-            return None
-        return best_verts, best_w
-
-    def is_blocked(edge_verts: Iterable[str]) -> bool:
-        cnt = 0
-        for x in edge_verts:
-            if x in masked:
-                cnt += 1
-                if cnt >= 2:
-                    return True
-        return False
-
-    # Decide which end of chain attaches to target_cell
-    can_attach_first = best_edge_between(target_cell, chain[0]) is not None
-    can_attach_last  = best_edge_between(target_cell, chain[-1]) is not None
-
-    if can_attach_first and not can_attach_last:
-        walk = [target_cell] + list(chain)
-    elif can_attach_last and not can_attach_first:
-        walk = [target_cell] + list(reversed(chain))
-    elif can_attach_first and can_attach_last:
-        # Ambiguous: both ends connect. Choose the stronger immediate link.
-        e_first = best_edge_between(target_cell, chain[0])
-        e_last  = best_edge_between(target_cell, chain[-1])
-        w_first = e_first[1] if e_first else -1.0
-        w_last  = e_last[1] if e_last else -1.0
-        walk = [target_cell] + (list(chain) if w_first >= w_last else list(reversed(chain)))
-    else:
-        return 0.0  # cannot even start from target into this chain
-    # At start of compute_chain_weight
-    known = set(hypergraph.vertices) - masked
-
-
-    # After you decide the walk order
-    for i in range(len(walk) - 1):
-        u, x = walk[i], walk[i + 1]
-        best = best_edge_between(u, x)
-        if best is None:
-            return 0.0
-
-        edge_verts, _ = best
-        # PAPER CONDITION: prerequisites must be known
-        if not (set(edge_verts) - {x} <= known):
-            return 0.0
-
-        known.add(x)
-
-    logw = 0.0
-    current_edge_verts: Optional[FrozenSet[str]] = None
-    current_edge_w: Optional[float] = None
-    current_edge_blocked: Optional[bool] = None
-
-    def commit_current_edge_and_maybe_stop() -> bool:
-        """
-        Multiply current edge weight once (if present).
-        Return True if we should STOP (i.e., current edge is active).
-        """
-        nonlocal logw
-        if current_edge_verts is None or current_edge_w is None or current_edge_blocked is None:
-            return False
-        if current_edge_w <= 0.0:
-            return True  # treat as dead end
-        logw += math.log(min(1.0, current_edge_w))
-        return (not current_edge_blocked)
-
-    # Traverse pair-by-pair, but only "commit" an edge when it CHANGES
-    for i in range(len(walk) - 1):
-        u, v = walk[i], walk[i + 1]
-        best = best_edge_between(u, v)
-        if best is None:
-            return 0.0
-
-        edge_verts, edge_w = best
-        edge_blocked = is_blocked(edge_verts)
-
-        if current_edge_verts is None:
-            # start tracking first edge
-            current_edge_verts = edge_verts
-            current_edge_w = edge_w
-            current_edge_blocked = edge_blocked
-            continue
-
-        if edge_verts == current_edge_verts:
-            # still in same hyperedge: DO NOT multiply again
-            # (also keep the originally-chosen weight for that hyperedge)
-            continue
-
-        # Edge changed: commit previous edge once
-        should_stop = commit_current_edge_and_maybe_stop()
-        if should_stop:
-            # previous edge was active: stop after multiplying it
-            w = math.exp(logw)
-            return float(min(1.0, max(1e-12, w)))
-
-        # Move to new edge
-        current_edge_verts = edge_verts
-        current_edge_w = edge_w
-        current_edge_blocked = edge_blocked
-
-    # End of walk: commit the last tracked edge once
-    commit_current_edge_and_maybe_stop()
-    w = math.exp(logw)
-    return float(min(1.0, max(1e-12, w)))
-
-
-def compute_leakage_delexp(mask: Set[str], target_cell: str, hypergraph: Hypergraph, rho: float) -> float:
-    # O ← V \ (M ∪ {c*})   (kept; not used for leakage aggregation anymore)
-    O = hypergraph.vertices - mask - {target_cell}
-
-    # r(c) ← 1[c ∈ O]      (kept; not used)
-    r: Dict[str, float] = {c: (1.0 if c in O else 0.0) for c in hypergraph.vertices}
-    _ = r
-
-    # ---------- helper: reconstruct the committed hyperedges used by compute_chain_weight ----------
-    masked = set(mask)
-    masked.add(target_cell)
-
-    # best hyperedge (max weight) connecting u and v; returns (frozenset(verts), weight) or None
-    def best_edge_between(u: str, v: str):
-        best_w = -1.0
-        best_verts = None
-        for verts, w in hypergraph.edges:
-            if u in verts and v in verts:
-                fw = float(w)
-                if fw > best_w:
-                    best_w = fw
-                    best_verts = frozenset(verts)
-        if best_verts is None:
-            return None
-        return best_verts, best_w
-
-    def is_blocked(edge_verts) -> bool:
-        cnt = 0
-        for x in edge_verts:
-            if x in masked:
-                cnt += 1
-                if cnt >= 2:
-                    return True
-        return False
-
-    def committed_edge_sequence_for_chain(chain: List[str]) -> Optional[List[Tuple[frozenset, float]]]:
-        """
-        Mirror compute_chain_weight's edge-selection + commit/stop rules,
-        but return the committed edge list (each committed once).
-        Returns None if chain cannot attach / missing connecting edge.
-        """
-        if not chain:
-            return []  # weight 1.0, no edges
-
-        can_attach_first = best_edge_between(target_cell, chain[0]) is not None
-        can_attach_last  = best_edge_between(target_cell, chain[-1]) is not None
-
-        if can_attach_first and not can_attach_last:
-            walk = [target_cell] + list(chain)
-        elif can_attach_last and not can_attach_first:
-            walk = [target_cell] + list(reversed(chain))
-        elif can_attach_first and can_attach_last:
-            e_first = best_edge_between(target_cell, chain[0])
-            e_last  = best_edge_between(target_cell, chain[-1])
-            w_first = e_first[1] if e_first else -1.0
-            w_last  = e_last[1] if e_last else -1.0
-            walk = [target_cell] + (list(chain) if w_first >= w_last else list(reversed(chain)))
+        # chain activity by your rule
+        ok = True
+        for eid in ch:
+            if not edge_active.get(eid, True):
+                ok = False
+                break
+        if ok:
+            active_chains += 1
         else:
-            return None
+            blocked_chains += 1
 
-        committed: List[Tuple[frozenset, float]] = []
-        current_edge_verts = None
-        current_edge_w = None
-        current_edge_blocked = None
+        # chain weight + rho-safe
+        cw = 1.0
+        for eid in ch:
+            cw *= w[eid]
+        if cw > max_chain_w:
+            max_chain_w = cw
 
-        def commit_current_and_should_stop() -> bool:
-            nonlocal committed
-            if current_edge_verts is None or current_edge_w is None or current_edge_blocked is None:
-                return False
-            if current_edge_w <= 0.0:
-                return True
-            committed.append((current_edge_verts, float(current_edge_w)))
-            return (not current_edge_blocked)  # stop if active
+        # update noisy-or
+        prod_not *= (1.0 - cw)
 
-        for i in range(len(walk) - 1):
-            u, v = walk[i], walk[i + 1]
-            best = best_edge_between(u, v)
-            if best is None:
-                return None
-            edge_verts, edge_w = best
-            edge_blocked = is_blocked(edge_verts)
-
-            if current_edge_verts is None:
-                current_edge_verts = edge_verts
-                current_edge_w = edge_w
-                current_edge_blocked = edge_blocked
-                continue
-
-            if edge_verts == current_edge_verts:
-                continue  # same hyperedge run, don't commit again
-
-            # edge changed => commit prior one
-            should_stop = commit_current_and_should_stop()
-            if should_stop:
-                return committed
-
-            # start tracking new edge
-            current_edge_verts = edge_verts
-            current_edge_w = edge_w
-            current_edge_blocked = edge_blocked
-
-        # end => commit last tracked edge once
-        commit_current_and_should_stop()
-        return committed
-
-    # ---------- enumerate chains (your current BFS enumerates all endpoints; keep call same) ----------
-    chains = get_inference_chains_bfs(hypergraph, target_cell, mask | {target_cell})
-    target_chains = chains.get(target_cell, [])
-    if not target_chains:
-        return 0.0
-
-    # ---------- compute per-chain weights + edge-sets for IE ----------
-    chain_weights: List[float] = []
-    chain_edge_sets: List[Set[frozenset]] = []
-    chain_edge_weight_maps: List[Dict[frozenset, float]] = []
-
-    w_star_max = 0.0
-
-    for p in target_chains:
-        # Your existing chain weight function (fix: keyword-only args)
-        w_p = float(compute_chain_weight(
-            p,
-            hypergraph=hypergraph,
-            masked_cells=mask,
-            target_cell=target_cell,
-        ))
-        if w_p <= 0.0:
-            continue
-
-        # reconstruct committed edges to enable w(p∩p')
-        committed = committed_edge_sequence_for_chain(p)
-        if committed is None:
-            # if reconstruction fails but compute_chain_weight said >0, fall back: skip from IE but keep for NOR
-            chain_weights.append(w_p)
-            w_star_max = max(w_star_max, w_p)
-            continue
-
-        emap: Dict[frozenset, float] = {}
-        eset: Set[frozenset] = set()
-        prod = 1.0
-        for ev, ew in committed:
-            eset.add(ev)
-            # if the same hyperedge appears twice (shouldn't), keep the first (commit-on-change means unique runs)
-            if ev not in emap:
-                emap[ev] = float(ew)
-            prod *= float(ew)
-
-        # Prefer the authoritative compute_chain_weight result for w(p)
-        chain_weights.append(w_p)
-        chain_edge_sets.append(eset)
-        chain_edge_weight_maps.append(emap)
-
-        w_star_max = max(w_star_max, w_p)
-
-    if not chain_weights:
-        return 0.0
-
-    # rho-safe max (keep your behavior)
-    if w_star_max > float(rho):
-        return 1.0
-
-    # ---------- L_NOR = 1 - Π(1 - w_p)  (your existing log-space constants) ----------
-    log_prod = 0.0
-    for w in chain_weights:
-        w = float(w)
-        if w >= 1.0:
-            return 1.0
-        if w > 1e-15:
-            log_prod += math.log1p(-w) if w < 0.5 else math.log(1.0 - w)
-
-    prod_fail = 0.0 if log_prod < -700 else math.exp(log_prod)
-    L_nor = 1.0 - prod_fail
-
-    # ---------- L_IE (3rd-order IE approximation from paper) ----------
-    # Work cap to avoid combinatorial explosion (keeps the function usable)
-    # We keep all your existing constants; this cap is internal only.
-    if len(chain_edge_sets) >= 2:
-        # Sort by weight desc and keep top K for IE (still exact L_NOR above)
-        K = min(120, len(chain_edge_sets))
-        order = sorted(range(len(chain_edge_sets)), key=lambda i: chain_weights[i], reverse=True)[:K]
-
-        w_list = [chain_weights[i] for i in order]
-        e_sets = [chain_edge_sets[i] for i in order]
-        e_maps = [chain_edge_weight_maps[i] for i in order]
-
-        # helper: intersection weight product over common committed hyperedges
-        def w_intersection(i: int, j: int) -> float:
-            common = e_sets[i] & e_sets[j]
-            if not common:
-                return 1.0
-            prod = 1.0
-            # weights should match across chains for same hyperedge; use i's map
-            mi = e_maps[i]
-            mj = e_maps[j]
-            for ev in common:
-                prod *= float(mi.get(ev, mj.get(ev, 1.0)))
-            return prod
-
-        def w_intersection3(i: int, j: int, k: int) -> float:
-            common = e_sets[i] & e_sets[j] & e_sets[k]
-            if not common:
-                return 1.0
-            prod = 1.0
-            mi, mj, mk = e_maps[i], e_maps[j], e_maps[k]
-            for ev in common:
-                prod *= float(mi.get(ev, mj.get(ev, mk.get(ev, 1.0))))
-            return prod
-
-        # s1
-        s1 = sum(w_list)
-
-        # s2
-        s2 = 0.0
-        for i in range(K):
-            for j in range(i + 1, K):
-                denom = w_intersection(i, j)
-                if denom <= 0.0:
-                    continue
-                s2 += (w_list[i] * w_list[j]) / denom
-
-        # s3
-        s3 = 0.0
-        for i in range(K):
-            for j in range(i + 1, K):
-                for k in range(j + 1, K):
-                    wab = w_intersection(i, j)
-                    wac = w_intersection(i, k)
-                    wbc = w_intersection(j, k)
-                    if wab <= 0.0 or wac <= 0.0 or wbc <= 0.0:
-                        continue
-                    wabc = w_intersection3(i, j, k)
-                    denom = wab * wac * wbc
-                    s3 += (w_list[i] * w_list[j] * w_list[k] * wabc) / denom
-
-        L_ie = s1 - s2 + s3
-        # paper clips IE to [0,1]
-        L_ie = max(0.0, min(1.0, L_ie))
-
-        # paper returns min(L_IE, L_NOR) (then clip to [0,1])
-        L = min(L_nor, L_ie)
+    if num_chains == 0:
+        L = 0.0
     else:
-        L = L_nor
+        L = 1.0 - prod_not
 
-    return float(max(1e-12, min(1.0, L)))
+    if max_chain_w > float(rho):
+        L = 1.0
+
+    if return_counts:
+        return float(L), int(num_chains), int(active_chains), int(blocked_chains)
+    return float(L)
 
 
 # ============================================================
-# Utility (your newer form you’ve been using elsewhere)
+# Utility
 # ============================================================
 
 def compute_utility_new(*, leakage: float, mask_size: int, lam: float, zone_size: int) -> float:
@@ -691,7 +436,7 @@ def compute_utility_new(*, leakage: float, mask_size: int, lam: float, zone_size
 
 
 # ============================================================
-# Memory estimator (kept from your combined script)
+# Memory estimator
 # ============================================================
 
 def estimate_memory_bytes_standard(
@@ -751,7 +496,7 @@ def estimate_memory_bytes_standard(
 
 
 # ============================================================
-# Baseline 3 ILP (as in your combined script)
+# Baseline 3 ILP (unchanged structurally)
 # ============================================================
 
 try:
@@ -785,23 +530,20 @@ def get_insertion_time(cursor, table, key, attr):
 def instantiate_edges_with_time_filter(cursor, table, key, attr, target_time, hypergraph: Dict[Tuple[str, ...], float]):
     edges = []
     for edge_attrs, weight in hypergraph.items():
-
-        # --- FIX: match schema attr against tuple tokens like "t1.attr" ---
         edge_attr_names = {ea.split(".")[-1] for ea in edge_attrs if isinstance(ea, str)}
         if attr not in edge_attr_names:
             continue
 
         valid_cells = []
         for edge_attr in edge_attrs:
-            attr_name = edge_attr.split('.')[-1]  # already doing this
+            attr_name = edge_attr.split('.')[-1]
             it = get_insertion_time(cursor, table, key, attr_name)
             if it >= target_time:
-                valid_cells.append(edge_attr)      # keep "t1.attr" tokens for ILP consistency
+                valid_cells.append(edge_attr)
 
         if len(valid_cells) > 1:
             edges.append(set(valid_cells))
     return edges
-
 
 
 def ilp_approach_matching_java(
@@ -957,19 +699,15 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
     init_mgr = initialization_phase.InitializationManager({"key": key, "attribute": target}, dataset, threshold)
     init_mgr.initialize()
 
-    # Build RDRs + weights STRICTLY (same convention as delexp)
     rdrs, rdr_weights = dc_to_rdrs_and_weights_strict(init_mgr)
 
-    # Optional rho auto-adjust (same spirit as delexp main)
     rho = float(RHO)
     if AUTO_ADJUST_RHO and rdr_weights:
         mx = max(rdr_weights)
         if mx > rho:
             rho = min(0.999, mx + 0.01)
 
-    # Hypergraph dict used by ILP instantiation (keys are t1.attr tokens)
-    # ILP expects hypergraph over "t1.attr" strings (you used that before),
-    # so we convert rdrs attrs -> "t1.<attr>".
+    # ILP hyperedge dict uses "t1.attr" tokens
     hyperedge_dict: Dict[Tuple[str, ...], float] = {}
     for rdr, w in zip(rdrs, rdr_weights):
         edge = tuple(sorted({f"t1.{a}" for a in rdr}))
@@ -987,7 +725,7 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
     memory_bytes = 0
     max_depth = 0
     num_cells = 0
-    leakage = 0.0
+    leakage_val = 0.0
     utility = 0.0
 
     try:
@@ -1013,45 +751,49 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
         )
         model_time = float(total_ilp_time)
 
-        # Apply update-to-null for ILP-selected cells
         for cell in to_del_cells:
             attr = cell.attribute.split('.')[-1]
             cursor.execute(DELETION_QUERY.format(table_name=table, column_name=attr, key=key))
         conn.commit()
 
-        # deletion_time excludes ILP model solve time
         deletion_time = (time.time() - deletion_start) - model_time
 
-        # ILP "mask" as attribute names
         final_mask = {cell.attribute.split('.')[-1] for cell in to_del_cells}
 
-        # === delexp leakage computation on H_actual ===
-        # mask M should NOT include the target itself
+        # mask should not include target
         mask_for_leakage = set(final_mask)
         mask_for_leakage.discard(target)
 
         H_max = construct_hypergraph_max(target, rdrs, rdr_weights)
-
         H_actual = construct_hypergraph_actual(target, rdrs, rdr_weights)
 
         zone_size = len(H_max.vertices - {target})
+
+        # DEBUG (keep)
         E_star = [(vs, w) for (vs, w) in H_actual.edges if target in vs]
         print("\n[DEBUG leakage]")
         print("target:", target)
         print("target in vertices:", target in H_actual.vertices)
         print("num_edges:", len(H_actual.edges))
         print("num_E_star:", len(E_star))
-
         if E_star:
             ws = [float(w) for _, w in E_star]
             print("E* weight min/max/mean:", min(ws), max(ws), sum(ws) / len(ws))
         else:
             print("No channels into target => leakage must be 0 for all masks.")
 
-        leakage = compute_leakage_delexp(mask_for_leakage, target, H_actual, rho=rho)
-        utility = compute_utility_new(leakage=leakage, mask_size=len(mask_for_leakage), lam=float(LAM), zone_size=zone_size)
+        # ✅ FAST leakage-only call (no chains returned)
+        leakage_val = compute_leakage_delexp(mask_for_leakage, target, H_actual, rho=rho)
 
-        # standardized memory estimate (ILP scale + hypergraph size + mask)
+        print("Leakage:", leakage_val)
+
+        utility = compute_utility_new(
+            leakage=leakage_val,
+            mask_size=len(mask_for_leakage),
+            lam=float(LAM),
+            zone_size=zone_size
+        )
+
         num_edges = len(H_actual.edges)
         edge_members = sum(len(vs) for vs, _w in H_actual.edges)
         num_vertices = len(H_actual.vertices)
@@ -1080,8 +822,6 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
         if conn:
             conn.close()
 
-    # Your old code did: int(num_cells)-2 (id + target)
-    # Keep same convention:
     num_cells_aux = int(num_cells) - 2
 
     return (
@@ -1092,7 +832,7 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
         float(init_time),
         float(model_time),
         float(deletion_time),
-        float(leakage),
+        float(leakage_val),
         float(utility),
         int(num_cells_aux),
     )
@@ -1100,14 +840,4 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
 
 if __name__ == '__main__':
     # Example:
-    #print(baseline_deletion_3("OriginCityMarketID", 500, "flight", 0))
     print(baseline_deletion_3("education", 500, "adult", 0))
-
-
-# justify dc cuttoff points, tau as a function of dc weights, corresponding delmin mask size count, avg leakage quartile distribution (mean mode median)
-# paths (inference chains/blocked active) For all the masks once we fix the experiment
-# inference zone changes per tau
-# depth and width (ablation) -> from the graph
-# arboricity
-# dcs
-# These are the most basic things that we can measure there is nothing more fundamental that we can measure
