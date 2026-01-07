@@ -11,7 +11,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, Set, Tuple
-from leakage import leakage, dc_to_rdrs_and_weights_strict, construct_hypergraph_max, construct_hypergraph_actual, compute_utility
+from leakage import leakage, dc_to_rdrs_and_weights, construct_hypergraph_max, construct_hypergraph_actual, compute_utility
 from collections import deque
 try:
     import mysql.connector
@@ -292,7 +292,7 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
     init_mgr = initialization_phase.InitializationManager({"key": key, "attribute": target}, dataset, threshold)
 
 
-    rdrs, rdr_weights = dc_to_rdrs_and_weights_strict(init_mgr)
+    rdrs, rdr_weights = dc_to_rdrs_and_weights(init_mgr)
 
 
     # ILP hyperedge dict uses "t1.attr" tokens
@@ -428,4 +428,4 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
 
 if __name__ == '__main__':
     # Example:
-    print(baseline_deletion_3("c90", 500, "ncvoter", 0))
+    print(baseline_deletion_3("ProviderNumber", 500, "hospital", 0))

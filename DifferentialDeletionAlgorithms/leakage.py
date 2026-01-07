@@ -26,7 +26,7 @@ def get_dataset_weights(dataset: str) -> Any:
     return weights_obj
 
 
-def map_dc_to_weight_strict(init_manager, dc, weights_obj) -> float:
+def map_dc_to_weight(init_manager, dc, weights_obj) -> float:
     """
     delexp-style mapping: use init_manager.denial_constraints ordering.
     """
@@ -58,7 +58,7 @@ def map_dc_to_weight_strict(init_manager, dc, weights_obj) -> float:
         raise RuntimeError("WEIGHTS object is not indexable by DC index; check weights module format.")
 
 
-def dc_to_rdrs_and_weights_strict(init_manager) -> Tuple[List[Tuple[str, ...]], List[float]]:
+def dc_to_rdrs_and_weights(init_manager) -> Tuple[List[Tuple[str, ...]], List[float]]:
     """
     Convert denial constraints into RDRs (tuples of attribute names) + aligned weights.
     Schema-level: each DC becomes one hyperedge over the attrs it mentions.
@@ -70,7 +70,7 @@ def dc_to_rdrs_and_weights_strict(init_manager) -> Tuple[List[Tuple[str, ...]], 
 
     for dc in getattr(init_manager, "denial_constraints", []) or []:
         attrs: Set[str] = set()
-        w = map_dc_to_weight_strict(init_manager, dc, weights_obj)
+        w = map_dc_to_weight(init_manager, dc, weights_obj)
 
         for pred in dc:
             if not isinstance(pred, (list, tuple)) or len(pred) < 1:

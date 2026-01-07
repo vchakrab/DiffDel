@@ -4,7 +4,7 @@ import csv
 # --- CONFIG ---
 DB_NAME = "tax"
 TABLE_NAME = "tax_data"
-CSV_PATH = "/DataGeneration/csv_files/tax.csv"  # <-- change this path
+CSV_PATH = "/Users/adhariya/Downloads/dc_weight_repro_github_bundle_latest 2/data/tax.csv"  # <-- change this path
 USER = "root"
 PASSWORD = "my_password"
 HOST = "localhost"
