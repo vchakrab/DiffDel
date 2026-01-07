@@ -1,6 +1,6 @@
 import csv
 
-from exponential_deletion import *
+from DifferentialDeletionAlgorithms.exponential_deletion import *
 
 
 def build_template(dataset, attribute):

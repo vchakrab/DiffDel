@@ -3,7 +3,7 @@ import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from exponential_deletion import find_inference_paths_str, clean_raw_dcs
+from DifferentialDeletionAlgorithms.exponential_deletion import find_inference_paths_str, clean_raw_dcs
 
 def find_heavy_paths():
     """

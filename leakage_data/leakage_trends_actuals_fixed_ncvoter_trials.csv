@@ -1,0 +1,7 @@
+dataset,target_attr,tau,rho,zone_size,num_edges_after_tau,mask,mask_size,leakage,active_edges,blocked_edges,num_chains,active_chains,blocked_chains
+ncvoter,c44,1.0,0.9,1,2,{},0,0.9374399180963412,2,0,2,2,0
+ncvoter,c44,1.0,0.9,1,2,{c45},1,0.0,0,2,0,0,0
+ncvoter,c45,1.0,0.9,1,2,{},0,0.9374399180963412,2,0,2,2,0
+ncvoter,c45,1.0,0.9,1,2,{c44},1,0.0,0,2,0,0,0
+ncvoter,c90,1.0,0.9,1,1,{},0,0.7454463352262201,1,0,1,1,0
+ncvoter,c90,1.0,0.9,1,1,{c48},1,0.0,0,1,0,0,0

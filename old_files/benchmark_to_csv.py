@@ -9,7 +9,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 try:
     from build_attribute_templates import build_template_for_attribute, TEMPLATE_FILE
-    from exponential_deletion import clean_raw_dcs
+    from DifferentialDeletionAlgorithms.exponential_deletion import clean_raw_dcs
 except ImportError as e:
     print(f"Error: Could not import required modules. {e}")
     sys.exit(1)

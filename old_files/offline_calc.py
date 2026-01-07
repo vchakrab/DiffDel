@@ -1,7 +1,5 @@
-import os
-import time
 from collections import Counter
-from exponential_deletion import *
+from DifferentialDeletionAlgorithms.exponential_deletion import *
 # assumes these are already imported in your environment
 # from your_str_module import (
 #     clean_raw_dcs,

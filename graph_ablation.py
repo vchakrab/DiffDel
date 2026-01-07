@@ -16,8 +16,8 @@ from matplotlib.lines import Line2D
 # =========================
 # USER SETTINGS
 # =========================
-INPUT_FILE_DELGUM = "ablation_delgum_epsilon_v1.csv"
-INPUT_FILE_DELEXP = "ablation_delexp_epsilon_v1.csv"
+INPUT_FILE_DELGUM = "leakage_data/ablation_delgum_epsilon_v1.csv"
+INPUT_FILE_DELEXP = "leakage_data/ablation_delexp_epsilon_v1.csv"
 OUTPUT_FIG = "ablation_epsilon_delgum_vs_delexp.pdf"
 
 X_COL = "epsilon"

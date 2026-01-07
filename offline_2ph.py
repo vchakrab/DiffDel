@@ -37,7 +37,7 @@ from datetime import datetime
 #   from del2ph import build_template_two_phase
 #   from mypackage.two_phase import build_template_two_phase
 try:
-    from two_phase_deletion import build_template_two_phase  # <-- CHANGE ME
+    from DifferentialDeletionAlgorithms.two_phase_deletion import build_template_two_phase  # <-- CHANGE ME
 except Exception as e:
     print("[FATAL] Failed to import build_template_two_phase. Edit the IMPORT section.")
     print("Error:", repr(e))

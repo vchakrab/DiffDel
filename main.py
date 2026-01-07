@@ -1,236 +1,214 @@
 #!/usr/bin/env python3
 """
-Compact RTF deletion performance evaluator.
-Measures: Query Time | Graph Building | Deletion Computation | Total | Memory
+Better plots showing BOTH leakage and mask size from:
+  leakage_trends_actuals_fixed_8.csv
+
+Generates:
+  1) Per-dataset: leakage vs mask_size (mean + IQR band) line plot
+  2) Global: joint plot (scatter + marginals) leakage vs mask_size colored by dataset
+  3) Dataset summary: dual-axis bar/line (mean leakage + mean mask_size)
 """
 
-import sys
-import os
-import time
-import tracemalloc
-from typing import List, Tuple, Set
-from dataclasses import dataclass
+from pathlib import Path
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from old_files.cell import Attribute, Cell
-#error in the code, I can fix it, I want to ask if this is just an error on my side or for everyone that needs to be changed
-from InferenceGraph.bulid_hyperedges import build_hyperedge_map, fetch_row #names have changed in these files as build_hyperedge map is a part of a class
-#fetch row is also not there, it is an independent file and it is in RTFDatabaseManager class
-from InferenceGraph.optimal_delete import optimal_delete, compute_costs, find_node
-from InferenceGraph.one_pass_optimal_delete import compute_deletion_set as one_pass_deletion
+# -------------------------
+# FIXED INPUT
+# -------------------------
+CSV_FILE = "leakage_data/leakage_trends_actuals_fixed_10.csv"
+OUTDIR = Path("plots_better")
+OUTDIR.mkdir(exist_ok=True)
 
-@dataclass
-class Metrics:
-    query_time: float = 0.0
-    graph_time: float = 0.0
-    deletion_time: float = 0.0
-    memory_mb: float = 0.0
-    deletion_size: int = 0
-    success: bool = True
+TAU = 1.0  # your file is tau=1.0 only, but keep filter anyway
 
-def measure_approach(approach_name: str, eval_func, key: int, target_attr: str) -> Metrics:
-    """Measure performance of a single approach."""
-    try:
-        tracemalloc.start()
-        start = time.perf_counter()
-        
-        deletion_set = eval_func(key, target_attr)
-        
-        _, peak = tracemalloc.get_traced_memory()
-        total_time = time.perf_counter() - start
-        tracemalloc.stop()
-        
-        return Metrics(
-            query_time=0.0,  # Set by individual evaluators
-            graph_time=0.0,  # Set by individual evaluators  
-            deletion_time=total_time,  # Default fallback
-            memory_mb=peak / 1024 / 1024,
-            deletion_size=len(deletion_set),
-            success=True
+
+def _to_num(s):
+    return pd.to_numeric(s, errors="coerce")
+
+
+def load_df():
+    df = pd.read_csv(CSV_FILE)
+    # filter tau if present
+    if "tau" in df.columns:
+        df["tau"] = _to_num(df["tau"])
+        df = df[df["tau"] == TAU]
+
+    df["leakage"] = _to_num(df["leakage"])
+    df["mask_size"] = _to_num(df["mask_size"])
+
+    # drop bad rows
+    df = df[df["leakage"].notna() & df["mask_size"].notna()]
+    df["mask_size"] = df["mask_size"].astype(int)
+
+    # stable dataset order
+    df["dataset"] = df["dataset"].astype(str)
+    return df
+
+
+def plot_leakage_vs_masksize_binned(df: pd.DataFrame):
+    """
+    For each dataset:
+      group by mask_size
+      plot mean leakage with an IQR band (25-75%)
+    """
+    datasets = sorted(df["dataset"].unique().tolist())
+    n = len(datasets)
+
+    # 1 row of panels if <=5 else grid
+    if n <= 5:
+        rows, cols = 1, n
+    else:
+        cols = min(3, n)
+        rows = int(np.ceil(n / cols))
+
+    fig, axes = plt.subplots(rows, cols, figsize=(5.2 * cols, 4.2 * rows), squeeze=False)
+    axes = axes.flatten()
+
+    for i, ds in enumerate(datasets):
+        ax = axes[i]
+        sub = df[df["dataset"] == ds].copy()
+
+        g = sub.groupby("mask_size")["leakage"]
+        x = g.mean().index.values
+        mean = g.mean().values
+        q25 = g.quantile(0.25).values
+        q75 = g.quantile(0.75).values
+        npts = g.size().values
+
+        ax.plot(x, mean, marker="o", linewidth=2)
+        ax.fill_between(x, q25, q75, alpha=0.2)
+
+        ax.set_title(f"{ds}: leakage vs mask_size")
+        ax.set_xlabel("mask_size")
+        ax.set_ylabel("leakage")
+
+        # annotate counts lightly
+        for xx, yy, nn in zip(x, mean, npts):
+            ax.annotate(str(nn), (xx, yy), textcoords="offset points", xytext=(0, 6), ha="center", fontsize=8)
+
+        ax.grid(True, alpha=0.3)
+
+    for j in range(n, len(axes)):
+        axes[j].axis("off")
+
+    fig.suptitle("τ=1.0: Mean leakage vs mask size (band = IQR, labels = count at mask_size)", y=0.98)
+    fig.tight_layout(rect=[0, 0, 1, 0.95])
+    out = OUTDIR / "panel_leakage_vs_masksize_binned.png"
+    fig.savefig(out, dpi=220)
+    plt.close(fig)
+
+
+def plot_joint_scatter_with_marginals(df: pd.DataFrame):
+    """
+    One “publication-style” figure:
+      - scatter of (mask_size, leakage), colored by dataset
+      - marginal hist for mask_size (top)
+      - marginal hist for leakage (right)
+    Pure matplotlib (no seaborn).
+    """
+    datasets = sorted(df["dataset"].unique().tolist())
+    colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+
+    fig = plt.figure(figsize=(9, 7))
+    gs = fig.add_gridspec(2, 2, width_ratios=[4, 1.2], height_ratios=[1.2, 4], wspace=0.05, hspace=0.05)
+
+    ax_top = fig.add_subplot(gs[0, 0])
+    ax_scatter = fig.add_subplot(gs[1, 0], sharex=ax_top)
+    ax_right = fig.add_subplot(gs[1, 1], sharey=ax_scatter)
+
+    # scatter
+    for i, ds in enumerate(datasets):
+        sub = df[df["dataset"] == ds]
+        ax_scatter.scatter(
+            sub["mask_size"].values,
+            sub["leakage"].values,
+            s=18,
+            alpha=0.65,
+            label=ds,
+            color=colors[i % len(colors)],
         )
-    except Exception as e:
-        tracemalloc.stop()
-        return Metrics(success=False)
 
-def eval_multi_pass(key: int, target_attr: str) -> Set[Cell]:
-    """Multi-pass approach with timing breakdown."""
-    global last_metrics
-    
-    # Query time
-    query_start = time.perf_counter()
-    row = fetch_row(key)
-    query_time = time.perf_counter() - query_start
-    
-    # Graph building
-    graph_start = time.perf_counter()
-    hyperedge_map = build_hyperedge_map(row, key, target_attr)
-    root = build_hypergraph_tree(row, key, target_attr, hyperedge_map)
-    graph_time = time.perf_counter() - graph_start
-    
-    # Deletion computation
-    deletion_start = time.perf_counter()
-    compute_costs(root)
-    start_node = find_node(root, root.cell)
-    deletion_set = optimal_delete(root, root.cell)
-    deletion_time = time.perf_counter() - deletion_start
-    
-    # Store detailed timing
-    last_metrics = Metrics(query_time=query_time, graph_time=graph_time, deletion_time=deletion_time)
-    return deletion_set
+    ax_scatter.set_xlabel("mask_size")
+    ax_scatter.set_ylabel("leakage")
+    ax_scatter.grid(True, alpha=0.25)
+    ax_scatter.legend(loc="best", frameon=True)
 
-def eval_one_pass(key: int, target_attr: str) -> Set[Cell]:
-    """One-pass approach with timing breakdown."""
-    global last_metrics
-    
-    # Query time
-    query_start = time.perf_counter()
-    row = fetch_row(key)
-    query_time = time.perf_counter() - query_start
-    
-    # Combined computation
-    combined_start = time.perf_counter()
-    deletion_set = one_pass_deletion(key, target_attr)
-    combined_time = time.perf_counter() - combined_start
-    
-    # Estimate breakdown (quick graph build for measurement)
-    graph_start = time.perf_counter()
-    build_hyperedge_map(row, key, target_attr)
-    estimated_graph_time = time.perf_counter() - graph_start
-    
-    last_metrics = Metrics(
-        query_time=query_time,
-        graph_time=estimated_graph_time,
-        deletion_time=combined_time - estimated_graph_time
+    # top hist of mask_size
+    all_ms = df["mask_size"].values
+    bins_ms = np.arange(all_ms.min() - 0.5, all_ms.max() + 1.5, 1.0)
+    ax_top.hist(all_ms, bins=bins_ms)
+    ax_top.set_ylabel("count")
+    plt.setp(ax_top.get_xticklabels(), visible=False)
+    ax_top.grid(True, alpha=0.15)
+
+    # right hist of leakage (horizontal)
+    ax_right.hist(df["leakage"].values, bins=30, orientation="horizontal")
+    ax_right.set_xlabel("count")
+    plt.setp(ax_right.get_yticklabels(), visible=False)
+    ax_right.grid(True, alpha=0.15)
+
+    fig.suptitle("τ=1.0: leakage vs mask_size (scatter + marginals)")
+    out = OUTDIR / "joint_leakage_vs_masksize.png"
+    fig.savefig(out, dpi=220)
+    plt.close(fig)
+
+
+def plot_dataset_dual_axis_summary(df: pd.DataFrame):
+    """
+    Per dataset:
+      bar = mean leakage (left y-axis)
+      line = mean mask_size (right y-axis)
+    This is a quick “executive summary” chart.
+    """
+    summary = (
+        df.groupby("dataset", as_index=False)
+        .agg(mean_leakage=("leakage", "mean"),
+             mean_mask_size=("mask_size", "mean"),
+             n=("leakage", "size"))
+        .sort_values("dataset")
     )
-    return deletion_set
 
-def eval_true_one_pass(key: int, target_attr: str) -> Set[Cell]:
-    """True one-pass approach with timing breakdown."""
-    global last_metrics
-    from InferenceGraph.one_pass_optimal_delete import build_tree, optimal_delete as true_optimal
-    
-    # Query time
-    query_start = time.perf_counter()
-    row = fetch_row(key)
-    query_time = time.perf_counter() - query_start
-    
-    # Graph building with integrated costs
-    graph_start = time.perf_counter()
-    hyperedge_map = build_hyperedge_map(row, key, target_attr)
-    root, cell_map = build_tree(row, key, target_attr, hyperedge_map)
-    graph_time = time.perf_counter() - graph_start
-    
-    # Deletion extraction
-    deletion_start = time.perf_counter()
-    target_cell = Cell(Attribute('adult_data', target_attr), key, row[target_attr])
-    deletion_set = true_optimal(target_cell, cell_map)
-    deletion_time = time.perf_counter() - deletion_start
-    
-    last_metrics = Metrics(query_time=query_time, graph_time=graph_time, deletion_time=deletion_time)
-    return deletion_set
+    x = np.arange(len(summary))
+    fig, ax1 = plt.subplots(figsize=(9, 4.8))
+    ax2 = ax1.twinx()
 
-def run_evaluation(test_cases: List[Tuple[int, str]]):
-    """Run compact performance evaluation."""
-    global last_metrics
-    
-    print("="*80)
-    print("RTF DELETION PERFORMANCE EVALUATION")
-    print("="*80)
-    print("Metrics: Query | Graph | Deletion | Total | Memory | Del-Set")
-    print("="*80)
-    
-    approaches = [
-        ("Multi-pass", eval_multi_pass),
-        ("One-pass", eval_one_pass),
-        ("True One-pass", eval_true_one_pass)
-    ]
-    
-    all_results = []
-    
-    for i, (key, target_attr) in enumerate(test_cases, 1):
-        print(f"\nCase {i}: key={key}, attr='{target_attr}'")
-        print("-" * 50)
-        
-        for approach_name, eval_func in approaches:
-            last_metrics = None
-            metrics = measure_approach(approach_name, eval_func, key, target_attr)
-            
-            if last_metrics:  # Use detailed breakdown if available
-                metrics.query_time = last_metrics.query_time
-                metrics.graph_time = last_metrics.graph_time
-                metrics.deletion_time = last_metrics.deletion_time
-            
-            if metrics.success:
-                total = metrics.query_time + metrics.graph_time + metrics.deletion_time
-                print(f"{approach_name:13} | "
-                      f"{metrics.query_time:5.3f}s | "
-                      f"{metrics.graph_time:5.3f}s | "
-                      f"{metrics.deletion_time:8.4f}s | "
-                      f"{total:5.3f}s | "
-                      f"{metrics.memory_mb:5.2f}MB | "
-                      f"{metrics.deletion_size:2d}")
-                all_results.append((approach_name, metrics))
-            else:
-                print(f"{approach_name:13} | FAILED")
-    
-    # Summary
-    print("\n" + "="*80)
-    print("SUMMARY")
-    print("="*80)
-    
-    by_approach = {}
-    for name, metrics in all_results:
-        if name not in by_approach:
-            by_approach[name] = []
-        by_approach[name].append(metrics)
-    
-    for name, metrics_list in by_approach.items():
-        if not metrics_list:
-            continue
-            
-        avg_query = sum(m.query_time for m in metrics_list) / len(metrics_list)
-        avg_graph = sum(m.graph_time for m in metrics_list) / len(metrics_list)
-        avg_deletion = sum(m.deletion_time for m in metrics_list) / len(metrics_list)
-        avg_total = avg_query + avg_graph + avg_deletion
-        avg_memory = sum(m.memory_mb for m in metrics_list) / len(metrics_list)
-        avg_del_size = sum(m.deletion_size for m in metrics_list) / len(metrics_list)
-        
-        print(f"\n{name}:")
-        print(f"  Query:    {avg_query:.4f}s ({avg_query/avg_total*100:.1f}%)")
-        print(f"  Graph:    {avg_graph:.4f}s ({avg_graph/avg_total*100:.1f}%)")
-        print(f"  Deletion: {avg_deletion:.4f}s ({avg_deletion/avg_total*100:.1f}%)")
-        print(f"  Total:    {avg_total:.4f}s")
-        print(f"  Memory:   {avg_memory:.2f}MB")
-        print(f"  Del-Size: {avg_del_size:.1f}")
-    
-    # Performance comparison
-    if len(by_approach) > 1:
-        approaches = list(by_approach.keys())
-        baseline = by_approach[approaches[0]]
-        baseline_avg_deletion = sum(m.deletion_time for m in baseline) / len(baseline)
-        
-        print(f"\nDeletion Computation Speedup (vs {approaches[0]}):")
-        for name in approaches[1:]:
-            metrics_list = by_approach[name]
-            avg_deletion = sum(m.deletion_time for m in metrics_list) / len(metrics_list)
-            speedup = baseline_avg_deletion / avg_deletion if avg_deletion > 0 else float('inf')
-            print(f"  {name}: {speedup:.0f}x faster")
+    ax1.bar(x, summary["mean_leakage"].values)
+    ax2.plot(x, summary["mean_mask_size"].values, marker="o", linewidth=2)
+
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(summary["dataset"].tolist(), rotation=0)
+    ax1.set_ylabel("mean leakage")
+    ax2.set_ylabel("mean mask_size")
+
+    # annotate n
+    for xi, n in zip(x, summary["n"].values):
+        ax1.annotate(f"n={int(n)}", (xi, summary["mean_leakage"].iloc[list(x).index(xi)]),
+                     textcoords="offset points", xytext=(0, 6), ha="center", fontsize=8)
+
+    ax1.grid(True, axis="y", alpha=0.25)
+    fig.suptitle("τ=1.0: Dataset summary (mean leakage + mean mask size)")
+    fig.tight_layout()
+    out = OUTDIR / "dataset_dual_axis_summary.png"
+    fig.savefig(out, dpi=220)
+    plt.close(fig)
+
 
 def main():
-    """Main entry point."""
-    global last_metrics
-    last_metrics = None
-    
-    # Default test cases
-    test_cases = [
-        (2, 'education'),
-        (3, 'occupation'), 
-        (4, 'workclass'),
-        (5, 'relationship'),
-        (1, 'age')
-    ]
-    
-    run_evaluation(test_cases)
+    df = load_df()
+    if df.empty:
+        raise SystemExit("No rows after filtering. Check CSV contents / tau column.")
+
+    plot_leakage_vs_masksize_binned(df)
+    plot_joint_scatter_with_marginals(df)
+    plot_dataset_dual_axis_summary(df)
+
+    print(f"✅ Wrote plots to: {OUTDIR.resolve()}")
+    print("  - panel_leakage_vs_masksize_binned.png")
+    print("  - joint_leakage_vs_masksize.png")
+    print("  - dataset_dual_axis_summary.png")
+
 
 if __name__ == "__main__":
     main()

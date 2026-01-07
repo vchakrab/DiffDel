@@ -76,13 +76,11 @@
 import time
 
 from old_files import baseline_deletion_2, baseline_deletion_1
-import baseline_deletion_3
-import exponential_deletion
-import greedy_gumbel
-import two_phase_deletion
+from DifferentialDeletionAlgorithms import baseline_deletion_3, greedy_gumbel, exponential_deletion, \
+    two_phase_deletion
 import mysql.connector
 import config
-from exponential_deletion import clean_raw_dcs, find_inference_paths_str, calculate_leakage_str
+from DifferentialDeletionAlgorithms.exponential_deletion import clean_raw_dcs, find_inference_paths_str, calculate_leakage_str
 
 
 # --- Helper for new metric calculation ---
@@ -332,7 +330,7 @@ def collect_baseline_deletion_data_3():
     """
     Collect data for baseline deletion 3 (ILP Java-style), now with leakage and paths_blocked.
     """
-    data_file_name = "delmin_data_v12.csv"  # New version for new data
+    data_file_name = "csv_files/delmin_data_v12.csv"  # New version for new data
 
     datasets = ['Onlineretail']
     attributes = ["InvoiceNo"]
@@ -403,7 +401,7 @@ def collect_exponential_deletion_data(epsilon, verbose: bool = False):
     """
     Collect data for the string-based exponential deletion algorithm.
     """
-    data_file_name = "delexp_data_collect_epsilon_v4.csv"
+    data_file_name = "csv_files/delexp_data_collect_epsilon_v4.csv"
     datasets = ["airport", "hospital", "ncvoter", "Onlineretail", "adult"]
     attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "InvoiceNo", "education"]
 
@@ -476,7 +474,7 @@ def collect_2phase_deletion_data():
     """
     Collect data for the 2-Phase deletion algorithm.
     """
-    data_file_name = "2phase_deletion_data_v12.csv"
+    data_file_name = "leakage_data/2phase_deletion_data_v12.csv"
     datasets = ["airport", "hospital", "ncvoter", "tax", 'flights', 'Onlineretail', 'adult']
     attributes_map = {
         # "airport": "latitude_deg",
@@ -586,7 +584,7 @@ import csv
 
 
 def collect_greedy_gumbel_data(epsilon: float, verbose: bool = False):
-    data_file_name = "delgum_data_epsilon_leakage_graph_v8_gpt_fixed_script.csv"
+    data_file_name = "csv_files/delgum_data_epsilon_leakage_graph_v8_gpt_fixed_script.csv"
     datasets = ["airport", "hospital", "ncvoter", "Onlineretail", "adult"]
     attributes = ["latitude_deg", "ProviderNumber", "voter_reg_num", "InvoiceNo", "education"]
 

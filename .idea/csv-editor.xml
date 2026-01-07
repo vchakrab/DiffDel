@@ -17,20 +17,6 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="$USER_HOME$/Downloads/dc_weight_extraction_code_and_outputs/outputs/hospital_dcs_weights_wpos_gamma0p25.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="$USER_HOME$/Downloads/semantic_dcs_selected_by_metric_all_datasets_20251231_063113/ncvoter_semantic_dcs_w_norm_20251231_063113.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="/ablation_delexp_alpha.csv">
           <value>
             <Attribute>
@@ -46,6 +32,13 @@
           </value>
         </entry>
         <entry key="/ablation_delexp_epsilon.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/ablation_delexp_epsilon_v1.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -81,6 +74,13 @@
           </value>
         </entry>
         <entry key="/ablation_delgum_epsilon.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/ablation_delgum_epsilon_v1.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -129,6 +129,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/ablation_tau_baseline3.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/baseline3_tau_runs.csv">
           <value>
             <Attribute>
@@ -171,6 +178,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/del2ph_data_standardized_v2.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/del2ph_data_standardized_vFinal.csv">
           <value>
             <Attribute>
@@ -206,6 +220,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/delexp_data_standardized_non_canonical.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/delexp_data_standardized_non_canonical_or_leakage.csv">
           <value>
             <Attribute>
@@ -227,6 +248,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/delexp_data_standardized_v1.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/delexp_data_standardized_v2.csv">
           <value>
             <Attribute>
@@ -235,6 +263,13 @@
           </value>
         </entry>
         <entry key="/delexp_data_standardized_v2_flightsandtax.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delexp_data_standardized_v3.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -325,6 +360,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/delgum_data_standardized_v1.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/delgum_data_standardized_v2.csv">
           <value>
             <Attribute>
@@ -340,6 +382,13 @@
           </value>
         </entry>
         <entry key="/delgum_data_standardized_v3.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/delgum_data_standardized_vFinal.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -472,6 +521,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/leakage_trends_actuals_fixed_10.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/leakage_trends_actuals_fixed_11.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/leakage_trends_actuals_fixed_2.csv">
           <value>
             <Attribute>
@@ -494,6 +557,69 @@
           </value>
         </entry>
         <entry key="/leakage_trends_actuals_fixed_5.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/leakage_trends_actuals_fixed_6.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/leakage_trends_actuals_fixed_7.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/leakage_trends_actuals_fixed_8.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/leakage_trends_actuals_fixed_9.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/leakage_trends_actuals_fixed_ncvoter_trials.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/leakage_trends_tax_nor.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/leakage_trends_tax_tight.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/leakage_trends_timed_leakage_nor.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/leakage_trends_timed_leakage_tight.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

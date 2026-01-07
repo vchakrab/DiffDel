@@ -5,7 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
-INPUT_FILE = "delgum_data_epsilon_leakage_graph_v8_gpt_fixed_script.csv"
+INPUT_FILE = "csv_files/delgum_data_epsilon_leakage_graph_v8_gpt_fixed_script.csv"
 OUTPUT_PDF = "graph_x_gum.pdf"
 
 DATASET_HEADER_RE = re.compile(r"^-{2,}\s*([A-Za-z0-9_]+)\s*-{2,}\s*$")

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import csv
 import itertools
-import os
+import time
 from typing import Set, List, Tuple
 
 # =========================
@@ -9,15 +9,13 @@ from typing import Set, List, Tuple
 # =========================
 
 DATASETS = [
-    ("airport", "iso_country"),
-#     ("adult", "education"),
-    #("flight", "OriginCityMarketID"),
+    ("tax", "marital_status"),
 ]
 
-TAUS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]  # 0.1 .. 1.0
-RHO = 0.9
+TAUS = [1.0]  # 0.1 .. 1.0
+RHO = 1.0
 
-OUT_CSV = "leakage_trends_actuals_fixed_5.csv"
+OUT_CSV = "leakage_trends_tax_tight.csv"
 
 # Flush to disk every N rows (flush only; no fsync)
 FLUSH_EVERY = 50
@@ -25,7 +23,7 @@ FLUSH_EVERY = 50
 # =========================
 # IMPORT YOUR CORE LOGIC
 # =========================
-from baseline_deletion_3 import (
+from DifferentialDeletionAlgorithms.baseline_deletion_3 import (
     dc_to_rdrs_and_weights_strict,
     construct_local_hypergraph,
     compute_leakage_delexp,  # <-- will be updated to support return_counts=True
@@ -115,6 +113,7 @@ def main():
         "num_chains",
         "active_chains",
         "blocked_chains",
+        "total_time"
     ]
 
     with open(OUT_CSV, "w", newline="") as f:
@@ -125,19 +124,20 @@ def main():
 
         for dataset, target_attr in DATASETS:
             print(f"\n=== {dataset} / target={target_attr} ===")
-
+            start_time = time.time()
             # ---- Initialization phase (DC loading only)
             init_mgr = InitializationManager(
                 {"key": 500, "attribute": target_attr},
                 dataset,
                 threshold=0,
             )
-            init_mgr.initialize()
+            #init_mgr.initialize()
 
             # ---- Build hypergraph
+
             rdrs, rdr_weights = dc_to_rdrs_and_weights_strict(init_mgr)
             H_base = construct_local_hypergraph(target_attr, rdrs, rdr_weights)
-
+            print(H_base.edges)
             inference_zone = sorted(H_base.vertices - {target_attr})
             zone_size = len(inference_zone)
 
@@ -150,6 +150,7 @@ def main():
                 print(f"  tau={tau:.1f}  |E_tau|={num_edges_tau}")
 
                 for mask in enumerate_all_masks(inference_zone):
+                    start_time_mask = time.time()
                     mask_size = len(mask)
 
                     # Leakage + chain COUNTS only (no chain lists/weights returned)
@@ -159,11 +160,12 @@ def main():
                         hypergraph=H_tau,
                         rho=RHO,
                         return_counts=True,
+                        leakage_method = "greedy_disjoint"
                     )
 
                     # Edge activity stats (mask rule)
                     active_edges, blocked_edges = count_active_blocked_edges(H_tau, mask, target_attr)
-
+                    end_time_mask = time.time() - start_time_mask
                     writer.writerow({
                         "dataset": dataset,
                         "target_attr": target_attr,
@@ -183,12 +185,13 @@ def main():
                         "num_chains": int(num_chains),
                         "active_chains": int(active_chains),
                         "blocked_chains": int(blocked_chains),
+                        "total_time": float(end_time_mask),
                     })
-
                     rows_written += 1
                     if FLUSH_EVERY and (rows_written % FLUSH_EVERY == 0):
                         f.flush()
-
+            end_time = start_time - time.time()
+            print(f"{dataset} elapsed time: {end_time}")
         f.flush()
 
     print(f"\nWrote {OUT_CSV}")

@@ -148,5 +148,5 @@ def plot_all_smoothed_metrics(csv_path, output_dir='plots'):
         print(f"An error occurred: {e}")
 
 if __name__ == '__main__':
-    csv_file = 'delgum_data_epsilon_leakage_graph_v8_gpt_fixed_script.csv'
+    csv_file = 'csv_files/delgum_data_epsilon_leakage_graph_v8_gpt_fixed_script.csv'
     plot_all_smoothed_metrics(csv_file)

@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
-INPUT_FILE = "ablation_delgum_epsilon.csv"
+INPUT_FILE = "leakage_data/ablation_delgum_epsilon.csv"
 OUTPUT_PDF = "delgum_epsilon_per_dataset_with_ci_colored_MAP.pdf"
 
 DATASETS_IN_ORDER = ["airport", "hospital", "ncvoter", "Onlineretail", "adult"]

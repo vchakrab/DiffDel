@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 # =========================
 # USER SETTINGS
 # =========================
-INPUT_FILE = "leakage_graphs.txt"   # <-- put your pasted output here
+INPUT_FILE = "leakage_data/leakage_graphs.txt"  # <-- put your pasted output here
 OUTPUT_FIG = "all_leakages_hist.png"
 BINS = 50
 

@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch
 
 # IMPORTANT: adjust this import if your module filename is not baseline3.py
-import baseline_deletion_3
+from DifferentialDeletionAlgorithms import baseline_deletion_3
 
 
 class TestExampleFigureLeakage(unittest.TestCase):

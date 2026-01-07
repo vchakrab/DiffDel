@@ -7,7 +7,7 @@ from collections import defaultdict
 # ------------------------------------------------------------
 # USER INPUT
 # ------------------------------------------------------------
-INPUT_FILE = "del2ph_data_standardized_vFinal.csv"   # <- paste your filename here
+INPUT_FILE = "csv_files/del2ph_data_standardized_vFinal.csv"  # <- paste your filename here
 OUTPUT_TEX = None  # None => auto: "<input_basename>_table.tex"
 
 # Optional: filter to a single method (set to None to include all rows)
