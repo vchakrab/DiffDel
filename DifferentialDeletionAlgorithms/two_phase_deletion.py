@@ -23,6 +23,8 @@ from sys import getsizeof
 
 import numpy as np
 
+from DifferentialDeletionAlgorithms.leakage import compute_utility_logarithmic, \
+    compute_utility_hinge
 # ============================================================
 # IMPORT *ALL* CORE METHODS FROM leakage.py
 # (this is exactly the big blob you pasted)
@@ -44,13 +46,76 @@ from leakage import (
     compute_utility,
 
     # leakage (Algorithm 2/5)
-    leakage as leakage_model,
+    leakage as leakage_model, hypergraph_to_edge_dict, iter_chains,
 )
 
 # ============================================================
 # Helpers (non-core)
 # ============================================================
+def compute_candidate_masks(
+    target_cell: str,
+    H_max: Hypergraph,
+    *,
+    tau: Optional[float] = None,
+    mask_space: Optional[str] = None,   # None => full powerset; "canonical" => inference-derived subset
+    canonical_max_chains: int = 2000,
+    canonical_max_union_chains: int = 200,
+) -> List[FrozenSet[str]]:
+    """
+    Candidate masks for Del2Ph (and DelExp), matching the same mask-space semantics as exponential_deletion:
 
+      - mask_space=None: all masks (full powerset of I(c*) \ {c*})
+      - mask_space="canonical": inference-derived subset built from inference chains in H_max under empty mask
+
+    Returns a list of frozensets (so they can be dict keys / cached).
+    """
+    zone_set = H_max.vertices - {target_cell}
+    zone = sorted(zone_set)
+
+    # if mask_space is None:
+    return [frozenset(m) for m in powerset(zone)] or [frozenset()]
+
+    if str(mask_space).lower() != "canonical":
+        raise ValueError(f"mask_space must be None or 'canonical' (got {mask_space!r}).")
+
+    edges = hypergraph_to_edge_dict(H_max, tau=tau)
+
+    candidates: Set[FrozenSet[str]] = {frozenset()}
+    for v in zone_set:
+        candidates.add(frozenset([v]))
+
+    chain_infos: List[Tuple[float, FrozenSet[str]]] = []
+    for ch in iter_chains(set(), target_cell, edges):
+        supp: Set[str] = set()
+        w_prod = 1.0
+        for eid in ch:
+            verts, w = edges[eid]
+            supp |= set(verts)
+            w_prod *= float(w)
+        supp.discard(target_cell)
+        if not supp:
+            continue
+        chain_infos.append((float(w_prod), frozenset(supp)))
+
+    chain_infos.sort(key=lambda t: t[0], reverse=True)
+
+    seen_supports: Set[FrozenSet[str]] = set()
+    top_supports: List[FrozenSet[str]] = []
+    for _w, supp_fs in chain_infos:
+        if supp_fs in seen_supports:
+            continue
+        seen_supports.add(supp_fs)
+        top_supports.append(supp_fs)
+        candidates.add(supp_fs)
+        if len(top_supports) >= int(canonical_max_chains):
+            break
+
+    topN = top_supports[: int(canonical_max_union_chains)]
+    for i in range(len(topN)):
+        for j in range(i + 1, len(topN)):
+            candidates.add(topN[i] | topN[j])
+
+    return list(candidates)
 def powerset(iterable: Iterable[Any]) -> Iterable[Tuple[Any, ...]]:
     s = list(iterable)
     return chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))
@@ -69,7 +134,7 @@ def stable_softmax(scores: np.ndarray) -> np.ndarray:
 
 def exp_mech_probs(utilities: np.ndarray, epsilon: float, lam: float) -> np.ndarray:
     # scores = (ε * u) / (2λ)
-    sens = max(1e-12, float(lam))
+    sens =float(lam)
     scores = (float(epsilon) * utilities.astype(float)) / (2.0 * sens)
     return stable_softmax(scores)
 
@@ -119,6 +184,7 @@ def load_parsed_dcs_for_dataset(dataset: str) -> List[List[Tuple[str, str, str]]
         return []
 
 
+
 # ============================================================
 # OFFLINE: build + cache template (now uses leakage.py end-to-end)
 # ============================================================
@@ -131,8 +197,9 @@ def build_template_two_phase(
     epsilon: float = 50.0,
     lam: float = 0.5,
     tau: Optional[float] = None,
-    leakage_method: str = "noisy_or",   # or "greedy_disjoint"
-    hypergraph_mode: str = "MAX",       # "MAX" or "ACTUAL"
+    leakage_method: str = "greedy_disjoint",   # or "greedy_disjoint"
+    hypergraph_mode: str = "MAX",
+    mask_space = None# "MAX" or "ACTUAL"
 ) -> Dict[str, Any]:
     # 1) load DCs
     raw_dcs = load_parsed_dcs_for_dataset(dataset)
@@ -166,7 +233,7 @@ def build_template_two_phase(
     zone_size = len(zone)
 
     # 6) Candidate masks
-    candidate_masks: List[FrozenSet[str]] = [frozenset(m) for m in powerset(zone)]
+    candidate_masks = compute_candidate_masks(target_attribute,H, mask_space = mask_space )
     if not candidate_masks:
         candidate_masks = [frozenset()]
 
@@ -191,7 +258,7 @@ def build_template_two_phase(
             leakage_method=leakage_method,
         )
 
-        U = compute_utility(leakage=float(L), mask_size=len(m), lam=float(lam), zone_size=zone_size)
+        U = compute_utility_hinge(leakage=float(L), mask_size=len(m), lam=float(lam), zone_size=zone_size)
 
         Leakage[m] = float(L)
         Utility[m] = float(U)
@@ -259,9 +326,10 @@ def two_phase_deletion_main(
     epsilon: float = 50.0,
     lam: float = 0.5,
     tau: Optional[float] = None,
-    leakage_method: str = "noisy_or",
+    leakage_method: str = "greedy_disjoint",
     hypergraph_mode: str = "MAX",
-    template_dir: str = "templates_2ph",
+    template_dir: str = f"templates",
+    mask_method: str = 'None',
     rng: Optional[np.random.Generator] = None,
 ) -> Dict[str, Any]:
     if rng is None:
@@ -273,6 +341,8 @@ def two_phase_deletion_main(
     try:
         T = load_template_two_phase(dataset, target_cell, save_dir=template_dir)
     except FileNotFoundError:
+        print(f"Building Template {dataset}_{target_cell}")
+        start_time = time.time()
         T = build_template_two_phase(
             dataset,
             target_cell,
@@ -282,7 +352,12 @@ def two_phase_deletion_main(
             tau=tau,
             leakage_method=leakage_method,
             hypergraph_mode=hypergraph_mode,
+            mask_space = mask_method
         )
+
+        end_time = time.time() - start_time
+        init_time = end_time
+
 
     # ensure cache matches params
     if (
@@ -292,6 +367,8 @@ def two_phase_deletion_main(
         or str(T.get("leakage_method", "")) != str(leakage_method)
         or str(T.get("hypergraph_mode", "")) != str(hypergraph_mode)
     ):
+        print(f"Building Template -  {dataset}_{target_cell}")
+        start_time = time.time()
         T = build_template_two_phase(
             dataset,
             target_cell,
@@ -302,7 +379,8 @@ def two_phase_deletion_main(
             leakage_method=leakage_method,
             hypergraph_mode=hypergraph_mode,
         )
-
+        end_time = time.time() - start_time
+        init_time = end_time
     model_start = time.time()
 
     masks: List[FrozenSet[str]] = T["R_intra"]
@@ -324,9 +402,37 @@ def two_phase_deletion_main(
     utility_val = float(T["Utility"][chosen])
     mask_set = set(chosen)
 
-    # Keep these fields compatible with your runner
-    num_paths = int(T.get("NumChains", {}).get(chosen, -1))      # proxy: #chains
-    paths_blocked = int(T.get("BlockedChains", {}).get(chosen, 0))
+    # Recompute inference-chain counts for THIS sampled mask (not a proxy pulled from the template)
+    # This ensures num_paths / paths_blocked correspond to the exact inference chains under `mask_set`.
+    try:
+        raw_dcs_now = load_parsed_dcs_for_dataset(dataset)
+
+        class _InitNow:
+            def __init__(self, dataset: str, denial_constraints):
+                self.dataset = dataset
+                self.denial_constraints = denial_constraints
+
+        init_manager_now = _InitNow(dataset, raw_dcs_now)
+        rdrs_now, rdr_weights_now = dc_to_rdrs_and_weights(init_manager_now)
+
+        if str(hypergraph_mode).upper() == "ACTUAL":
+            H_now: Hypergraph = construct_hypergraph_actual(target_cell, rdrs_now, rdr_weights_now)
+        else:
+            H_now = construct_hypergraph_max(target_cell, rdrs_now, rdr_weights_now)
+
+        _L_tmp, num_paths, _act_ch, paths_blocked = leakage_model(
+            mask_set,
+            target_cell,
+            H_now,
+            tau=tau,
+            return_counts=True,
+            leakage_method=leakage_method,
+        )
+    except Exception:
+
+        # fallback (should be rare): use precomputed template diagnostics if recomputation fails
+        num_paths = int(T.get("NumChains", {}).get(chosen, -1))
+        paths_blocked = int(T.get("BlockedChains", {}).get(chosen, 0))
 
     del_time = 0.0  # runner measures actual update-to-null time elsewhere
 
@@ -358,7 +464,8 @@ def two_phase_deletion_main(
 if __name__ == "__main__":
     # quick sanity run:
     # python del2ph.py
-    ds = "airport"
-    tgt = "iso_country"
-    out = two_phase_deletion_main(ds, key=0, target_cell=tgt)
-    print(out)
+    # ds = "airport"
+    # tgt = "scheduled_service"
+    # out = two_phase_deletion_main(ds, key=1, target_cell=tgt)
+    print(two_phase_deletion_main("adult", key=1, target_cell="education"))
+

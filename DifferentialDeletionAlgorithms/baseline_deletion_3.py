@@ -5,14 +5,26 @@ BASELINE 3 (ILP) + DELEXP HYPERGRAPH + DELEXP LEAKAGE MODEL (Algorithm 2)
 CLEANED + FIXED VERSION:
   - enumerate/iter_chains fixed to match EnumerateChains pseudocode AND be faster
   - rest unchanged from your uploaded script
+
+FIX (this version):
+  - "instantiated cell count" now reports ALL cells/attributes that are "touched/considered"
+    while scanning relevant edges (even if later filtered by insertion-time).
+  - Still returns the ILP-instantiated count separately for memory sizing correctness.
 """
 
 from __future__ import annotations
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, Set, Tuple
-from leakage import leakage, dc_to_rdrs_and_weights, construct_hypergraph_max, construct_hypergraph_actual, compute_utility
+from typing import Any, Dict, Set, Tuple, Optional
+from leakage import (
+    leakage,
+    dc_to_rdrs_and_weights,
+    construct_hypergraph_max,
+    construct_hypergraph_actual,
+    compute_utility,
+)
 from collections import deque
+
 try:
     import mysql.connector
 except Exception:
@@ -26,12 +38,12 @@ except Exception:
 
 LAM = 0.5
 
-
 DELETION_QUERY = """
 UPDATE {table_name}
 SET `{column_name}` = NULL
 WHERE id = {key};
 """
+
 try:
     from gurobipy import Model, GRB, quicksum
     GUROBI_AVAILABLE = True
@@ -48,7 +60,6 @@ except Exception:
 class CellILP:
     attribute: str
     key: int
-
 
 
 def estimate_memory_bytes_standard(
@@ -107,9 +118,6 @@ def estimate_memory_bytes_standard(
     return int(est)
 
 
-
-
-
 def get_insertion_time(cursor, table, key, attr):
     try:
         query = f"SELECT `{attr}` FROM {table}_insertiontime WHERE insertionKey = {key}"
@@ -120,12 +128,32 @@ def get_insertion_time(cursor, table, key, attr):
         return 0
 
 
-def instantiate_edges_with_time_filter(cursor, table, key, attr, target_time, hypergraph: Dict[Tuple[str, ...], float]):
+def instantiate_edges_with_time_filter(
+    cursor,
+    table,
+    key,
+    attr,
+    target_time,
+    hypergraph: Dict[Tuple[str, ...], float],
+    *,
+    touched_cells: Optional[Set[CellILP]] = None,
+):
+    """
+    Returns instantiated edges (after insertion-time filtering).
+    Additionally (FIX): if touched_cells is provided, we count ALL cells appearing
+    in any relevant edge (i.e., edge contains curr attr) as "touched/considered",
+    even if they do not survive the time filter.
+    """
     edges = []
     for edge_attrs, weight in hypergraph.items():
         edge_attr_names = {ea.split(".")[-1] for ea in edge_attrs if isinstance(ea, str)}
         if attr not in edge_attr_names:
             continue
+
+        # ✅ Count all cells in this relevant edge as "touched"
+        if touched_cells is not None:
+            for edge_attr in edge_attrs:
+                touched_cells.add(CellILP(edge_attr, key))
 
         valid_cells = []
         for edge_attr in edge_attrs:
@@ -136,6 +164,7 @@ def instantiate_edges_with_time_filter(cursor, table, key, attr, target_time, hy
 
         if len(valid_cells) > 1:
             edges.append(set(valid_cells))
+
     return edges
 
 
@@ -156,8 +185,11 @@ def ilp_approach_matching_java(
     edge_counter = -1
     cell_to_id: Dict[CellILP, int] = {}
     cell_to_var = {}
-    instantiated_cells = set()
+    instantiated_cells: Set[CellILP] = set()
     cells_to_visit = deque()
+
+    # ✅ NEW: touched/considered cells count
+    touched_cells: Set[CellILP] = set()
 
     cell_to_depth = {}
     max_depth = 0
@@ -181,6 +213,9 @@ def ilp_approach_matching_java(
     cells_to_visit.append(deleted_cell)
     instantiated_cells.add(deleted_cell)
 
+    # ✅ touched includes the target cell
+    touched_cells.add(deleted_cell)
+
     while cells_to_visit:
         curr = cells_to_visit.popleft()
         curr_id = cell_to_id[curr]
@@ -189,7 +224,10 @@ def ilp_approach_matching_java(
         obj += aj
 
         curr_attr = curr.attribute.split(".")[-1]
-        edges = instantiate_edges_with_time_filter(cursor, table, key, curr_attr, target_time, hypergraph)
+        edges = instantiate_edges_with_time_filter(
+            cursor, table, key, curr_attr, target_time, hypergraph,
+            touched_cells=touched_cells
+        )
 
         for edge in edges:
             frozenset_edge = frozenset(edge)
@@ -208,6 +246,10 @@ def ilp_approach_matching_java(
             tail_tji_vars = []
             for cell_attr in edge:
                 cell = CellILP(cell_attr, key)
+
+                # Note: cell_attr is already in touched_cells (because we touched whole edge),
+                # but leaving this harmless.
+                touched_cells.add(cell)
 
                 if cell not in cell_to_id:
                     t_id = max_id
@@ -260,7 +302,20 @@ def ilp_approach_matching_java(
     model.dispose()
     total_ilp_time = time.time() - start_total_ilp
 
-    return to_delete, total_ilp_time, max_depth, len(cell_to_id), activated_dependencies_count, ilp_num_vars, ilp_num_constrs
+    # ✅ Return both:
+    num_cells_instantiated = len(cell_to_id)   # vars/cells created in ILP
+    num_cells_touched = len(touched_cells)     # all cells considered/touched
+
+    return (
+        to_delete,
+        total_ilp_time,
+        max_depth,
+        num_cells_instantiated,
+        num_cells_touched,
+        activated_dependencies_count,
+        ilp_num_vars,
+        ilp_num_constrs,
+    )
 
 
 # ============================================================
@@ -279,21 +334,21 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
       deletion_time,
       leakage,
       utility,
-      num_cells_aux
+      num_cells_aux,
+      paths,
+      blocked
     """
     if not GUROBI_AVAILABLE:
-        return 0, set(), 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0
+        return 0, set(), 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0
 
     if initialization_phase is None or config is None or mysql is None:
         print("[WARN] Missing deps for baseline_deletion_3 (rtf_core/config/mysql).")
-        return 0, set(), 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0
+        return 0, set(), 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0
 
     init_start = time.time()
     init_mgr = initialization_phase.InitializationManager({"key": key, "attribute": target}, dataset, threshold)
 
-
     rdrs, rdr_weights = dc_to_rdrs_and_weights(init_mgr)
-
 
     # ILP hyperedge dict uses "t1.attr" tokens
     hyperedge_dict: Dict[Tuple[str, ...], float] = {}
@@ -312,7 +367,11 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
     final_mask: Set[str] = set()
     memory_bytes = 0
     max_depth = 0
-    num_cells = 0
+
+    # We'll keep both; use touched for reporting, instantiated for memory.
+    num_cells_instantiated = 0
+    num_cells_touched = 0
+
     leakage_val = 0.0
     utility = 0.0
 
@@ -334,9 +393,17 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
 
         target_time = get_insertion_time(cursor, table, key, target)
 
-        to_del_cells, total_ilp_time, max_depth, num_cells, activated_dependencies_count, ilp_num_vars, ilp_num_constrs = (
-            ilp_approach_matching_java(cursor, table, key, target, target_time, hyperedge_dict)
-        )
+        (
+            to_del_cells,
+            total_ilp_time,
+            max_depth,
+            num_cells_instantiated,
+            num_cells_touched,
+            activated_dependencies_count,
+            ilp_num_vars,
+            ilp_num_constrs
+        ) = ilp_approach_matching_java(cursor, table, key, target, target_time, hyperedge_dict)
+
         model_time = float(total_ilp_time)
 
         for cell in to_del_cells:
@@ -371,7 +438,7 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
             print("No channels into target => leakage must be 0 for all masks.")
 
         # ✅ FAST leakage-only call (no chains returned)
-        leakage_val = leakage(mask_for_leakage, target, H_actual)
+        leakage_val, paths, active, blocked = leakage(mask_for_leakage, target, H_actual, return_counts=True)
 
         print("Leakage:", leakage_val)
 
@@ -386,6 +453,7 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
         edge_members = sum(len(vs) for vs, _w in H_actual.edges)
         num_vertices = len(H_actual.vertices)
 
+        # ✅ For memory sizing, use instantiated ILP cells (vars created), not touched.
         memory_bytes = estimate_memory_bytes_standard(
             num_vertices=num_vertices,
             num_edges=num_edges,
@@ -394,23 +462,25 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
             stores_candidate_masks=False,
             includes_inferable_model=False,
             includes_channel_map=False,
-            ilp_num_cells=num_cells,
-            ilp_num_vars=ilp_num_vars,
-            ilp_num_constrs=ilp_num_constrs,
+            ilp_num_cells=int(num_cells_instantiated),
+            ilp_num_vars=int(ilp_num_vars),
+            ilp_num_constrs=int(ilp_num_constrs),
         )
 
     except Exception as e:
         print(f"Error in Baseline 3: {e}")
         import traceback
         traceback.print_exc()
-        return 0, set(), 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0
+        return 0, set(), 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0
     finally:
         if cursor:
             cursor.close()
         if conn:
             conn.close()
 
-    num_cells_aux = int(num_cells) - 2
+    # ✅ Report "touched/considered" cells (what you asked for).
+    # If you want "touched excluding target cell", subtract 1:
+    num_cells_aux = max(0, int(num_cells_touched) - 1)
 
     return (
         int(activated_dependencies_count),
@@ -423,9 +493,14 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
         float(leakage_val),
         float(utility),
         int(num_cells_aux),
+        int(paths),
+        int(blocked)
     )
 
 
 if __name__ == '__main__':
     # Example:
-    print(baseline_deletion_3("ProviderNumber", 500, "hospital", 0))
+    # print(baseline_deletion_3("ProviderNumber", 500, "hospital", 0))
+    print(baseline_deletion_3("marital_status", 500, "tax", 0))
+    print(baseline_deletion_3("iso_region", 500, "airport", 0))
+    print(baseline_deletion_3("education", 500, "adult", 0))

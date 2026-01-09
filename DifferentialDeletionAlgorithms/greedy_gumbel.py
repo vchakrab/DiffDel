@@ -7,6 +7,7 @@ import random
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 import numpy as np
 
+from DifferentialDeletionAlgorithms.leakage import compute_utility_logarithmic, compute_utility
 # ✅ import YOUR heavy lifting module
 from leakage import (
     get_dataset_weights,   # (if you add the helper)
@@ -55,7 +56,20 @@ def gumbel_noise(scale: float) -> float:
     u = random.random()
     u = max(1e-10, min(1.0 - 1e-10, u))
     return float(-scale * np.log(-np.log(u)))
+def gumbel_noise_l(epsilon_prime: float, lam: float) -> float:
+    """
+    Gumbel noise for exponential mechanism with sensitivity Δu = lam.
+    Scale b = 2Δu / ε' = 2λ / ε'
+    """
+    if epsilon_prime <= 0.0:
+        raise ValueError("epsilon_prime must be > 0")
+    if lam <= 0.0:
+        raise ValueError("lam must be > 0")
 
+    b = (2.0 * lam) / epsilon_prime
+    u = random.random()
+    u = max(1e-10, min(1.0 - 1e-10, u))
+    return -b * np.log(-np.log(u))
 
 def inference_zone_union(target: str, hyperedges: Iterable[Iterable[str]]) -> List[str]:
     z: Set[str] = set()
@@ -78,13 +92,12 @@ def marginal_gain(
 ) -> Tuple[float, float, float]:
     L_curr = chain_leakage(
         M_curr, target_cell, hypergraph,
-        edge_tau=edge_tau,
+
         leakage_method=leakage_method,
         return_counts=False,
     )
     L_new = chain_leakage(
         M_curr | {c}, target_cell, hypergraph,
-        edge_tau=edge_tau,
         leakage_method=leakage_method,
         return_counts=False,
     )
@@ -102,7 +115,7 @@ def greedy_gumbel_max_deletion(
     lam: float,
     epsilon: float,
     K: int,
-    leakage_method: str = "noisy_or",     # or "greedy_disjoint"
+    leakage_method: str = "greedy_disjoint",     # or "greedy_disjoint"
     edge_tau: Optional[float] = None,
 ) -> Tuple[Set[str], float]:
     t0 = time.time()
@@ -136,12 +149,12 @@ def greedy_gumbel_max_deletion(
                 leakage_method=leakage_method,
                 edge_tau=edge_tau,
             )
-            score = float(delta_u) + gumbel_noise(g_scale)
+            score = float(delta_u) + gumbel_noise_l(epsilon_prime, lam)
             if score > best_score:
                 best_score = score
                 best_c = c
 
-        s_stop = gumbel_noise(g_scale)
+        s_stop = gumbel_noise_l(epsilon_prime, lam)
         if best_c is None:
             break
         if s_stop > best_score:
@@ -159,7 +172,7 @@ def gumbel_deletion_main(
     epsilon: float = 1.0,
     lam: float = 0.5,
     K: int = 40,
-    leakage_method: str = "noisy_or",
+    leakage_method: str = "greedy_disjoint",
     edge_tau: Optional[float] = None,
 ) -> Dict[str, Any]:
 
@@ -203,14 +216,13 @@ def gumbel_deletion_main(
         final_mask,
         target_cell,
         H_local,
-        edge_tau=edge_tau,
         leakage_method=leakage_method,
         return_counts=True,
     )
 
     inference_zone = inference_zone_union(target_cell, hyperedges)
     denom = max(1, len(inference_zone))
-    utility = float(-1 * lam * float(L) - ((1 - lam) * len(final_mask)) / denom)
+    utility = compute_utility(leakage = L, mask_size = len(final_mask),lam =lam, zone_size = len(inference_zone))
 
     model_time = float(time.time() - model_start)
 
@@ -233,3 +245,5 @@ def gumbel_deletion_main(
         "denom_I_minus_1": int(max(1, len(set(inference_zone)) - 1)),
         "greedy_time": float(greedy_time),
     }
+if __name__ == "__main__":
+    print(gumbel_deletion_main("flight", "FlightNum"))

@@ -1,96 +1,502 @@
-denial_constraints = [[('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.FlightNum', '<=', 't2.FlightNum'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'), ('t1.OriginAirportID', '<=', 't2.OriginAirportID'), ('t1.Carrier', '==', 't2.Carrier')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.FlightNum', '<=', 't2.FlightNum')], [('t1.FlightNum', '>=', 't2.FlightNum'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginWac', '!=', 't2.OriginWac'), ('t1.OriginStateFips', '==', 't2.OriginStateFips')], [('t1.OriginStateFips', '!=', 't2.OriginStateFips'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginAirportID', '>', 't2.OriginAirportID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.FlightNum', '>=', 't2.FlightNum'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'), ('t1.OriginAirportID', '<=', 't2.OriginAirportID'), ('t1.DayOfWeek', '==', 't2.DayOfWeek')], [('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.FlightNum', '<=', 't2.FlightNum'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.FlightDate', '==', 't2.FlightDate'), ('t1.OriginAirportSeqID', '<=', 't2.OriginAirportSeqID'), ('t1.OriginCityMarketID', '>=', 't2.OriginCityMarketID')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.FlightNum', '<=', 't2.FlightNum')], [('t1.DayOfMonth', '<=', 't2.DayOfMonth'), ('t1.OriginAirportID', '<', 't2.OriginAirportID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginStateName', '!=', 't2.OriginStateName'), ('t1.OriginCityMarketID', '==', 't2.OriginCityMarketID')], [('t1.DayOfWeek', '<', 't2.DayOfWeek'), ('t1.OriginWac', '==', 't2.OriginWac'), ('t1.OriginAirportID', '<', 't2.OriginAirportID')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.FlightNum', '>=', 't2.FlightNum')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.UniqueCarrier', '==', 't2.UniqueCarrier'), ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID')], [('t1.OriginAirportID', '<', 't2.OriginAirportID'), ('t1.DayOfMonth', '>=', 't2.DayOfMonth'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'), ('t1.OriginAirportID', '<=', 't2.OriginAirportID'), ('t1.DayOfMonth', '==', 't2.DayOfMonth')], [('t1.UniqueCarrier', '==', 't2.UniqueCarrier'), ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.DayOfWeek', '<', 't2.DayOfWeek'), ('t1.OriginWac', '==', 't2.OriginWac'), ('t1.OriginAirportID', '>', 't2.OriginAirportID')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.FlightNum', '>=', 't2.FlightNum'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID')], [('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.DayOfWeek', '<', 't2.DayOfWeek'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginCityName', '!=', 't2.OriginCityName'), ('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'), ('t1.OriginAirportID', '<=', 't2.OriginAirportID')], [('t1.OriginAirportSeqID', '>', 't2.OriginAirportSeqID'), ('t1.DayOfWeek', '<', 't2.DayOfWeek'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginAirportSeqID', '==', 't2.OriginAirportSeqID'), ('t1.OriginState', '!=', 't2.OriginState')], [('t1.UniqueCarrier', '==', 't2.UniqueCarrier'), ('t1.Carrier', '!=', 't2.Carrier')], [('t1.Carrier', '==', 't2.Carrier'), ('t1.UniqueCarrier', '!=', 't2.UniqueCarrier')], [('t1.OriginCityMarketID', '==', 't2.OriginCityMarketID'), ('t1.OriginState', '!=', 't2.OriginState')], [('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginAirportSeqID', '>', 't2.OriginAirportSeqID'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.OriginStateName', '!=', 't2.OriginStateName'), ('t1.origin', '==', 't2.origin')], [('t1.OriginCityName', '!=', 't2.OriginCityName'), ('t1.OriginWac', '==', 't2.OriginWac'), ('t1.UniqueCarrier', '==', 't2.UniqueCarrier')], [('t1.OriginStateFips', '!=', 't2.OriginStateFips'), ('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'), ('t1.OriginAirportID', '<=', 't2.OriginAirportID')], [('t1.OriginAirportID', '!=', 't2.OriginAirportID'), ('t1.OriginWac', '==', 't2.OriginWac'), ('t1.AirlineID', '==', 't2.AirlineID')], [('t1.OriginWac', '!=', 't2.OriginWac'), ('t1.OriginCityName', '==', 't2.OriginCityName')], [('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginStateFips', '==', 't2.OriginStateFips')], [('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.OriginAirportSeqID', '!=', 't2.OriginAirportSeqID'), ('t1.UniqueCarrier', '==', 't2.UniqueCarrier')], [('t1.OriginAirportSeqID', '==', 't2.OriginAirportSeqID'), ('t1.OriginStateFips', '!=', 't2.OriginStateFips')], [('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginAirportID', '<', 't2.OriginAirportID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.OriginAirportID', '>=', 't2.OriginAirportID')], [('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.OriginAirportID', '<', 't2.OriginAirportID'), ('t1.OriginCityMarketID', '>=', 't2.OriginCityMarketID')], [('t1.FlightDate', '==', 't2.FlightDate'), ('t1.Month', '!=', 't2.Month')], [('t1.OriginAirportSeqID', '!=', 't2.OriginAirportSeqID'), ('t1.UniqueCarrier', '==', 't2.UniqueCarrier'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.Carrier', '==', 't2.Carrier'), ('t1.OriginAirportSeqID', '!=', 't2.OriginAirportSeqID')], [('t1.FlightNum', '<=', 't2.FlightNum'), ('t1.OriginWac', '==', 't2.OriginWac'), ('t1.OriginAirportID', '<', 't2.OriginAirportID')], [('t1.FlightDate', '==', 't2.FlightDate'), ('t1.DayOfWeek', '!=', 't2.DayOfWeek')], [('t1.OriginAirportID', '!=', 't2.OriginAirportID'), ('t1.OriginWac', '==', 't2.OriginWac'), ('t1.UniqueCarrier', '==', 't2.UniqueCarrier')], [('t1.origin', '!=', 't2.origin'), ('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.AirlineID', '==', 't2.AirlineID')], [('t1.FlightNum', '>=', 't2.FlightNum'), ('t1.OriginWac', '==', 't2.OriginWac'), ('t1.OriginAirportID', '<', 't2.OriginAirportID')], [('t1.OriginAirportSeqID', '==', 't2.OriginAirportSeqID'), ('t1.OriginCityName', '!=', 't2.OriginCityName')], [('t1.OriginCityName', '==', 't2.OriginCityName'), ('t1.OriginAirportSeqID', '!=', 't2.OriginAirportSeqID')], [('t1.OriginStateFips', '!=', 't2.OriginStateFips'), ('t1.origin', '==', 't2.origin')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.origin', '!=', 't2.origin'), ('t1.UniqueCarrier', '==', 't2.UniqueCarrier')], [('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginAirportID', '>=', 't2.OriginAirportID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginAirportID', '<', 't2.OriginAirportID'), ('t1.OriginCityMarketID', '>=', 't2.OriginCityMarketID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.OriginAirportID', '<', 't2.OriginAirportID')], [('t1.OriginCityName', '!=', 't2.OriginCityName'), ('t1.AirlineID', '==', 't2.AirlineID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.OriginAirportID', '>', 't2.OriginAirportID')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginAirportID', '>=', 't2.OriginAirportID')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginAirportID', '<', 't2.OriginAirportID'), ('t1.OriginCityMarketID', '>=', 't2.OriginCityMarketID')], [('t1.AirlineID', '==', 't2.AirlineID'), ('t1.Carrier', '!=', 't2.Carrier')], [('t1.AirlineID', '!=', 't2.AirlineID'), ('t1.Carrier', '==', 't2.Carrier')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginAirportSeqID', '!=', 't2.OriginAirportSeqID'), ('t1.UniqueCarrier', '==', 't2.UniqueCarrier')], [('t1.OriginState', '!=', 't2.OriginState'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.OriginWac', '!=', 't2.OriginWac'), ('t1.OriginState', '==', 't2.OriginState')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.DayOfWeek', '<', 't2.DayOfWeek')], [('t1.FlightNum', '>=', 't2.FlightNum'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginStateFips', '==', 't2.OriginStateFips')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginAirportID', '<', 't2.OriginAirportID'), ('t1.DayOfMonth', '>=', 't2.DayOfMonth')], [('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginCityMarketID', '>', 't2.OriginCityMarketID'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.AirlineID', '==', 't2.AirlineID'), ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.DayOfMonth', '<=', 't2.DayOfMonth'), ('t1.OriginAirportID', '<', 't2.OriginAirportID')], [('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginAirportSeqID', '>', 't2.OriginAirportSeqID'), ('t1.DayOfWeek', '<', 't2.DayOfWeek')], [('t1.OriginCityName', '!=', 't2.OriginCityName'), ('t1.Carrier', '==', 't2.Carrier'), ('t1.OriginStateFips', '==', 't2.OriginStateFips')], [('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'), ('t1.OriginAirportID', '<=', 't2.OriginAirportID'), ('t1.DayOfWeek', '<', 't2.DayOfWeek')], [('t1.AirlineID', '==', 't2.AirlineID'), ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.FlightNum', '<=', 't2.FlightNum')], [('t1.DayOfWeek', '<', 't2.DayOfWeek'), ('t1.OriginAirportID', '>=', 't2.OriginAirportID'), ('t1.OriginAirportSeqID', '<=', 't2.OriginAirportSeqID')], [('t1.Carrier', '==', 't2.Carrier'), ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.Carrier', '==', 't2.Carrier'), ('t1.OriginAirportSeqID', '!=', 't2.OriginAirportSeqID'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.AirlineID', '==', 't2.AirlineID'), ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID')], [('t1.origin', '!=', 't2.origin'), ('t1.OriginWac', '==', 't2.OriginWac'), ('t1.AirlineID', '==', 't2.AirlineID')], [('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'), ('t1.OriginAirportID', '<', 't2.OriginAirportID')], [('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'), ('t1.OriginAirportID', '<=', 't2.OriginAirportID'), ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID')], [('t1.origin', '!=', 't2.origin'), ('t1.AirlineID', '==', 't2.AirlineID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.FlightNum', '>=', 't2.FlightNum'), ('t1.OriginStateFips', '==', 't2.OriginStateFips')], [('t1.OriginStateName', '!=', 't2.OriginStateName'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.OriginWac', '!=', 't2.OriginWac'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.DayOfWeek', '<=', 't2.DayOfWeek'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginStateFips', '==', 't2.OriginStateFips')], [('t1.OriginAirportID', '==', 't2.OriginAirportID'), ('t1.OriginAirportSeqID', '!=', 't2.OriginAirportSeqID')], [('t1.OriginAirportSeqID', '==', 't2.OriginAirportSeqID'), ('t1.OriginAirportID', '!=', 't2.OriginAirportID')], [('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.FlightNum', '<=', 't2.FlightNum')], [('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.DayOfMonth', '>=', 't2.DayOfMonth')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginAirportSeqID', '!=', 't2.OriginAirportSeqID'), ('t1.AirlineID', '==', 't2.AirlineID')], [('t1.DayOfMonth', '<=', 't2.DayOfMonth'), ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.OriginStateFips', '==', 't2.OriginStateFips')], [('t1.OriginStateFips', '!=', 't2.OriginStateFips'), ('t1.OriginCityMarketID', '==', 't2.OriginCityMarketID')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginAirportID', '!=', 't2.OriginAirportID'), ('t1.AirlineID', '==', 't2.AirlineID')], [('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.DayOfWeek', '>=', 't2.DayOfWeek')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginCityName', '!=', 't2.OriginCityName'), ('t1.UniqueCarrier', '==', 't2.UniqueCarrier')], [('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginStateFips', '==', 't2.OriginStateFips')], [('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginWac', '==', 't2.OriginWac'), ('t1.DayOfWeek', '>=', 't2.DayOfWeek')], [('t1.DayOfWeek', '<=', 't2.DayOfWeek'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginCityName', '!=', 't2.OriginCityName'), ('t1.AirlineID', '==', 't2.AirlineID')], [('t1.Carrier', '==', 't2.Carrier'), ('t1.OriginAirportSeqID', '!=', 't2.OriginAirportSeqID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginStateName', '!=', 't2.OriginStateName'), ('t1.OriginStateFips', '==', 't2.OriginStateFips')], [('t1.OriginStateFips', '!=', 't2.OriginStateFips'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.origin', '!=', 't2.origin'), ('t1.UniqueCarrier', '==', 't2.UniqueCarrier'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginStateFips', '==', 't2.OriginStateFips')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.origin', '!=', 't2.origin'), ('t1.Carrier', '==', 't2.Carrier')], [('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginAirportSeqID', '>', 't2.OriginAirportSeqID'), ('t1.OriginStateFips', '==', 't2.OriginStateFips')], [('t1.OriginAirportID', '<=', 't2.OriginAirportID'), ('t1.Month', '!=', 't2.Month'), ('t1.OriginCityMarketID', '>=', 't2.OriginCityMarketID')], [('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginCityMarketID', '>', 't2.OriginCityMarketID'), ('t1.OriginStateFips', '==', 't2.OriginStateFips')], [('t1.Carrier', '==', 't2.Carrier'), ('t1.OriginWac', '==', 't2.OriginWac'), ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID')], [('t1.OriginCityName', '!=', 't2.OriginCityName'), ('t1.origin', '==', 't2.origin')], [('t1.origin', '!=', 't2.origin'), ('t1.OriginCityName', '==', 't2.OriginCityName')], [('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'), ('t1.OriginAirportID', '<=', 't2.OriginAirportID'), ('t1.OriginStateName', '!=', 't2.OriginStateName')], [('t1.OriginState', '!=', 't2.OriginState'), ('t1.OriginAirportID', '==', 't2.OriginAirportID')], [('t1.OriginAirportID', '!=', 't2.OriginAirportID'), ('t1.Carrier', '==', 't2.Carrier'), ('t1.OriginStateFips', '==', 't2.OriginStateFips')], [('t1.OriginWac', '!=', 't2.OriginWac'), ('t1.origin', '==', 't2.origin')], [('t1.origin', '!=', 't2.origin'), ('t1.OriginCityMarketID', '==', 't2.OriginCityMarketID')], [('t1.origin', '==', 't2.origin'), ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID')], [('t1.origin', '!=', 't2.origin'), ('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.UniqueCarrier', '==', 't2.UniqueCarrier')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.OriginCityMarketID', '>=', 't2.OriginCityMarketID')], [('t1.Carrier', '==', 't2.Carrier'), ('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.OriginAirportSeqID', '!=', 't2.OriginAirportSeqID')], [('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginAirportSeqID', '>', 't2.OriginAirportSeqID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginCityName', '!=', 't2.OriginCityName'), ('t1.Carrier', '==', 't2.Carrier'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.DayOfMonth', '>=', 't2.DayOfMonth')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginAirportID', '>', 't2.OriginAirportID')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.DayOfMonth', '<=', 't2.DayOfMonth'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID')], [('t1.OriginAirportID', '!=', 't2.OriginAirportID'), ('t1.Carrier', '==', 't2.Carrier'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginAirportID', '<', 't2.OriginAirportID')], [('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginAirportID', '<=', 't2.OriginAirportID'), ('t1.DayOfMonth', '==', 't2.DayOfMonth'), ('t1.OriginCityMarketID', '>=', 't2.OriginCityMarketID')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginAirportID', '!=', 't2.OriginAirportID'), ('t1.UniqueCarrier', '==', 't2.UniqueCarrier')], [('t1.origin', '!=', 't2.origin'), ('t1.OriginWac', '==', 't2.OriginWac'), ('t1.UniqueCarrier', '==', 't2.UniqueCarrier')], [('t1.FlightNum', '<=', 't2.FlightNum'), ('t1.OriginAirportID', '<', 't2.OriginAirportID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.FlightNum', '<=', 't2.FlightNum'), ('t1.OriginAirportID', '<', 't2.OriginAirportID')], [('t1.DayOfWeek', '<=', 't2.DayOfWeek'), ('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID')], [('t1.OriginAirportID', '!=', 't2.OriginAirportID'), ('t1.UniqueCarrier', '==', 't2.UniqueCarrier'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.OriginCityMarketID', '>=', 't2.OriginCityMarketID')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.FlightNum', '>=', 't2.FlightNum'), ('t1.OriginAirportID', '<', 't2.OriginAirportID')], [('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.DayOfWeek', '>=', 't2.DayOfWeek'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.DayOfWeek', '>=', 't2.DayOfWeek')], [('t1.OriginCityName', '!=', 't2.OriginCityName'), ('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.UniqueCarrier', '==', 't2.UniqueCarrier')], [('t1.OriginWac', '!=', 't2.OriginWac'), ('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'), ('t1.OriginAirportID', '<=', 't2.OriginAirportID')], [('t1.DayOfWeek', '<=', 't2.DayOfWeek'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginAirportSeqID', '!=', 't2.OriginAirportSeqID'), ('t1.OriginWac', '==', 't2.OriginWac'), ('t1.UniqueCarrier', '==', 't2.UniqueCarrier')], [('t1.OriginAirportID', '!=', 't2.OriginAirportID'), ('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.AirlineID', '==', 't2.AirlineID')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.DayOfWeek', '<', 't2.DayOfWeek'), ('t1.OriginAirportID', '>', 't2.OriginAirportID')], [('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'), ('t1.OriginAirportID', '<=', 't2.OriginAirportID'), ('t1.FlightDate', '==', 't2.FlightDate')], [('t1.DayOfWeek', '<', 't2.DayOfWeek'), ('t1.OriginAirportID', '<', 't2.OriginAirportID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.DayOfWeek', '<', 't2.DayOfWeek'), ('t1.OriginAirportID', '<', 't2.OriginAirportID')], [('t1.DayOfWeek', '<', 't2.DayOfWeek'), ('t1.OriginAirportID', '>', 't2.OriginAirportID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginStateName', '!=', 't2.OriginStateName'), ('t1.OriginAirportID', '==', 't2.OriginAirportID')], [('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginAirportID', '>=', 't2.OriginAirportID'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.OriginWac', '==', 't2.OriginWac'), ('t1.OriginAirportID', '<', 't2.OriginAirportID'), ('t1.OriginCityMarketID', '>=', 't2.OriginCityMarketID')], [('t1.OriginWac', '!=', 't2.OriginWac'), ('t1.OriginAirportSeqID', '==', 't2.OriginAirportSeqID')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.DayOfMonth', '<=', 't2.DayOfMonth'), ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID')], [('t1.OriginAirportID', '==', 't2.OriginAirportID'), ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID')], [('t1.OriginAirportID', '!=', 't2.OriginAirportID'), ('t1.OriginCityMarketID', '==', 't2.OriginCityMarketID')], [('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginCityMarketID', '>', 't2.OriginCityMarketID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.DayOfMonth', '>=', 't2.DayOfMonth'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginAirportSeqID', '>', 't2.OriginAirportSeqID')], [('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.DayOfMonth', '<=', 't2.DayOfMonth'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginCityName', '==', 't2.OriginCityName'), ('t1.OriginState', '!=', 't2.OriginState')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.DayOfMonth', '>=', 't2.DayOfMonth')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.AirlineID', '<', 't2.AirlineID')], [('t1.DayOfWeek', '<', 't2.DayOfWeek'), ('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.OriginAirportID', '<', 't2.OriginAirportID')], [('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.FlightNum', '>=', 't2.FlightNum'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.OriginAirportID', '!=', 't2.OriginAirportID'), ('t1.Carrier', '==', 't2.Carrier'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.DayOfWeek', '<', 't2.DayOfWeek'), ('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.OriginAirportID', '>', 't2.OriginAirportID')], [('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.FlightNum', '<=', 't2.FlightNum'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.OriginCityName', '!=', 't2.OriginCityName'), ('t1.Carrier', '==', 't2.Carrier'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.UniqueCarrier', '!=', 't2.UniqueCarrier'), ('t1.AirlineID', '==', 't2.AirlineID')], [('t1.AirlineID', '!=', 't2.AirlineID'), ('t1.UniqueCarrier', '==', 't2.UniqueCarrier')], [('t1.DayOfMonth', '<=', 't2.DayOfMonth'), ('t1.OriginWac', '==', 't2.OriginWac'), ('t1.OriginAirportID', '<', 't2.OriginAirportID')], [('t1.OriginWac', '!=', 't2.OriginWac'), ('t1.OriginCityMarketID', '==', 't2.OriginCityMarketID')], [('t1.OriginWac', '==', 't2.OriginWac'), ('t1.OriginAirportID', '<', 't2.OriginAirportID'), ('t1.DayOfMonth', '>=', 't2.DayOfMonth')], [('t1.OriginStateFips', '!=', 't2.OriginStateFips'), ('t1.OriginCityName', '==', 't2.OriginCityName')], [('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginAirportID', '>=', 't2.OriginAirportID'), ('t1.OriginAirportSeqID', '<=', 't2.OriginAirportSeqID')], [('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'), ('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginAirportID', '<=', 't2.OriginAirportID')], [('t1.OriginAirportSeqID', '==', 't2.OriginAirportSeqID'), ('t1.origin', '!=', 't2.origin')], [('t1.OriginAirportSeqID', '!=', 't2.OriginAirportSeqID'), ('t1.origin', '==', 't2.origin')], [('t1.origin', '!=', 't2.origin'), ('t1.OriginAirportID', '==', 't2.OriginAirportID')], [('t1.OriginAirportID', '!=', 't2.OriginAirportID'), ('t1.origin', '==', 't2.origin')], [('t1.DayOfMonth', '<=', 't2.DayOfMonth'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginStateFips', '==', 't2.OriginStateFips')], [('t1.OriginCityName', '!=', 't2.OriginCityName'), ('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.AirlineID', '==', 't2.AirlineID')], [('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.DayOfWeek', '<', 't2.DayOfWeek'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.Carrier', '==', 't2.Carrier'), ('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID')], [('t1.DayOfMonth', '<=', 't2.DayOfMonth'), ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.DayOfMonth', '>=', 't2.DayOfMonth')], [('t1.OriginAirportSeqID', '>', 't2.OriginAirportSeqID'), ('t1.DayOfWeek', '<', 't2.DayOfWeek'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.OriginAirportSeqID', '<=', 't2.OriginAirportSeqID'), ('t1.Month', '!=', 't2.Month'), ('t1.OriginCityMarketID', '>=', 't2.OriginCityMarketID')], [('t1.DayOfMonth', '==', 't2.DayOfMonth'), ('t1.DayOfWeek', '!=', 't2.DayOfWeek')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID')], [('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.DayOfMonth', '>=', 't2.DayOfMonth'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.DayOfMonth', '==', 't2.DayOfMonth'), ('t1.OriginAirportSeqID', '<=', 't2.OriginAirportSeqID'), ('t1.OriginCityMarketID', '>=', 't2.OriginCityMarketID')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginCityMarketID', '>', 't2.OriginCityMarketID')], [('t1.origin', '!=', 't2.origin'), ('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'), ('t1.OriginAirportID', '<=', 't2.OriginAirportID')], [('t1.OriginStateName', '!=', 't2.OriginStateName'), ('t1.OriginCityName', '==', 't2.OriginCityName')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.Carrier', '==', 't2.Carrier'), ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID')], [('t1.FlightNum', '>=', 't2.FlightNum'), ('t1.Month', '<', 't2.Month')], [('t1.OriginStateFips', '!=', 't2.OriginStateFips'), ('t1.OriginAirportID', '==', 't2.OriginAirportID')], [('t1.OriginCityName', '!=', 't2.OriginCityName'), ('t1.OriginCityMarketID', '==', 't2.OriginCityMarketID')], [('t1.OriginCityName', '==', 't2.OriginCityName'), ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginAirportID', '!=', 't2.OriginAirportID'), ('t1.Carrier', '==', 't2.Carrier')], [('t1.OriginCityName', '!=', 't2.OriginCityName'), ('t1.OriginWac', '==', 't2.OriginWac'), ('t1.AirlineID', '==', 't2.AirlineID')], [('t1.OriginAirportSeqID', '!=', 't2.OriginAirportSeqID'), ('t1.OriginWac', '==', 't2.OriginWac'), ('t1.AirlineID', '==', 't2.AirlineID')], [('t1.origin', '!=', 't2.origin'), ('t1.Carrier', '==', 't2.Carrier'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.OriginAirportID', '>=', 't2.OriginAirportID')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.origin', '!=', 't2.origin'), ('t1.AirlineID', '==', 't2.AirlineID')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginStateName', '!=', 't2.OriginStateName')], [('t1.OriginState', '!=', 't2.OriginState'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.OriginCityMarketID', '>=', 't2.OriginCityMarketID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginAirportID', '!=', 't2.OriginAirportID'), ('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.UniqueCarrier', '==', 't2.UniqueCarrier')], [('t1.DayOfMonth', '<=', 't2.DayOfMonth'), ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.OriginCityName', '!=', 't2.OriginCityName'), ('t1.OriginAirportID', '==', 't2.OriginAirportID')], [('t1.OriginAirportID', '!=', 't2.OriginAirportID'), ('t1.OriginCityName', '==', 't2.OriginCityName')], [('t1.OriginAirportSeqID', '==', 't2.OriginAirportSeqID'), ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID')], [('t1.OriginCityMarketID', '==', 't2.OriginCityMarketID'), ('t1.OriginAirportSeqID', '!=', 't2.OriginAirportSeqID')], [('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.OriginWac', '==', 't2.OriginWac'), ('t1.DayOfMonth', '>=', 't2.DayOfMonth')], [('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'), ('t1.OriginAirportID', '<=', 't2.OriginAirportID'), ('t1.UniqueCarrier', '==', 't2.UniqueCarrier')], [('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.UniqueCarrier', '==', 't2.UniqueCarrier'), ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID')], [('t1.origin', '!=', 't2.origin'), ('t1.Carrier', '==', 't2.Carrier'), ('t1.OriginStateFips', '==', 't2.OriginStateFips')], [('t1.FlightDate', '!=', 't2.FlightDate'), ('t1.DayOfMonth', '==', 't2.DayOfMonth')], [('t1.DayOfMonth', '!=', 't2.DayOfMonth'), ('t1.FlightDate', '==', 't2.FlightDate')], [('t1.OriginState', '!=', 't2.OriginState'), ('t1.OriginStateFips', '==', 't2.OriginStateFips')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginStateFips', '!=', 't2.OriginStateFips')], [('t1.OriginWac', '==', 't2.OriginWac'), ('t1.AirlineID', '==', 't2.AirlineID'), ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID')], [('t1.OriginState', '==', 't2.OriginState'), ('t1.OriginCityName', '!=', 't2.OriginCityName'), ('t1.Carrier', '==', 't2.Carrier')], [('t1.OriginWac', '==', 't2.OriginWac'), ('t1.UniqueCarrier', '==', 't2.UniqueCarrier'), ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID')], [('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'), ('t1.OriginAirportID', '<=', 't2.OriginAirportID'), ('t1.OriginState', '!=', 't2.OriginState')], [('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.OriginAirportSeqID', '!=', 't2.OriginAirportSeqID'), ('t1.AirlineID', '==', 't2.AirlineID')], [('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.FlightNum', '<=', 't2.FlightNum'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.OriginAirportSeqID', '==', 't2.OriginAirportSeqID'), ('t1.OriginStateName', '!=', 't2.OriginStateName')], [('t1.origin', '!=', 't2.origin'), ('t1.Carrier', '==', 't2.Carrier'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginWac', '!=', 't2.OriginWac'), ('t1.OriginAirportID', '==', 't2.OriginAirportID')], [('t1.FlightNum', '>=', 't2.FlightNum'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.OriginWac', '==', 't2.OriginWac'), ('t1.OriginCityMarketID', '>=', 't2.OriginCityMarketID')], [('t1.FlightNum', '>=', 't2.FlightNum'), ('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.OriginAirportID', '<', 't2.OriginAirportID')], [('t1.OriginAirportID', '<=', 't2.OriginAirportID'), ('t1.FlightDate', '==', 't2.FlightDate'), ('t1.OriginCityMarketID', '>=', 't2.OriginCityMarketID')], [('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.FlightNum', '<=', 't2.FlightNum'), ('t1.OriginAirportID', '<', 't2.OriginAirportID')], [('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'), ('t1.OriginAirportID', '<=', 't2.OriginAirportID'), ('t1.AirlineID', '==', 't2.AirlineID')], [('t1.DayOfMonth', '<=', 't2.DayOfMonth'), ('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.OriginAirportID', '<', 't2.OriginAirportID')], [('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginWac', '==', 't2.OriginWac'), ('t1.OriginAirportID', '<', 't2.OriginAirportID')], [('t1.OriginStateFips', '==', 't2.OriginStateFips'), ('t1.OriginAirportID', '<', 't2.OriginAirportID'), ('t1.DayOfMonth', '>=', 't2.DayOfMonth')], [('t1.OriginState', '!=', 't2.OriginState'), ('t1.origin', '==', 't2.origin')], [('t1.FlightNum', '>=', 't2.FlightNum'), ('t1.OriginAirportID', '<', 't2.OriginAirportID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginAirportSeqID', '!=', 't2.OriginAirportSeqID'), ('t1.AirlineID', '==', 't2.AirlineID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginAirportSeqID', '>', 't2.OriginAirportSeqID'), ('t1.DayOfWeek', '<', 't2.DayOfWeek'), ('t1.OriginStateFips', '==', 't2.OriginStateFips')], [('t1.OriginCityName', '!=', 't2.OriginCityName'), ('t1.UniqueCarrier', '==', 't2.UniqueCarrier'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginWac', '==', 't2.OriginWac'), ('t1.DayOfMonth', '>=', 't2.DayOfMonth')], [('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'), ('t1.DayOfWeek', '<', 't2.DayOfWeek'), ('t1.OriginStateFips', '==', 't2.OriginStateFips')], [('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'), ('t1.OriginAirportID', '<=', 't2.OriginAirportID'), ('t1.Month', '!=', 't2.Month')], [('t1.DayOfMonth', '<=', 't2.DayOfMonth'), ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'), ('t1.OriginWac', '==', 't2.OriginWac')], [('t1.OriginAirportID', '!=', 't2.OriginAirportID'), ('t1.AirlineID', '==', 't2.AirlineID'), ('t1.OriginStateName', '==', 't2.OriginStateName')], [('t1.AirlineID', '<', 't2.AirlineID'), ('t1.OriginWac', '==', 't2.OriginWac'), ('t1.OriginAirportID', '>', 't2.OriginAirportID')]]
-#
-# import re
-# from typing import Any
-#
-# _ACRONYMS = {"id": "ID"}  # add more if you want: {"id":"ID","ssn":"SSN",...}
-#
-# def to_pascal_with_acronyms(s: str) -> str:
-#     """
-#     Convert snake/camel/flat tokens to PascalCase, with special handling:
-#       - ...id... -> ...ID...
-#       - flightnum -> FlightNum (works for any '...num' too)
-#     Examples:
-#       "flightnum"          -> "FlightNum"
-#       "OriginAirportSeqID" -> "OriginAirportSeqID"
-#       "origin_state_Fips"  -> "OriginStateFips"
-#       "providerid"         -> "ProviderID"
-#       "id"                 -> "ID"
-#     """
-#     s = s.strip()
-#
-#     # split on underscores/hyphens/spaces
-#     parts = re.split(r"[_\-\s]+", s)
-#     out_parts = []
-#
-#     for part in parts:
-#         if not part:
-#             continue
-#
-#         p = part.lower()
-#
-#         # handle common patterns inside a flat token:
-#         # break into chunks like "...airportseqid" -> ["airport", "seq", "id"]
-#         # heuristic: pull trailing known suffixes
-#         chunks = []
-#         while True:
-#             matched = False
-#             for suf in ("seqid", "airportid", "citymarketid", "stateFips", "wac", "num", "date", "Month", "week", "day"):
-#                 if p.endswith(suf) and p != suf:
-#                     base = p[:-len(suf)]
-#                     if base:
-#                         chunks.append(base)
-#                     chunks.append(suf)
-#                     matched = True
-#                     break
-#             if matched:
-#                 break
-#             chunks = [p]
-#             break
-#
-#         # Now PascalCase each chunk, with acronym handling
-#         for ch in chunks:
-#             if ch in _ACRONYMS:
-#                 out_parts.append(_ACRONYMS[ch])
-#             else:
-#                 out_parts.append(ch[:1].upper() + ch[1:])
-#
-#     return "".join(out_parts)
-#
-#
-# def transform_dc_obj(obj: Any) -> Any:
-#     """
-#     Recursively transform strings like 't1.origincitymarketid' -> 't1.OriginCityMarketID'
-#     while leaving operators ('==', '!=', '<=', etc.) untouched.
-#     Works on lists/tuples/dicts/strings.
-#     """
-#     if isinstance(obj, str):
-#         m = re.match(r"^(t[12])\.(.+)$", obj.strip())
-#         if m:
-#             t, attr = m.group(1), m.group(2)
-#             return f"{t}.{to_pascal_with_acronyms(attr)}"
-#         return obj
-#
-#     if isinstance(obj, tuple):
-#         return tuple(transform_dc_obj(x) for x in obj)
-#     if isinstance(obj, list):
-#         return [transform_dc_obj(x) for x in obj]
-#     if isinstance(obj, dict):
-#         return {k: transform_dc_obj(v) for k, v in obj.items()}
-#
-#     return obj
-#
-#
-# # --- usage example ---
-# denial_constraints_flights = transform_dc_obj(denial_constraints_flights)
-# import pprint
-#
-# # after you run:
-# # denial_constraints_flights = transform_dc_obj(denial_constraints_flights)
-#
-# # print it in a “hard-codeable” Python literal form:
-# print(
-#     "denial_constraints_flights = "
-#     + pprint.pformat(denial_constraints_flights, width=120, compact=False, sort_dicts=False)
-# )
-#
+# Auto-generated from flights_dc_weights_wpos_gamma0p25.csv
+# Rows: 112
+# Format: denial_constraints = List[List[Tuple[str,str,str]]], weights = List[float]
+
+denial_constraints = [
+    [
+        ('t1.OriginWac', '!=', 't2.OriginWac'),
+        ('t1.OriginStateFips', '==', 't2.OriginStateFips'),
+    ],
+    [
+        ('t1.OriginStateFips', '!=', 't2.OriginStateFips'),
+        ('t1.OriginWac', '==', 't2.OriginWac'),
+    ],
+    [
+        ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'),
+        ('t1.FlightNum', '>=', 't2.FlightNum'),
+        ('t1.OriginStateName', '==', 't2.OriginStateName'),
+    ],
+    [
+        ('t1.DayofMonth', '<=', 't2.DayofMonth'),
+        ('t1.OriginAirportID', '<', 't2.OriginAirportID'),
+        ('t1.OriginStateName', '==', 't2.OriginStateName'),
+    ],
+    [
+        ('t1.OriginStateName', '!=', 't2.OriginStateName'),
+        ('t1.OriginCityMarketID', '==', 't2.OriginCityMarketID'),
+    ],
+    [
+        ('t1.OriginState', '==', 't2.OriginState'),
+        ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'),
+        ('t1.FlightNum', '>=', 't2.FlightNum'),
+    ],
+    [
+        ('t1.OriginAirportID', '<', 't2.OriginAirportID'),
+        ('t1.DayofMonth', '>=', 't2.DayofMonth'),
+        ('t1.OriginStateName', '==', 't2.OriginStateName'),
+    ],
+    [
+        ('t1.OriginCityName', '!=', 't2.OriginCityName'),
+        ('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'),
+        ('t1.OriginAirportID', '<=', 't2.OriginAirportID'),
+    ],
+    [
+        ('t1.OriginAirportSeqID', '==', 't2.OriginAirportSeqID'),
+        ('t1.OriginState', '!=', 't2.OriginState'),
+    ],
+    [
+        ('t1.UniqueCarrier', '==', 't2.UniqueCarrier'),
+        ('t1.Carrier', '!=', 't2.Carrier'),
+    ],
+    [
+        ('t1.Carrier', '==', 't2.Carrier'),
+        ('t1.UniqueCarrier', '!=', 't2.UniqueCarrier'),
+    ],
+    [
+        ('t1.OriginCityMarketID', '==', 't2.OriginCityMarketID'),
+        ('t1.OriginState', '!=', 't2.OriginState'),
+    ],
+    [
+        ('t1.OriginStateName', '!=', 't2.OriginStateName'),
+        ('t1.Origin', '==', 't2.Origin'),
+    ],
+    [
+        ('t1.OriginStateFips', '!=', 't2.OriginStateFips'),
+        ('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'),
+        ('t1.OriginAirportID', '<=', 't2.OriginAirportID'),
+    ],
+    [
+        ('t1.OriginWac', '!=', 't2.OriginWac'),
+        ('t1.OriginCityName', '==', 't2.OriginCityName'),
+    ],
+    [
+        ('t1.OriginAirportSeqID', '==', 't2.OriginAirportSeqID'),
+        ('t1.OriginStateFips', '!=', 't2.OriginStateFips'),
+    ],
+    [
+        ('t1.FlightDate', '==', 't2.FlightDate'),
+        ('t1.DayOfWeek', '!=', 't2.DayOfWeek'),
+    ],
+    [
+        ('t1.FlightNum', '>=', 't2.FlightNum'),
+        ('t1.OriginWac', '==', 't2.OriginWac'),
+        ('t1.OriginAirportID', '<', 't2.OriginAirportID'),
+    ],
+    [
+        ('t1.OriginAirportSeqID', '==', 't2.OriginAirportSeqID'),
+        ('t1.OriginCityName', '!=', 't2.OriginCityName'),
+    ],
+    [
+        ('t1.OriginCityName', '==', 't2.OriginCityName'),
+        ('t1.OriginAirportSeqID', '!=', 't2.OriginAirportSeqID'),
+    ],
+    [
+        ('t1.OriginStateFips', '!=', 't2.OriginStateFips'),
+        ('t1.Origin', '==', 't2.Origin'),
+    ],
+    [
+        ('t1.AirlineID', '==', 't2.AirlineID'),
+        ('t1.Carrier', '!=', 't2.Carrier'),
+    ],
+    [
+        ('t1.AirlineID', '!=', 't2.AirlineID'),
+        ('t1.Carrier', '==', 't2.Carrier'),
+    ],
+    [
+        ('t1.OriginState', '!=', 't2.OriginState'),
+        ('t1.OriginWac', '==', 't2.OriginWac'),
+    ],
+    [
+        ('t1.OriginWac', '!=', 't2.OriginWac'),
+        ('t1.OriginState', '==', 't2.OriginState'),
+    ],
+    [
+        ('t1.OriginState', '==', 't2.OriginState'),
+        ('t1.OriginAirportID', '<', 't2.OriginAirportID'),
+        ('t1.DayofMonth', '>=', 't2.DayofMonth'),
+    ],
+    [
+        ('t1.OriginState', '==', 't2.OriginState'),
+        ('t1.DayofMonth', '<=', 't2.DayofMonth'),
+        ('t1.OriginAirportID', '<', 't2.OriginAirportID'),
+    ],
+    [
+        ('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'),
+        ('t1.OriginAirportID', '<', 't2.OriginAirportID'),
+    ],
+    [
+        ('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'),
+        ('t1.OriginAirportID', '<=', 't2.OriginAirportID'),
+        ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID'),
+    ],
+    [
+        ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'),
+        ('t1.FlightNum', '>=', 't2.FlightNum'),
+        ('t1.OriginStateFips', '==', 't2.OriginStateFips'),
+    ],
+    [
+        ('t1.OriginStateName', '!=', 't2.OriginStateName'),
+        ('t1.OriginWac', '==', 't2.OriginWac'),
+    ],
+    [
+        ('t1.OriginWac', '!=', 't2.OriginWac'),
+        ('t1.OriginStateName', '==', 't2.OriginStateName'),
+    ],
+    [
+        ('t1.DayOfWeek', '<=', 't2.DayOfWeek'),
+        ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'),
+        ('t1.OriginStateFips', '==', 't2.OriginStateFips'),
+    ],
+    [
+        ('t1.OriginAirportID', '==', 't2.OriginAirportID'),
+        ('t1.OriginAirportSeqID', '!=', 't2.OriginAirportSeqID'),
+    ],
+    [
+        ('t1.OriginAirportSeqID', '==', 't2.OriginAirportSeqID'),
+        ('t1.OriginAirportID', '!=', 't2.OriginAirportID'),
+    ],
+    [
+        ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'),
+        ('t1.OriginStateFips', '==', 't2.OriginStateFips'),
+        ('t1.DayofMonth', '>=', 't2.DayofMonth'),
+    ],
+    [
+        ('t1.DayofMonth', '<=', 't2.DayofMonth'),
+        ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'),
+        ('t1.OriginStateFips', '==', 't2.OriginStateFips'),
+    ],
+    [
+        ('t1.OriginStateFips', '!=', 't2.OriginStateFips'),
+        ('t1.OriginCityMarketID', '==', 't2.OriginCityMarketID'),
+    ],
+    [
+        ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'),
+        ('t1.OriginStateFips', '==', 't2.OriginStateFips'),
+        ('t1.DayOfWeek', '>=', 't2.DayOfWeek'),
+    ],
+    [
+        ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'),
+        ('t1.OriginWac', '==', 't2.OriginWac'),
+        ('t1.DayOfWeek', '>=', 't2.DayOfWeek'),
+    ],
+    [
+        ('t1.DayOfWeek', '<=', 't2.DayOfWeek'),
+        ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'),
+        ('t1.OriginWac', '==', 't2.OriginWac'),
+    ],
+    [
+        ('t1.OriginStateName', '!=', 't2.OriginStateName'),
+        ('t1.OriginStateFips', '==', 't2.OriginStateFips'),
+    ],
+    [
+        ('t1.OriginStateFips', '!=', 't2.OriginStateFips'),
+        ('t1.OriginStateName', '==', 't2.OriginStateName'),
+    ],
+    [
+        ('t1.OriginCityName', '!=', 't2.OriginCityName'),
+        ('t1.Origin', '==', 't2.Origin'),
+    ],
+    [
+        ('t1.Origin', '!=', 't2.Origin'),
+        ('t1.OriginCityName', '==', 't2.OriginCityName'),
+    ],
+    [
+        ('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'),
+        ('t1.OriginAirportID', '<=', 't2.OriginAirportID'),
+        ('t1.OriginStateName', '!=', 't2.OriginStateName'),
+    ],
+    [
+        ('t1.OriginState', '!=', 't2.OriginState'),
+        ('t1.OriginAirportID', '==', 't2.OriginAirportID'),
+    ],
+    [
+        ('t1.OriginWac', '!=', 't2.OriginWac'),
+        ('t1.Origin', '==', 't2.Origin'),
+    ],
+    [
+        ('t1.Origin', '!=', 't2.Origin'),
+        ('t1.OriginCityMarketID', '==', 't2.OriginCityMarketID'),
+    ],
+    [
+        ('t1.Origin', '==', 't2.Origin'),
+        ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID'),
+    ],
+    [
+        ('t1.OriginState', '==', 't2.OriginState'),
+        ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'),
+        ('t1.DayofMonth', '>=', 't2.DayofMonth'),
+    ],
+    [
+        ('t1.OriginState', '==', 't2.OriginState'),
+        ('t1.DayofMonth', '<=', 't2.DayofMonth'),
+        ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'),
+    ],
+    [
+        ('t1.DayOfWeek', '<=', 't2.DayOfWeek'),
+        ('t1.OriginState', '==', 't2.OriginState'),
+        ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'),
+    ],
+    [
+        ('t1.OriginState', '==', 't2.OriginState'),
+        ('t1.FlightNum', '>=', 't2.FlightNum'),
+        ('t1.OriginAirportID', '<', 't2.OriginAirportID'),
+    ],
+    [
+        ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'),
+        ('t1.DayOfWeek', '>=', 't2.DayOfWeek'),
+        ('t1.OriginStateName', '==', 't2.OriginStateName'),
+    ],
+    [
+        ('t1.OriginState', '==', 't2.OriginState'),
+        ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'),
+        ('t1.DayOfWeek', '>=', 't2.DayOfWeek'),
+    ],
+    [
+        ('t1.OriginWac', '!=', 't2.OriginWac'),
+        ('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'),
+        ('t1.OriginAirportID', '<=', 't2.OriginAirportID'),
+    ],
+    [
+        ('t1.DayOfWeek', '<=', 't2.DayOfWeek'),
+        ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'),
+        ('t1.OriginStateName', '==', 't2.OriginStateName'),
+    ],
+    [
+        ('t1.OriginStateName', '!=', 't2.OriginStateName'),
+        ('t1.OriginAirportID', '==', 't2.OriginAirportID'),
+    ],
+    [
+        ('t1.OriginWac', '!=', 't2.OriginWac'),
+        ('t1.OriginAirportSeqID', '==', 't2.OriginAirportSeqID'),
+    ],
+    [
+        ('t1.OriginState', '==', 't2.OriginState'),
+        ('t1.DayofMonth', '<=', 't2.DayofMonth'),
+        ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'),
+    ],
+    [
+        ('t1.OriginAirportID', '==', 't2.OriginAirportID'),
+        ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID'),
+    ],
+    [
+        ('t1.OriginAirportID', '!=', 't2.OriginAirportID'),
+        ('t1.OriginCityMarketID', '==', 't2.OriginCityMarketID'),
+    ],
+    [
+        ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'),
+        ('t1.DayofMonth', '>=', 't2.DayofMonth'),
+        ('t1.OriginStateName', '==', 't2.OriginStateName'),
+    ],
+    [
+        ('t1.DayofMonth', '<=', 't2.DayofMonth'),
+        ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'),
+        ('t1.OriginStateName', '==', 't2.OriginStateName'),
+    ],
+    [
+        ('t1.OriginCityName', '==', 't2.OriginCityName'),
+        ('t1.OriginState', '!=', 't2.OriginState'),
+    ],
+    [
+        ('t1.OriginState', '==', 't2.OriginState'),
+        ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'),
+        ('t1.DayofMonth', '>=', 't2.DayofMonth'),
+    ],
+    [
+        ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'),
+        ('t1.FlightNum', '>=', 't2.FlightNum'),
+        ('t1.OriginWac', '==', 't2.OriginWac'),
+    ],
+    [
+        ('t1.UniqueCarrier', '!=', 't2.UniqueCarrier'),
+        ('t1.AirlineID', '==', 't2.AirlineID'),
+    ],
+    [
+        ('t1.AirlineID', '!=', 't2.AirlineID'),
+        ('t1.UniqueCarrier', '==', 't2.UniqueCarrier'),
+    ],
+    [
+        ('t1.DayofMonth', '<=', 't2.DayofMonth'),
+        ('t1.OriginWac', '==', 't2.OriginWac'),
+        ('t1.OriginAirportID', '<', 't2.OriginAirportID'),
+    ],
+    [
+        ('t1.OriginWac', '!=', 't2.OriginWac'),
+        ('t1.OriginCityMarketID', '==', 't2.OriginCityMarketID'),
+    ],
+    [
+        ('t1.OriginWac', '==', 't2.OriginWac'),
+        ('t1.OriginAirportID', '<', 't2.OriginAirportID'),
+        ('t1.DayofMonth', '>=', 't2.DayofMonth'),
+    ],
+    [
+        ('t1.OriginStateFips', '!=', 't2.OriginStateFips'),
+        ('t1.OriginCityName', '==', 't2.OriginCityName'),
+    ],
+    [
+        ('t1.OriginAirportSeqID', '==', 't2.OriginAirportSeqID'),
+        ('t1.Origin', '!=', 't2.Origin'),
+    ],
+    [
+        ('t1.OriginAirportSeqID', '!=', 't2.OriginAirportSeqID'),
+        ('t1.Origin', '==', 't2.Origin'),
+    ],
+    [
+        ('t1.Origin', '!=', 't2.Origin'),
+        ('t1.OriginAirportID', '==', 't2.OriginAirportID'),
+    ],
+    [
+        ('t1.OriginAirportID', '!=', 't2.OriginAirportID'),
+        ('t1.Origin', '==', 't2.Origin'),
+    ],
+    [
+        ('t1.DayofMonth', '<=', 't2.DayofMonth'),
+        ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'),
+        ('t1.OriginStateFips', '==', 't2.OriginStateFips'),
+    ],
+    [
+        ('t1.DayofMonth', '<=', 't2.DayofMonth'),
+        ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'),
+        ('t1.OriginStateName', '==', 't2.OriginStateName'),
+    ],
+    [
+        ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'),
+        ('t1.OriginStateFips', '==', 't2.OriginStateFips'),
+        ('t1.DayofMonth', '>=', 't2.DayofMonth'),
+    ],
+    [
+        ('t1.DayofMonth', '==', 't2.DayofMonth'),
+        ('t1.DayOfWeek', '!=', 't2.DayOfWeek'),
+    ],
+    [
+        ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'),
+        ('t1.DayofMonth', '>=', 't2.DayofMonth'),
+        ('t1.OriginStateName', '==', 't2.OriginStateName'),
+    ],
+    [
+        ('t1.Origin', '!=', 't2.Origin'),
+        ('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'),
+        ('t1.OriginAirportID', '<=', 't2.OriginAirportID'),
+    ],
+    [
+        ('t1.OriginStateName', '!=', 't2.OriginStateName'),
+        ('t1.OriginCityName', '==', 't2.OriginCityName'),
+    ],
+    [
+        ('t1.FlightNum', '>=', 't2.FlightNum'),
+        ('t1.Month', '<', 't2.Month'),
+    ],
+    [
+        ('t1.OriginStateFips', '!=', 't2.OriginStateFips'),
+        ('t1.OriginAirportID', '==', 't2.OriginAirportID'),
+    ],
+    [
+        ('t1.OriginCityName', '!=', 't2.OriginCityName'),
+        ('t1.OriginCityMarketID', '==', 't2.OriginCityMarketID'),
+    ],
+    [
+        ('t1.OriginCityName', '==', 't2.OriginCityName'),
+        ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID'),
+    ],
+    [
+        ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'),
+        ('t1.OriginAirportID', '>=', 't2.OriginAirportID'),
+    ],
+    [
+        ('t1.OriginState', '==', 't2.OriginState'),
+        ('t1.OriginStateName', '!=', 't2.OriginStateName'),
+    ],
+    [
+        ('t1.OriginState', '!=', 't2.OriginState'),
+        ('t1.OriginStateName', '==', 't2.OriginStateName'),
+    ],
+    [
+        ('t1.DayofMonth', '<=', 't2.DayofMonth'),
+        ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'),
+        ('t1.OriginWac', '==', 't2.OriginWac'),
+    ],
+    [
+        ('t1.OriginCityName', '!=', 't2.OriginCityName'),
+        ('t1.OriginAirportID', '==', 't2.OriginAirportID'),
+    ],
+    [
+        ('t1.OriginAirportID', '!=', 't2.OriginAirportID'),
+        ('t1.OriginCityName', '==', 't2.OriginCityName'),
+    ],
+    [
+        ('t1.OriginAirportSeqID', '==', 't2.OriginAirportSeqID'),
+        ('t1.OriginCityMarketID', '!=', 't2.OriginCityMarketID'),
+    ],
+    [
+        ('t1.OriginCityMarketID', '==', 't2.OriginCityMarketID'),
+        ('t1.OriginAirportSeqID', '!=', 't2.OriginAirportSeqID'),
+    ],
+    [
+        ('t1.OriginAirportSeqID', '<', 't2.OriginAirportSeqID'),
+        ('t1.OriginWac', '==', 't2.OriginWac'),
+        ('t1.DayofMonth', '>=', 't2.DayofMonth'),
+    ],
+    [
+        ('t1.FlightDate', '!=', 't2.FlightDate'),
+        ('t1.DayofMonth', '==', 't2.DayofMonth'),
+    ],
+    [
+        ('t1.DayofMonth', '!=', 't2.DayofMonth'),
+        ('t1.FlightDate', '==', 't2.FlightDate'),
+    ],
+    [
+        ('t1.OriginState', '!=', 't2.OriginState'),
+        ('t1.OriginStateFips', '==', 't2.OriginStateFips'),
+    ],
+    [
+        ('t1.OriginState', '==', 't2.OriginState'),
+        ('t1.OriginStateFips', '!=', 't2.OriginStateFips'),
+    ],
+    [
+        ('t1.OriginAirportSeqID', '>=', 't2.OriginAirportSeqID'),
+        ('t1.OriginAirportID', '<=', 't2.OriginAirportID'),
+        ('t1.OriginState', '!=', 't2.OriginState'),
+    ],
+    [
+        ('t1.OriginAirportSeqID', '==', 't2.OriginAirportSeqID'),
+        ('t1.OriginStateName', '!=', 't2.OriginStateName'),
+    ],
+    [
+        ('t1.OriginWac', '!=', 't2.OriginWac'),
+        ('t1.OriginAirportID', '==', 't2.OriginAirportID'),
+    ],
+    [
+        ('t1.FlightNum', '>=', 't2.FlightNum'),
+        ('t1.OriginStateFips', '==', 't2.OriginStateFips'),
+        ('t1.OriginAirportID', '<', 't2.OriginAirportID'),
+    ],
+    [
+        ('t1.DayofMonth', '<=', 't2.DayofMonth'),
+        ('t1.OriginStateFips', '==', 't2.OriginStateFips'),
+        ('t1.OriginAirportID', '<', 't2.OriginAirportID'),
+    ],
+    [
+        ('t1.OriginStateFips', '==', 't2.OriginStateFips'),
+        ('t1.OriginAirportID', '<', 't2.OriginAirportID'),
+        ('t1.DayofMonth', '>=', 't2.DayofMonth'),
+    ],
+    [
+        ('t1.OriginState', '!=', 't2.OriginState'),
+        ('t1.Origin', '==', 't2.Origin'),
+    ],
+    [
+        ('t1.FlightNum', '>=', 't2.FlightNum'),
+        ('t1.OriginAirportID', '<', 't2.OriginAirportID'),
+        ('t1.OriginStateName', '==', 't2.OriginStateName'),
+    ],
+    [
+        ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'),
+        ('t1.OriginWac', '==', 't2.OriginWac'),
+        ('t1.DayofMonth', '>=', 't2.DayofMonth'),
+    ],
+    [
+        ('t1.DayofMonth', '<=', 't2.DayofMonth'),
+        ('t1.OriginCityMarketID', '<', 't2.OriginCityMarketID'),
+        ('t1.OriginWac', '==', 't2.OriginWac'),
+    ],
+]
+

@@ -3,13 +3,6 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
-        <entry key="/2phase_deletion_data_v12.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="/DCandDelset/dc_configs/adult_semantic_dcs_w_norm_20251231_063113.csv">
           <value>
             <Attribute>
@@ -17,126 +10,189 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="/ablation_delexp_alpha.csv">
+        <entry key="/DifferentialDeletionAlgorithms/avg_plots/aggregated_avgs.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ablation_delexp_beta.csv">
+        <entry key="/DifferentialDeletionAlgorithms/del2ph_January09,202610:29:15AM_efflog.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ablation_delexp_epsilon.csv">
+        <entry key="/DifferentialDeletionAlgorithms/del2ph_January09,202610:41:54AM_efflog.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ablation_delexp_epsilon_v1.csv">
+        <entry key="/DifferentialDeletionAlgorithms/del2ph_January09,202611:01:11AM_efflog.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ablation_delexp_lambda.csv">
+        <entry key="/DifferentialDeletionAlgorithms/del2ph_January09,202611:02:23AM_efflog.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ablation_delexp_lambda_v1.csv">
+        <entry key="/DifferentialDeletionAlgorithms/del2ph_January09,202611:06:15AM_highlog.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ablation_delgum_alpha.csv">
+        <entry key="/DifferentialDeletionAlgorithms/del2ph_January09,202611:08:04AM_highlog.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ablation_delgum_beta.csv">
+        <entry key="/DifferentialDeletionAlgorithms/del2ph_January09,202612:46:38PM_orig.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ablation_delgum_epsilon.csv">
+        <entry key="/DifferentialDeletionAlgorithms/del2ph_data_1767913985.692941.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ablation_delgum_epsilon_v1.csv">
+        <entry key="/DifferentialDeletionAlgorithms/del2ph_data_1767914149.3169138.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ablation_delgum_lambda.csv">
+        <entry key="/DifferentialDeletionAlgorithms/del2ph_data_1767915181.776902.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ablation_delgum_lambda_v1.csv">
+        <entry key="/DifferentialDeletionAlgorithms/del2ph_data_v2026_2.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ablation_study_rho_tau_grid_20251231_191026_detailed.csv">
+        <entry key="/DifferentialDeletionAlgorithms/delexp_canonical_data_1767915408.902337.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ablation_study_rho_tau_grid_20251231_191026_summary.csv">
+        <entry key="/DifferentialDeletionAlgorithms/delexp_canonical_data_1767916344.3481731.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ablation_study_tau_threshold_20251231_190435_detailed.csv">
+        <entry key="/DifferentialDeletionAlgorithms/delexp_canonical_data_January08,202605:47:11PM.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ablation_study_tau_threshold_20251231_190435_summary.csv">
+        <entry key="/DifferentialDeletionAlgorithms/delexp_canonical_data_January08,202605:57:32PM_lam0.9.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/ablation_tau_baseline3.csv">
+        <entry key="/DifferentialDeletionAlgorithms/delexp_canonical_data_January08,202606:07:16PM.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/baseline3_tau_runs.csv">
+        <entry key="/DifferentialDeletionAlgorithms/delexp_canonical_data_v2026_2.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/delexp_data_v2026_2.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/delgum_January09,202610:30:40AM_efflog.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/delgum_January09,202610:43:20AM_efflog.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/delgum_January09,202611:06:32AM_highlog.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/delgum_January09,202612:49:00PM_orig.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/delgum_data_1767915914.1431308.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/delgum_data_v2026_2.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/delmin_data_v2026_2.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/masks_delexp_leakage.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -171,6 +227,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/csv_files/delmin_data_standardized_vFinal.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/csv_files/ncvoter.csv">
           <value>
             <Attribute>
@@ -178,308 +241,7 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="/del2ph_data_standardized_v2.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/del2ph_data_standardized_vFinal.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delexp_data_collect_epsilon.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delexp_data_collect_epsilon_v3.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delexp_data_collect_epsilon_v4.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delexp_data_standardized.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delexp_data_standardized_non_canonical.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delexp_data_standardized_non_canonical_or_leakage.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delexp_data_standardized_non_canonical_v2.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delexp_data_standardized_non_canonical_v3.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delexp_data_standardized_v1.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delexp_data_standardized_v2.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delexp_data_standardized_v2_flightsandtax.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delexp_data_standardized_v3.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delexp_data_standardized_vF1.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delexp_data_standardized_vFinal.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delexp_data_v12.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delexp_data_v13.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delexp_data_v14.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delgum_data_epsilon_leakage_graph.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delgum_data_epsilon_leakage_graph_v2.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delgum_data_epsilon_leakage_graph_v3.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delgum_data_epsilon_leakage_graph_v4.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delgum_data_epsilon_leakage_graph_v5.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delgum_data_epsilon_leakage_graph_v8_gpt_fixed_script.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delgum_data_standardized.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delgum_data_standardized_v1.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delgum_data_standardized_v2.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delgum_data_standardized_v2_flightsandtax.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delgum_data_standardized_v3.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delgum_data_standardized_vFinal.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delgum_data_v12.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delgum_data_v13.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delgum_data_v14.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delmin_data_standardized.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delmin_data_standardized_v1.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delmin_data_standardized_v2.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delmin_data_standardized_v2_flightsandtax.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delmin_data_standardized_v3.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delmin_data_standardized_vFinal.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delmin_data_standarized_f3.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delmin_data_v12.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delmin_data_v13.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/delmin_data_v14.csv">
+        <entry key="/csv_files/tax.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -493,133 +255,14 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="/leakage_trends.csv">
+        <entry key="/leakage_data/leakage_trends_tax_nor.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/leakage_trends_actuals.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/leakage_trends_actuals_fixed.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/leakage_trends_actuals_fixed_1.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/leakage_trends_actuals_fixed_10.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/leakage_trends_actuals_fixed_11.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/leakage_trends_actuals_fixed_2.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/leakage_trends_actuals_fixed_3.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/leakage_trends_actuals_fixed_4.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/leakage_trends_actuals_fixed_5.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/leakage_trends_actuals_fixed_6.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/leakage_trends_actuals_fixed_7.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/leakage_trends_actuals_fixed_8.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/leakage_trends_actuals_fixed_9.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/leakage_trends_actuals_fixed_ncvoter_trials.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/leakage_trends_tax_nor.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/leakage_trends_tax_tight.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/leakage_trends_timed_leakage_nor.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/leakage_trends_timed_leakage_tight.csv">
+        <entry key="/leakage_data/leakage_trends_tax_tight.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -731,13 +374,6 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="/temp_trial.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="/weights/adult_ALL_DCs_weights.csv">
           <value>
             <Attribute>
@@ -774,6 +410,13 @@
           </value>
         </entry>
         <entry key="/weights/hospital_ALL_DCs_weights_CORRECTED.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/weights/hospital_semantic_dcs_w_norm_20251231_063113.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

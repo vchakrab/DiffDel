@@ -3,7 +3,7 @@ import csv
 
 DB_NAME = "airport"
 TABLE_NAME = "airports" # change this to the table name
-CSV_PATH = "/Users/adhariya/Downloads/dc_weight_repro_github_bundle_latest 2/data/airport.csv"  # <-- change this path
+CSV_PATH = "/Users/adhariya/src/DiffDel/csv_files/airport.csv"  # <-- change this path
 USER = "root"
 PASSWORD = "my_password" # change password
 HOST = "localhost"
@@ -76,7 +76,7 @@ with open(CSV_PATH, newline='', encoding='utf-8') as csvfile:
     cursor.executemany(insert_query, rows)
     conn.commit()
 
-print("✅ Inserted {cursor.rowcount} rows from {CSV_PATH} into '{TABLE_NAME}'.")
+print(f"✅ Inserted {cursor.rowcount} rows from {CSV_PATH} into '{TABLE_NAME}'.")
 
 cursor.close()
 conn.close()

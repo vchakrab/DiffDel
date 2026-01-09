@@ -1,4 +1,5 @@
 import importlib
+import math
 from collections import Counter
 from typing import Tuple, List, Set, Iterable, Optional, Dict, Any
 
@@ -40,9 +41,7 @@ def map_dc_to_weight(init_manager, dc, weights_obj) -> float:
                 attrs.add(b.split(".", 1)[1])
             attr_sets.append(frozenset(attrs))
 
-        for sets1, sets2 in zip(attr_sets, attr_sets):
-            if sets1 == sets2 and not sets1.__eq__(sets2):
-                print(sets1, sets2)
+
         counts = Counter(attr_sets)
 
         num_identical_dcs = sum(c for c in counts.values() if c > 1)
@@ -50,9 +49,6 @@ def map_dc_to_weight(init_manager, dc, weights_obj) -> float:
     except ValueError:
         return 1.0
     try:
-        print(len(weights_obj))
-        print(len(dc))
-        print(dc)
         return float(weights_obj[idx])
     except Exception:
         raise RuntimeError("WEIGHTS object is not indexable by DC index; check weights module format.")
@@ -89,8 +85,6 @@ def dc_to_rdrs_and_weights(init_manager) -> Tuple[List[Tuple[str, ...]], List[fl
             rdrs.append(tuple(sorted(attrs)))
             rdr_weights.append(float(w))
 
-    print("RDRs:", rdrs)
-    print("RDR_weights:", rdr_weights)
     return rdrs, rdr_weights
 
 
@@ -179,6 +173,34 @@ def compute_utility(*, leakage: float, mask_size: int, lam: float, zone_size: in
     denom = max(1, int(zone_size) - 1)
     norm = float(mask_size) / float(denom)
     return float(-(lam * float(leakage)) - ((1.0 - lam) * norm))
+
+def compute_utility_log(*, leakage: float, mask_size: int, lam: float, zone_size: int):
+    """
+    U(M) = λ · (-log(L(M) + 0.01) / log(100)) - (1-λ) · |M| / |Z_max|
+    """
+    leakage_term = -math.log(leakage + 0.01) / math.log(100)
+    size_term = float(mask_size) / float(max(1, zone_size))
+    return float((lam * leakage_term) - ((1.0 - lam) * size_term))
+
+def compute_utility_logarithmic(*, leakage: float, mask_size: int, lam: float, zone_size: int, t: str):
+    if t == "highlog":
+        leakage_term = math.log(1.0 - leakage + 0.01) / math.log(100)
+        size_term = float(mask_size) / float(max(1, zone_size))
+        return float((lam * leakage_term) - ((1.0 - lam) * size_term))
+    elif t == "efflog":
+        log_term = math.log(1.0 - leakage + 0.01) / math.log(100)
+        ratio_term = (1.0 - leakage) / float(mask_size + 1)
+
+        return float((lam * log_term) + ((1.0 - lam) * ratio_term))
+def compute_utility_hinge(* ,leakage, mask_size, zone_size, lam, L0 = 0.25):
+    """ Cap-aware hinge utility. u(M) = - lam * max(0, L(M,c*,D) - L0) - (1-lam) * (|M|/I_max) where: - L0 is the permissible leakage cap (policy knob) - lam in (0,1) weights policy compliance vs deletion cost - |M|/I_max is normalized mask size in [0,1] Returns a finite, bounded utility in [-1, 0] (assuming L in [0,1]). """
+    if not (0.0 < lam < 1.0):
+        raise ValueError("lam must be in (0,1).")
+    if not (0.0 <= L0 <= 1.0):
+        raise ValueError("L0 must be in [0,1].")
+    violation = max(0.0, leakage - L0)
+    size_term = mask_size/zone_size
+    return -lam * violation - (1.0 - lam) * size_term
 
 # ============================================================
 # Leakage computation (Algorithm 2) — SINGLE SOURCE OF TRUTH
@@ -430,21 +452,25 @@ def leakage(
     *,
     tau: Optional[float] = None,
     return_counts: bool = False,
-    leakage_method: str = "noisy_or",  # "noisy_or" | "greedy_disjoint"
+    leakage_method: str = "greedy_disjoint",  # "noisy_or" | "greedy_disjoint" | "nor_with_ie"
 ):
     """
     Leakage estimation options:
 
-    1) leakage_method="noisy_or" (default, your current behavior)
+    1) leakage_method="noisy_or"
        L = 1 - Π_p (1 - w(p)) over ALL chains
 
     2) leakage_method="greedy_disjoint"
        - compute all chains + their maskedCells (inferred masked intermediates)
        - pick a mask-disjoint subset D using Algorithm 5
        - L = 1 - Π_{p in D} (1 - w(p))
-       This avoids double-counting chains that share masked intermediates.
 
-    If max_chain_weight > rho: set L = 1.0 (rho-safe).
+    3) leakage_method="nor_with_ie"
+       - compute noisy-OR over all chains
+       - ALSO compute a 2nd-order inclusion–exclusion (Bonferroni) estimate:
+            L_ie2 = Σ w(p) - Σ_{p<q} w(p ∪ q)
+         where w(p ∪ q) is product of edge weights over the UNION of edges in the two chains
+       - return min(noisy_or, L_ie2) as the "tighter" estimate (smaller leakage)
     """
 
     edge_dict = hypergraph_to_edge_dict(hypergraph, tau=tau)
@@ -462,11 +488,15 @@ def leakage(
     active_chains = 0
     blocked_chains = 0
 
-    # For rho-safe
+    # For rho-safe (kept for compatibility with your current code structure)
     max_chain_w = 0.0
 
-    if leakage_method == "noisy_or":
+    if leakage_method in ("noisy_or", "nor_with_ie"):
         prod_not = 1.0
+
+        # Only needed for IE
+        chain_weights: List[float] = []
+        chain_edge_sets: List[Set[str]] = []
 
         for ch in iter_chains(mask, target_cell, edge_dict):
             num_chains += 1
@@ -475,6 +505,7 @@ def leakage(
             for eid in ch:
                 if not edge_active.get(eid, True):
                     ok = False
+                    blocked_chains += 1
                     break
             if ok:
                 active_chains += 1
@@ -490,7 +521,45 @@ def leakage(
 
             prod_not *= (1.0 - cw)
 
-        L = 0.0 if num_chains == 0 else (1.0 - prod_not)
+            if leakage_method == "nor_with_ie":
+                chain_weights.append(float(cw))
+                chain_edge_sets.append(set(ch))
+
+        L_nor = 0.0 if num_chains == 0 else (1.0 - prod_not)
+
+        if leakage_method == "noisy_or":
+            L = L_nor
+        else:
+            # 2nd-order inclusion–exclusion: sum singles - sum pairwise intersections
+            # Approximate P(p AND q) as product of edge weights over union(p,q).
+            sum1 = float(sum(chain_weights))
+
+            memo_union_prob: Dict[frozenset, float] = {}
+            sum2 = 0.0
+
+            m = len(chain_weights)
+            for i in range(m):
+                Ei = chain_edge_sets[i]
+                for j in range(i + 1, m):
+                    union_edges = Ei | chain_edge_sets[j]
+                    key = frozenset(union_edges)
+                    pu = memo_union_prob.get(key)
+                    if pu is None:
+                        pu = 1.0
+                        for eid in union_edges:
+                            pu *= w[eid]
+                        memo_union_prob[key] = float(pu)
+                    sum2 += float(pu)
+
+            L_ie2 = sum1 - sum2
+            # clamp to [0,1]
+            if L_ie2 < 0.0:
+                L_ie2 = 0.0
+            elif L_ie2 > 1.0:
+                L_ie2 = 1.0
+
+            # "tighter" leakage bound => smaller estimate
+            L = min(float(L_nor), float(L_ie2))
 
     elif leakage_method == "greedy_disjoint":
         # Collect chains with (chain, weight, maskedCells)
@@ -528,8 +597,12 @@ def leakage(
             L = 1.0 - prod_not
 
     else:
-        raise ValueError(f"Unknown leakage_method={leakage_method!r}. Use 'noisy_or' or 'greedy_disjoint'.")
+        raise ValueError(
+            f"Unknown leakage_method={leakage_method!r}. "
+            "Use 'noisy_or', 'greedy_disjoint', or 'nor_with_ie'."
+        )
 
     if return_counts:
         return float(L), int(num_chains), int(active_chains), int(blocked_chains)
     return float(L)
+

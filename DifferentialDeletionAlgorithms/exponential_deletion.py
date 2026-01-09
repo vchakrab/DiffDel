@@ -2,42 +2,37 @@
 """
 exponential_deletion.py - Hypergraph-Based Implementation (Schema-level)
 
-REFactor request:
-- REMOVE local inference-chain / leakage / BFS / graph-related code
-- IMPORT the single-source-of-truth leakage implementation from your `leakage.py`
-  (the one that already has: Hypergraph, construct_hypergraph_max/actual, leakage(...))
+Key addition:
+- Canonical frontier logic: replace any mask M by its frontier F(M)
+  (drop masked cells that are not directly attackable from reachable region).
 
-Assumptions:
-- You have a module `leakage.py` on PYTHONPATH that defines:
-    - get_dataset_weights
-    - Hypergraph
-    - construct_hypergraph_max
-    - construct_hypergraph_actual
-    - leakage(mask, target_cell, hypergraph, *, tau=None, return_counts=False, leakage_method="noisy_or")
-- You have `rtf_core.initialization_phase.InitializationManager`
+Also:
+- Change "paths" counters to "inference chains" counters using iter_chains.
 """
 
 from __future__ import annotations
 
+import csv
 import time
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, FrozenSet
 from itertools import chain, combinations
 
 import numpy as np
 
 from rtf_core import initialization_phase
 
-# ✅ Import leakage + hypergraph construction from your single source of truth
 from leakage import (
     get_dataset_weights,
     Hypergraph,
     construct_hypergraph_max,
     construct_hypergraph_actual,
-    leakage as compute_leakage,  # rename for this file
+    leakage as compute_leakage,
     compute_utility,
-    map_dc_to_weight
+    map_dc_to_weight,
+    iter_chains,
+    hypergraph_to_edge_dict,
+    compute_utility_log, compute_utility_hinge,
 )
-
 
 # ============================================================
 # Utilities
@@ -48,14 +43,251 @@ def powerset(iterable: Iterable[Any]) -> Iterable[Tuple[Any, ...]]:
     return chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))
 
 
-def compute_possible_mask_set_str(target_cell: str, hypergraph: Hypergraph) -> List[Set[str]]:
-    """
-    Candidate masks are the powerset of the inference zone:
-      I(c*) = V(H_max) \ {c*}
-    """
-    inference_zone = hypergraph.vertices - {target_cell}
-    return [set(s) for s in powerset(sorted(inference_zone))]
+EdgeDict = Dict[int, Tuple[Tuple[str, ...], float]]  # edges[eid] = (verts, weight)
 
+
+def _build_incident_index(edges: EdgeDict) -> Dict[str, List[int]]:
+    incident: Dict[str, List[int]] = {}
+    for eid, (verts, _w) in edges.items():
+        for v in verts:
+            incident.setdefault(v, []).append(eid)
+    return incident
+
+
+def _reachable_closure_undirected(
+    visible: Set[str],
+    masked: Set[str],
+    edges: EdgeDict,
+) -> Set[str]:
+    """
+    Reachability closure under your (undirected) hyperedge inference rule:
+      if all-but-one vertices of an edge are reachable, infer the last one.
+    Masked cells are treated as not reachable (hard wall).
+    """
+    reachable: Set[str] = set(visible)
+
+    changed = True
+    while changed:
+        changed = False
+        for _eid, (verts, _w) in edges.items():
+            missing: List[str] = []
+            for u in verts:
+                # masked cells are treated as "missing" forever
+                if u in masked or u not in reachable:
+                    missing.append(u)
+                    if len(missing) > 1:
+                        break
+
+            # If exactly one vertex is missing, it would be inferable
+            if len(missing) == 1:
+                v = missing[0]
+                if v not in masked and v not in reachable:
+                    reachable.add(v)
+                    changed = True
+
+    return reachable
+
+
+def canonical_frontier_mask_undirected(
+    mask: Set[str],
+    target_cell: str,
+    vertices: Set[str],
+    edges: EdgeDict,
+    *,
+    incident: Optional[Dict[str, List[int]]] = None,
+) -> Set[str]:
+    """
+    Compute frontier F(M):
+      masked cells that are directly attackable from the reachable region.
+
+    Formal (matching the writeup intuition):
+      - Let O(M) be visible cells = V \ (M ∪ {c*})
+      - Let R(M) be reachable closure from O(M) without crossing masked cells
+      - A masked cell c is in the frontier if there exists a hyperedge e containing c
+        such that all other vertices in e are reachable.
+
+    Returns F(M) ⊆ M.
+    """
+    M = set(mask)
+    M.discard(target_cell)
+
+    visible = set(vertices) - M - {target_cell}
+    reachable = _reachable_closure_undirected(visible=visible, masked=M, edges=edges)
+
+    if incident is None:
+        incident = _build_incident_index(edges)
+
+    frontier: Set[str] = set()
+    for c in M:
+        for eid in incident.get(c, []):
+            verts, _w = edges[eid]
+            # c is frontier if every other vertex in this hyperedge is reachable
+            if all((u == c) or (u in reachable) for u in verts):
+                frontier.add(c)
+                break
+
+    return frontier
+
+
+def canonicalize_mask(
+    mask: Set[str],
+    *,
+    target_cell: str,
+    hypergraph: Hypergraph,
+    incident: Optional[Dict[str, List[int]]] = None,
+    edges: Optional[EdgeDict] = None,
+    vertices: Optional[Set[str]] = None,
+) -> Set[str]:
+    """
+    Replace any mask M by its canonical representative F(M).
+    """
+    if edges is None:
+        edges = hypergraph_to_edge_dict(hypergraph)
+    if vertices is None:
+        vertices = set(hypergraph.vertices)
+    if incident is None:
+        incident = _build_incident_index(edges)
+
+    return canonical_frontier_mask_undirected(
+        mask=set(mask),
+        target_cell=target_cell,
+        vertices=vertices,
+        edges=edges,
+        incident=incident,
+    )
+
+
+def _chain_vertex_set(chain_edge_ids: Iterable[int], edges: EdgeDict) -> Set[str]:
+    """
+    Convert a chain (list of edge ids) into the union of vertices used in those edges.
+    """
+    out: Set[str] = set()
+    for eid in chain_edge_ids:
+        verts, _w = edges[eid]
+        out.update(verts)
+    return out
+
+
+def count_inference_chains(
+    *,
+    edges: EdgeDict,
+    target_cell: str,
+    mask: Set[str],
+) -> Tuple[int, int, int]:
+    """
+    Counts inference chains (NOT generic "paths"):
+      total_chains: number of chains to target in the hypergraph (empty mask)
+      active_chains: chains that do NOT touch any masked vertex (excluding target)
+      blocked_chains: total - active
+
+    Uses iter_chains from leakage.py for chain enumeration.
+    """
+    M = set(mask)
+    M.discard(target_cell)
+
+    total = 0
+    active = 0
+
+    # Enumerate all chains to target (mask-independent)
+    for ch in iter_chains(set(), target_cell, edges):
+        total += 1
+        vset = _chain_vertex_set(ch, edges)
+        vset.discard(target_cell)
+        if vset.isdisjoint(M):
+            active += 1
+
+    blocked = total - active
+    return total, active, blocked
+
+
+# ============================================================
+# Candidate masks
+# ============================================================
+
+def compute_possible_mask_set_str(
+    target_cell: str,
+    hypergraph: Hypergraph,
+    *,
+    mask_space: Optional[str] = None,   # None => full powerset; "canonical" => canonicalized candidates
+    tau: Optional[float] = None,
+    canonical_max_chains: int = 2000,
+    canonical_max_union_chains: int = 200,
+) -> List[Set[str]]:
+    """
+    Candidates:
+      - mask_space=None: full powerset of inference zone
+      - mask_space="canonical": generate a reduced set, canonicalized via F(M)
+        (dedup by frontier equivalence)
+    """
+    inference_zone = set(hypergraph.vertices) - {target_cell}
+
+    if mask_space is None:
+        return [set(s) for s in powerset(sorted(inference_zone))]
+
+    if str(mask_space).lower() != "canonical":
+        raise ValueError(f"mask_space must be None or 'canonical' (got {mask_space!r}).")
+
+    edges: EdgeDict = hypergraph_to_edge_dict(hypergraph)
+    vertices = set(hypergraph.vertices)
+    incident = _build_incident_index(edges)
+
+    def canon_fs(M: Set[str]) -> FrozenSet[str]:
+        F = canonical_frontier_mask_undirected(
+            mask=M,
+            target_cell=target_cell,
+            vertices=vertices,
+            edges=edges,
+            incident=incident,
+        )
+        return frozenset(F)
+
+    candidates: Set[FrozenSet[str]] = {frozenset()}  # include empty
+
+    # canonicalized singletons
+    for v in inference_zone:
+        candidates.add(canon_fs({v}))
+
+    # chain-derived supports + canonicalize
+    chain_infos: List[Tuple[float, FrozenSet[str]]] = []
+    for ch in iter_chains(set(), target_cell, edges):
+        supp: Set[str] = set()
+        w_prod = 1.0
+        for eid in ch:
+            verts_e, w = edges[eid]
+            supp |= set(verts_e)
+            w_prod *= float(w)
+        supp.discard(target_cell)
+        if not supp:
+            continue
+        supp_c = canon_fs(supp)
+        if supp_c:
+            chain_infos.append((float(w_prod), supp_c))
+
+    chain_infos.sort(key=lambda t: t[0], reverse=True)
+
+    top_supports: List[FrozenSet[str]] = []
+    seen: Set[FrozenSet[str]] = set()
+    for _w, s in chain_infos:
+        if s in seen:
+            continue
+        seen.add(s)
+        top_supports.append(s)
+        candidates.add(s)
+        if len(top_supports) >= int(canonical_max_chains):
+            break
+
+    # unions of top supports, canonicalized
+    topN = top_supports[: int(canonical_max_union_chains)]
+    for i in range(len(topN)):
+        for j in range(i + 1, len(topN)):
+            candidates.add(canon_fs(set(topN[i] | topN[j])))
+
+    return [set(fs) for fs in candidates]
+
+
+# ============================================================
+# Exponential mechanism
+# ============================================================
 
 def exponential_mechanism_sample(
     candidates: List[Set[str]],
@@ -66,22 +298,46 @@ def exponential_mechanism_sample(
     lam: float,
     rho: float = 0.9,
     tau: Optional[float] = None,
-    leakage_method: str = "noisy_or",  # or "greedy_disjoint" if your leakage.py supports it
+    leakage_method: str = "greedy_disjoint",
+    canonicalize_each: bool = True,
 ) -> Tuple[Set[str], float, float]:
     """
     Sample a mask using exponential mechanism.
 
-    Returns: (mask, utility, leakage)
+    If canonicalize_each=True, each candidate M is replaced by F(M) before scoring,
+    and duplicates are merged (keeping the best utility among duplicates implicitly
+    via dedup list order + recompute).
     """
+
     zone_size = len((hypergraph.vertices - {target_cell}))
-    if zone_size <= 0:
-        zone_size = 1
+    if zone_size <= 4:
+        raise ValueError()
+
+    # Precompute canonicalization helpers for this hypergraph
+    edges: EdgeDict = hypergraph_to_edge_dict(hypergraph)
+    vertices = set(hypergraph.vertices)
+    incident = _build_incident_index(edges)
+
+    # Canonicalize + dedup candidates (important so EM probs align to unique masks)
+    if canonicalize_each:
+        uniq: Dict[FrozenSet[str], Set[str]] = {}
+        for M in candidates:
+            F = canonical_frontier_mask_undirected(
+                mask=set(M),
+                target_cell=target_cell,
+                vertices=vertices,
+                edges=edges,
+                incident=incident,
+            )
+            uniq.setdefault(frozenset(F), set(F))
+        candidates = list(uniq.values())
+        if not candidates:
+            candidates = [set()]
 
     utilities = np.empty(len(candidates), dtype=float)
     leakages = np.empty(len(candidates), dtype=float)
-
+    candidates = [frozenset(m) for m in powerset(vertices)] or [frozenset()]
     for i, M in enumerate(candidates):
-        # ✅ use imported leakage implementation
         L = compute_leakage(
             M,
             target_cell,
@@ -90,21 +346,24 @@ def exponential_mechanism_sample(
             leakage_method=leakage_method,
             return_counts=False,
         )
+        writer.writerow(["mask_size", "mask", "leakage"])
+        with open(f"{target_cell}_original_utility_mvl.csv", "a", newline = "", encoding = "utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow([
+                len(M),  # mask_size
+                repr(M),  # mask contents
+                L  # leakage
+            ])
 
-        # If your leakage.py enforces rho-safe internally, keep rho there.
-        # If rho-safe is handled outside, you can clamp here. Most of your
-        # codebase does rho-safe inside compute_leakage, so we do nothing here.
         leakages[i] = float(L)
-        utilities[i] = compute_utility(
+        utilities[i] = compute_utility_hinge(
             leakage=float(L),
             mask_size=len(M),
             lam=float(lam),
             zone_size=int(zone_size),
         )
 
-    # Exponential mechanism probabilities
-    # NOTE: Utility sensitivity handling is project-specific; keeping your prior style:
-    scores = (float(epsilon) * utilities) / (2.0 * max(1e-10, float(lam)))
+    scores = (float(epsilon) * utilities) / (2.0)
     max_score = float(np.max(scores)) if len(scores) else 0.0
     exp_scores = np.exp(scores - max_score)
     probs = exp_scores / np.sum(exp_scores)
@@ -113,25 +372,9 @@ def exponential_mechanism_sample(
     return candidates[idx], float(utilities[idx]), float(leakages[idx])
 
 
-def estimate_paths_proxy_from_channels(
-    *,
-    num_channel_edges: int,
-    L_empty: float,
-    L_mask: float
-) -> Dict[str, int]:
-    """
-    Proxy for paths blocked based on leakage reduction.
-    """
-    total = int(max(0, num_channel_edges))
-    if total == 0 or not np.isfinite(L_empty) or L_empty <= 1e-15 or not np.isfinite(L_mask):
-        return {"num_paths_est": total, "paths_blocked_est": 0}
-
-    frac = 1.0 - (float(L_mask) / float(L_empty))
-    frac = float(max(0.0, min(1.0, frac)))
-    blocked = int(round(frac * total))
-    blocked = int(max(0, min(total, blocked)))
-    return {"num_paths_est": total, "paths_blocked_est": blocked}
-
+# ============================================================
+# Memory estimate (unchanged)
+# ============================================================
 
 def estimate_memory_overhead_bytes_delexp(
     *,
@@ -141,7 +384,6 @@ def estimate_memory_overhead_bytes_delexp(
     candidate_mask_members: int,
     includes_channel_map: bool = True,
 ) -> int:
-    """Memory overhead estimation for the exponential mechanism (rough)."""
     num_vertices = len(hypergraph.vertices)
     num_edges = len(hypergraph.edges)
     edge_members = sum(len(vertices) for vertices, _ in hypergraph.edges)
@@ -172,13 +414,10 @@ def estimate_memory_overhead_bytes_delexp(
 
 
 # ============================================================
-# DC -> RDR hyperedges (schema-level)
+# DC -> RDR hyperedges
 # ============================================================
 
 def dc_to_hyperedges(init_manager) -> Tuple[List[Tuple[str, ...]], List[float]]:
-    """
-    Convert denial constraints into RDRs (tuples of attributes) + aligned weights.
-    """
     rdrs: List[Tuple[str, ...]] = []
     rdr_weights: List[float] = []
 
@@ -219,15 +458,10 @@ def exponential_deletion_main(
     lam: float = 0.67,
     rho: float = 0.9,
     tau: Optional[float] = None,
-    leakage_method: str = "noisy_or",  # or "greedy_disjoint"
+    leakage_method: str = "greedy_disjoint",
+    mask_method: str = None,  # None or "canonical"
 ) -> Dict[str, Any]:
-    """
-    Hypergraph-based exponential deletion mechanism, schema-level.
 
-    Uses:
-      - construct_hypergraph_max/actual from leakage.py
-      - compute_leakage (imported) from leakage.py
-    """
     # ----------------------
     # INIT
     # ----------------------
@@ -249,20 +483,19 @@ def exponential_deletion_main(
     init_time = time.time() - init_start
 
     # ----------------------
-    # HYPERGRAPH CONSTRUCTION (Algorithm 1)
+    # HYPERGRAPH CONSTRUCTION
     # ----------------------
     model_start = time.time()
 
     H_max = construct_hypergraph_max(target_cell, rdrs, rdr_weights)
     H_actual = construct_hypergraph_actual(target_cell, rdrs, rdr_weights)
 
-    inference_zone = H_max.vertices - {target_cell}
-    candidates = compute_possible_mask_set_str(target_cell, H_max)
+    candidates = compute_possible_mask_set_str(target_cell, H_max, mask_space=mask_method)
     if not candidates:
         candidates = [set()]
 
     # ----------------------
-    # Exponential mechanism
+    # Exponential mechanism (sample)
     # ----------------------
     final_mask, util_val, _L_selected_quick = exponential_mechanism_sample(
         candidates,
@@ -273,7 +506,11 @@ def exponential_deletion_main(
         rho=rho,
         tau=tau,
         leakage_method=leakage_method,
+        canonicalize_each=True,  # ensure frontier-only masks scored/sampled
     )
+
+    # Canonicalize the sampled mask too (guarantees output is canonical)
+    final_mask = canonicalize_mask(final_mask, target_cell=target_cell, hypergraph=H_actual)
 
     # ----------------------
     # Leakage baseline + final
@@ -296,14 +533,18 @@ def exponential_deletion_main(
         return_counts=False,
     )
 
+    # ----------------------
+    # Inference chain counts (replaces "paths")
+    # ----------------------
+    edges_actual: EdgeDict = hypergraph_to_edge_dict(H_actual)
+    total_chains, active_chains, chains_blocked = count_inference_chains(
+        edges=edges_actual,
+        target_cell=target_cell,
+        mask=final_mask,
+    )
+
     # Count channel edges (edges containing target)
     num_channel_edges = sum(1 for vertices, _ in H_actual.edges if target_cell in vertices)
-
-    paths_proxy = estimate_paths_proxy_from_channels(
-        num_channel_edges=num_channel_edges,
-        L_empty=float(leakage_base),
-        L_mask=float(leakage_final),
-    )
 
     model_time = time.time() - model_start
 
@@ -334,8 +575,10 @@ def exponential_deletion_main(
         "mask_size": int(len(final_mask)),
         "mask": set(final_mask),
 
-        "num_paths": int(paths_proxy["num_paths_est"]),
-        "paths_blocked": int(paths_proxy["paths_blocked_est"]),
+        # CHANGED: inference chains (not generic "paths")
+        "total_chains": int(total_chains),
+        "active_chains": int(active_chains),
+        "chains_blocked": int(chains_blocked),
 
         "memory_overhead_bytes": int(memory_overhead),
         "num_instantiated_cells": int(num_instantiated_cells),
@@ -349,9 +592,50 @@ def exponential_deletion_main(
 
 
 if __name__ == "__main__":
-    # Example (adjust to your dataset/target):
-    out = exponential_deletion_main("hospital", key=500, target_cell="ProviderNumber", epsilon=10, lam=0.67, rho=0.9)
-    print(out)
-    pass
+    out = exponential_deletion_main(
+        "adult",
+        key=500,
+        target_cell="education",
+        epsilon=25,
+        lam=0.75,
+        rho=0.9,
+        mask_method="None",  # try canonical
+    )
+    out = exponential_deletion_main(
+        "hospital",
+        key = 500,
+        target_cell = "ProviderNumber",
+        epsilon = 25,
+        lam = 0.75,
+        rho = 0.9,
+        mask_method = "None",  # try canonical
+    )
+    out = exponential_deletion_main(
+        "airport",
+        key = 500,
+        target_cell = "scheduled_service",
+        epsilon = 25,
+        lam = 0.75,
+        rho = 0.9,
+        mask_method = "None",  # try canonical
+    )
+    out = exponential_deletion_main(
+        "flight",
+        key = 500,
+        target_cell = "FlightNum",
+        epsilon = 25,
+        lam = 0.75,
+        rho = 0.9,
+        mask_method = "None",  # try canonical
+    )
+    out = exponential_deletion_main(
+        "tax",
+        key = 500,
+        target_cell = "marital_status",
+        epsilon = 25,
+        lam = 0.75,
+        rho = 0.9,
+        mask_method = "None",  # try canonical
+    )
 
-#change paths to inference chains rather
+

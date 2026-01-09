@@ -246,6 +246,8 @@ def main():
     file_paths = [
         "delmin_data_standarized_f3.csv",
         "delexp_data_standardized_non_canonical_v3.csv",
+        "delgum_data_standardized_non_canonical_v3.csv",
+        "del2ph_data_standardized_non_canonical_v3.csv",
     ]
 
     datasets = ["airport", "hospital", "ncvoter", "onlineretail", "adult", "tax"]

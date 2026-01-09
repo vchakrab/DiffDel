@@ -1,0 +1,41 @@
+dc_id,dc_str,m,nV,nE_best,best_head_idx,best_base,weight
+1,t0.City != t1.City AND t0.Zip == t1.Zip,2,100000,0,-1,0.0,0.0
+2,t0.AreaCode == t1.AreaCode AND t0.State != t1.State,2,100000,870,1,0.996834716543037,0.746834716543037
+3,t0.State != t1.State AND t0.Zip == t1.Zip,2,100000,0,-1,0.0,0.0
+4,t0.SingleExemp > t1.SingleExemp AND t0.MarriedExemp > t1.MarriedExemp,2,100000,29327,1,0.9996852348630801,0.7496852348630801
+5,t0.SingleExemp < t1.SingleExemp AND t0.MarriedExemp < t1.MarriedExemp,2,100000,29306,1,0.999685105806979,0.749685105806979
+6,t0.MaritalStatus == t1.MaritalStatus AND t0.SingleExemp != t1.SingleExemp AND t0.MarriedExemp != t1.MarriedExemp,3,100000,26657,0,0.9997962076426821,0.7497962076426821
+7,t0.FName == t1.FName AND t0.Gender != t1.Gender,2,100000,0,-1,0.0,0.0
+8,t0.AreaCode == t1.AreaCode AND t0.Phone == t1.Phone,2,100000,0,-1,0.0,0.0
+9,t0.Phone == t1.Phone AND t0.City == t1.City,2,100000,0,-1,0.0,0.0
+10,t0.FName == t1.FName AND t0.Phone == t1.Phone,2,100000,0,-1,0.0,0.0
+11,t0.LName == t1.LName AND t0.Phone == t1.Phone,2,100000,0,-1,0.0,0.0
+12,t0.Phone == t1.Phone AND t0.Zip == t1.Zip,2,100000,0,-1,0.0,0.0
+13,t0.MaritalStatus == t1.MaritalStatus AND t0.SingleExemp != t1.SingleExemp AND t0.MarriedExemp > t1.MarriedExemp,3,100000,13289,0,0.9995912455162104,0.7495912455162104
+14,t0.MaritalStatus == t1.MaritalStatus AND t0.SingleExemp != t1.SingleExemp AND t0.MarriedExemp < t1.MarriedExemp,3,100000,13368,0,0.999593660617202,0.749593660617202
+15,t0.MaritalStatus == t1.MaritalStatus AND t0.SingleExemp > t1.SingleExemp AND t0.MarriedExemp != t1.MarriedExemp,3,100000,13368,0,0.999593660617202,0.749593660617202
+16,t0.MaritalStatus == t1.MaritalStatus AND t0.SingleExemp < t1.SingleExemp AND t0.MarriedExemp != t1.MarriedExemp,3,100000,13289,0,0.9995912455162104,0.7495912455162104
+17,t0.State == t1.State AND t0.HasChild == t1.HasChild AND t0.ChildExemp != t1.ChildExemp,3,100000,968,2,0.9952371742123401,0.7452371742123401
+18,t0.AreaCode == t1.AreaCode AND t0.HasChild == t1.HasChild AND t0.ChildExemp != t1.ChildExemp,3,100000,427,2,0.9892407685564768,0.7392407685564768
+19,t0.State == t1.State AND t0.MaritalStatus == t1.MaritalStatus AND t0.SingleExemp != t1.SingleExemp,3,100000,979,2,0.9952789949840273,0.7452789949840273
+20,t0.State == t1.State AND t0.MaritalStatus == t1.MaritalStatus AND t0.MarriedExemp != t1.MarriedExemp,3,100000,979,2,0.9953160977227387,0.7453160977227387
+21,t0.Zip == t1.Zip AND t0.HasChild == t1.HasChild AND t0.ChildExemp != t1.ChildExemp,3,100000,0,-1,0.0,0.0
+22,t0.AreaCode == t1.AreaCode AND t0.MaritalStatus == t1.MaritalStatus AND t0.SingleExemp != t1.SingleExemp,3,100000,413,2,0.9888511546987191,0.7388511546987191
+23,t0.AreaCode == t1.AreaCode AND t0.MaritalStatus == t1.MaritalStatus AND t0.MarriedExemp != t1.MarriedExemp,3,100000,413,2,0.988938774324783,0.738938774324783
+24,t0.Zip == t1.Zip AND t0.MaritalStatus == t1.MaritalStatus AND t0.SingleExemp != t1.SingleExemp,3,100000,0,-1,0.0,0.0
+25,t0.Zip == t1.Zip AND t0.MaritalStatus == t1.MaritalStatus AND t0.MarriedExemp != t1.MarriedExemp,3,100000,0,-1,0.0,0.0
+26,t0.State == t1.State AND t0.SingleExemp != t1.SingleExemp AND t0.MarriedExemp == t1.MarriedExemp,3,100000,1239,1,0.9962675234726245,0.7462675234726245
+27,t0.State == t1.State AND t0.SingleExemp == t1.SingleExemp AND t0.MarriedExemp != t1.MarriedExemp,3,100000,1239,2,0.9962968572905027,0.7462968572905027
+28,t0.AreaCode == t1.AreaCode AND t0.SingleExemp != t1.SingleExemp AND t0.MarriedExemp == t1.MarriedExemp,3,100000,546,1,0.9915535083431454,0.7415535083431454
+29,t0.State == t1.State AND t0.Salary == t1.Salary AND t0.Rate != t1.Rate,3,100000,4759,0,0.9702795082476026,0.7202795082476026
+30,t0.AreaCode == t1.AreaCode AND t0.SingleExemp == t1.SingleExemp AND t0.MarriedExemp != t1.MarriedExemp,3,100000,546,2,0.991619889965684,0.741619889965684
+31,t0.Zip == t1.Zip AND t0.SingleExemp != t1.SingleExemp AND t0.MarriedExemp == t1.MarriedExemp,3,100000,0,-1,0.0,0.0
+32,t0.Zip == t1.Zip AND t0.SingleExemp == t1.SingleExemp AND t0.MarriedExemp != t1.MarriedExemp,3,100000,0,-1,0.0,0.0
+33,t0.AreaCode == t1.AreaCode AND t0.Salary == t1.Salary AND t0.Rate != t1.Rate,3,100000,4759,0,0.9309619490730714,0.6809619490730714
+34,t0.Zip == t1.Zip AND t0.Salary == t1.Salary AND t0.Rate != t1.Rate,3,100000,0,-1,0.0,0.0
+35,t0.MaritalStatus == t1.MaritalStatus AND t0.SingleExemp < t1.SingleExemp AND t0.MarriedExemp > t1.MarriedExemp,3,100000,13289,0,0.9995912455162104,0.7495912455162104
+36,t0.MaritalStatus == t1.MaritalStatus AND t0.SingleExemp > t1.SingleExemp AND t0.MarriedExemp < t1.MarriedExemp,3,100000,13368,0,0.999593660617202,0.749593660617202
+37,t0.State == t1.State AND t0.HasChild == t1.HasChild AND t0.ChildExemp > t1.ChildExemp,3,100000,968,2,0.9904278383217867,0.7404278383217867
+38,t0.State == t1.State AND t0.HasChild == t1.HasChild AND t0.ChildExemp < t1.ChildExemp,3,100000,968,2,0.9904500876165756,0.7404500876165756
+39,t0.State == t1.State AND t0.MaritalStatus == t1.MaritalStatus AND t0.SingleExemp > t1.SingleExemp,3,100000,979,2,0.9905263305981404,0.7405263305981404
+40,t0.State == t1.State AND t0.MaritalStatus == t1.MaritalStatus AND t0.SingleExemp < t1.SingleExemp,3,100000,979,2,0.9905195031880568,0.7405195031880568

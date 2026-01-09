@@ -4,7 +4,7 @@ import csv
 # --- CONFIG ---
 DB_NAME = "hospital"
 TABLE_NAME = "hospital_data"
-CSV_PATH = "/DataGeneration/csv_files/hospital.csv"  # <-- change this path
+CSV_PATH = "/Users/adhariya/src/DiffDel/csv_files/hospital.csv"  # <-- change this path
 USER = "root"
 PASSWORD = "my_password"
 HOST = "localhost"
