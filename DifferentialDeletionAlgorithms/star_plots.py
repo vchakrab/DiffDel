@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 import csv
-import os
-import sys
 from math import pi
 import numpy as np
-
 import matplotlib.pyplot as plt
 
 # =============================
@@ -12,25 +9,25 @@ import matplotlib.pyplot as plt
 # =============================
 
 CSV_PATHS = {
-    "Baseline 3": "delmin_data_v2026_2.csv",
-    "Exponential Deletion": "del2ph_January09,202611:02:23AM_efflog.csv",
-    "Greedy Gumbel": "delgum_January09,202611:03:47AM_efflog.csv",
+    "Baseline 3": "delmin_final_data.csv",
+    "Exponential Deletion": "del2ph_January09,202610:50:09PM_hinge.csv",
+    "Greedy Gumbel": "delgum_January10,202610:46:58AM_hinge.csv",
 }
 
 DATASETS = ["airport", "hospital", "flight", "adult", "tax"]
 
-OUTPUT_PDF = "star_plots_avg_metrics_efflog.pdf"
+OUTPUT_PDF = "star_plots_avg_metrics_final.pdf"
 
 # =============================
 # Radar categories (clockwise)
 # =============================
 # (label, aggregated_key, scale)
 CATEGORIES = [
-    ("Avg Mask Size",  "mask_size",    "log"),
-    ("Leakage",        "leakage",      "linear"),
-    ("Avg Time",       "total_time",   "log"),
-    ("Avg Memory (MB)","memory_mb",    "log"),
-    ("Avg Paths",      "paths_blocked","log"),
+    ("Mask Size",        "mask_size",     "linear"),
+    ("Leakage",          "leakage",       "linear"),
+    ("Time",             "total_time",    "linear"),
+    ("Model Size (MB)",  "memory_mb",     "linear"),   # ✅ FIX: use the key you actually aggregate
+    ("Total Paths",      "paths_blocked", "linear"),
 ]
 
 DISPLAY_NAME = {
@@ -39,10 +36,11 @@ DISPLAY_NAME = {
     "Greedy Gumbel": "Gum",
 }
 
+# ✅ FIX: keys should match DISPLAY_NAME outputs ("Min", "2Ph", "Gum")
 LINE_STYLE = {
-    "DelMin": dict(color="red",     linestyle=":",  linewidth=1.6),
-    "DelExp": dict(color="blue",    linestyle="--", linewidth=1.6),
-    "DelGum": dict(color="#006400", linestyle="-",  linewidth=1.6),
+    "Min": dict(color="red",     linestyle=":",  linewidth=1.6),
+    "2Ph": dict(color="blue",    linestyle="--", linewidth=1.6),
+    "Gum": dict(color="#006400", linestyle="-",  linewidth=1.6),
 }
 
 FILL_ALPHA = 0.06
@@ -96,6 +94,8 @@ def load_and_aggregate(csv_path):
             sums[ds]["leakage"] += safe_float(row.get("leakage"))
             sums[ds]["total_time"] += safe_float(row.get("total_time"))
             sums[ds]["paths_blocked"] += safe_float(row.get("paths_blocked"))
+
+            # memory_overhead_bytes -> MB
             sums[ds]["memory_mb"] += safe_float(row.get("memory_overhead_bytes")) / (1024 ** 2)
 
             cnts[ds] += 1
@@ -116,9 +116,6 @@ def log_norm(v, vmax):
 
 def lin_norm(v, vmax):
     return v / vmax if vmax > 0 else 0.0
-
-def inv_log(r, vmax):
-    return (vmax + 1.0) ** r - 1.0
 
 # =============================
 # Radar plot
@@ -203,10 +200,7 @@ def main():
     )
 
     for ax, ds in zip(axes, DATASETS):
-        metrics = {
-            method: all_metrics[method].get(ds)
-            for method in CSV_PATHS
-        }
+        metrics = {method: all_metrics[method].get(ds) for method in CSV_PATHS}
         axis_max = compute_axis_max(metrics)
         star_plot(ax, metrics, ds, axis_max)
 

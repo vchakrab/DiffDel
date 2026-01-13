@@ -54,11 +54,11 @@ ORIGINAL_TABLE_NAMES = {
     "tax" : "tax_data",
 }
 K_SIZE = {
-    "airport": 7,
-    "hospital": 11,
-    "adult": 13,
-    "flight": 14,
-    "tax": 4,
+    "airport": 6,
+    "hospital": 10,
+    "adult": 12,
+    "flight": 13,
+    "tax": 3,
 }
 TARGET_ATTR = {
     "airport": "scheduled_service",
@@ -68,7 +68,7 @@ TARGET_ATTR = {
     "flight": "FlightNum"
 }
 
-ITERS = 50
+ITERS = 100
 
 
 # ----------------------------
@@ -324,12 +324,10 @@ def estimate_paths_blocked(num_paths: int, leakage: Optional[float]) -> int:
 
 def write_csv_header(f):
     f.write(
-        "method,dataset,target_attribute,total_time,init_time,model_time,update_time,"
+        "method,dataset,target_attribute,total_time,init_time,model_time,del_time,"
         "leakage,baseline_leakage_empty_mask,utility,"
-        "blocked,total_paths,paths_blocked,num_paths,mask_size,"
-        "memory_overhead_bytes,num_instantiated_cells,num_cells_updated,"
-        "epsilon,lambda,lam,rho,tau,leakage_method,"
-        "num_channel_edges,num_rdrs,greedy_time,inference_zone_size,denom_I_minus_1,total_time_minus_init\n"
+        "total_paths,mask_size,"
+        "model_size,num_instantiated_cells"
     )
 
 
@@ -347,30 +345,14 @@ def write_csv_row(f, row: Dict[str, Any]):
             fmt(row.get("total_time")),
             fmt(row.get("init_time")),
             fmt(row.get("model_time")),
-            fmt(row.get("update_time")),
+            fmt(row.get("del_time")),
             fmt(row.get("leakage")),
             fmt(row.get("baseline_leakage_empty_mask")),
             fmt(row.get("utility")),
-            fmt(row.get("blocked")),
             fmt(row.get("total_paths")),
-            fmt(row.get("paths_blocked")),
-            fmt(row.get("num_paths")),
             fmt(row.get("mask_size")),
             fmt(row.get("memory_overhead_bytes")),
             fmt(row.get("num_instantiated_cells")),
-            fmt(row.get("num_cells_updated")),
-            fmt(row.get("epsilon")),
-            fmt(row.get("lambda")),
-            fmt(row.get("lam")),
-            fmt(row.get("rho")),
-            fmt(row.get("tau")),
-            fmt(row.get("leakage_method")),
-            fmt(row.get("num_channel_edges")),
-            fmt(row.get("num_rdrs")),
-            fmt(row.get("greedy_time")),
-            fmt(row.get("inference_zone_size")),
-            fmt(row.get("denom_I_minus_1")),
-            fmt(row.get("total_time_minus_init"))
         ]) + "\n"
     )
 
@@ -382,15 +364,12 @@ def standardize_row(
     attr: str,
     raw: Dict[str, Any],
     update_time: float,
-    num_cells_updated: int,
-    paths_blocked: int,
-    memory_overhead_bytes: int,
 ) -> Dict[str, Any]:
     init_time = raw.get("init_time")
-    model_time = float(raw.get("model_time", 0.0) or 0.0)
-    del_time = float(raw.get("del_time", 0.0) or 0.0)
+    model_time = float(raw.get("model_time"))
+    del_time = float(raw.get("del_time"))
     delete_db_time = float(update_time)
-    total_time = init_time + model_time + del_time + delete_db_time
+    total_time = init_time + model_time + del_time
     total_time_minus_init = total_time - init_time #useful only for 2ph
 
     return {
@@ -400,34 +379,15 @@ def standardize_row(
         "total_time": total_time,
         "init_time": init_time,
         "model_time": model_time,
-        # "del_time": del_time,
-        # "delete_db_time": delete_db_time,
-        "update_time": float(update_time),
+        "del_time": del_time,
         "leakage": raw.get("leakage"),
-        "baseline_leakage_empty_mask": raw.get("baseline_leakage_empty_mask", raw.get("baseline_leakage", raw.get("L_empty", None))),
+        "baseline_leakage_empty_mask": raw.get("baseline_leakage"),
         "utility": raw.get("utility"),
-        # requested explicit columns
-        "blocked": int(raw.get("paths_blocked", paths_blocked)),
         "total_paths": int(raw.get("num_paths", -1) or -1),
-        "paths_blocked": int(paths_blocked),
         "mask_size": int(raw.get("mask_size", 0) or 0),
-        "num_paths": int(raw.get("num_paths", -1) or -1),
-        "memory_overhead_bytes": int(memory_overhead_bytes),
+        "memory_overhead_bytes": raw.get("memory_overhead_bytes"),
         "num_instantiated_cells": raw.get("num_instantiated_cells", None),
-        "num_cells_updated": int(num_cells_updated),
         # passthrough method params / diagnostics when present
-        "epsilon": raw.get("epsilon", None),
-        "lambda": raw.get("lambda", None),
-        "lam": raw.get("lam", None),
-        "rho": raw.get("rho", None),
-        "tau": raw.get("tau", None),
-        "leakage_method": raw.get("leakage_method", None),
-        "num_channel_edges": raw.get("num_channel_edges", None),
-        "num_rdrs": raw.get("num_rdrs", None),
-        "greedy_time": raw.get("greedy_time", None),
-        "inference_zone_size": raw.get("inference_zone_size", None),
-        "denom_I_minus_1": raw.get("denom_I_minus_1", None),
-        "total_time_minus_init": total_time_minus_init
     }
 
 
@@ -448,7 +408,7 @@ def run_delmin(out_csv: str):
                 key = get_random_key(ds)
                 if key is None:
                     continue
-
+                int(activated_dependencies_count),
                 try:
                     (
                         activated_dependencies_count,
@@ -458,9 +418,9 @@ def run_delmin(out_csv: str):
                         init_time,
                         model_time,
                         del_time,
-                        num_instantiated,
                         leakage,
                         utility,
+                        num_instantiated,
                         total_paths,
                         paths_blocked,
                     ) = baseline_deletion_3.baseline_deletion_3(
@@ -685,46 +645,25 @@ def run_delgum(
                         K=int(K_SIZE[ds]),
                         leakage_method=str(leakage_method),
                     )
+                    if verbose:
 
-                    # ensure params are present for CSV
-                    raw.setdefault("epsilon", float(epsilon))
-                    raw.setdefault("lam", float(lam))
-                    raw.setdefault("leakage_method", str(leakage_method))
-
-                    mask_obj = raw.get("mask", set())
-
-                    # update-to-null measured separately
-                    upd_t, upd_cnt = update_mask_to_null(ds, key, (mask_obj.update({attr})))
-
-                    # Prefer method-provided counts (these are actual inference chains)
-                    num_paths = int(raw.get("num_paths", -1) or -1)
-                    if "paths_blocked" in raw and raw.get("paths_blocked") is not None:
-                        paths_blocked = int(raw.get("paths_blocked") or 0)
-                    else:
-                        leakage = raw.get("leakage", None)
-                        paths_blocked = estimate_paths_blocked(num_paths, leakage)
-
-                    # IMPORTANT: use method-provided memory (MEDIUM)
-                    memory_overhead = int(raw.get("memory_overhead_bytes", 0) or 0)
-
-                    row = standardize_row(
+                        mask_obj = raw.get("mask", set())
+                        upd_t, upd_cnt = update_mask_to_null(ds, key, (mask_obj.update({attr})))
+                        raw["del_time"] = upd_t
+                        row = standardize_row(
                         method=method_name,
                         dataset=ds,
                         attr=attr,
                         raw=raw,
                         update_time=upd_t,
-                        num_cells_updated=upd_cnt,
-                        paths_blocked=paths_blocked,
-                        memory_overhead_bytes=memory_overhead,
-                    )
 
-                    if verbose:
+                        )
                         write_csv_row(f, row)
                     else:
                         if to_write == "lambda":
-                            f.write(f"{lam},{row['leakage']},{row['utility']},{row['mask_size']}\n")
+                            f.write(f"{lam},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
                         elif to_write == "epsilon":
-                            f.write(f"{epsilon},{row['leakage']},{row['utility']},{row['mask_size']}\n")
+                            f.write(f"{epsilon},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
 
                 except Exception as e:
                     print(f"  [delgum] iter {i+1} error: {e}")
@@ -740,6 +679,8 @@ def run_del2ph(
     leakage_method: str = "greedy_disjoint",
     template_dir: str = "templates",
     method_name: str = "del2ph",
+    verbose: bool = False,
+    which_ablation: Optional[str] = None,
 ):
     """
     2-phase exponential-style (NEW λ/ε):
@@ -752,9 +693,21 @@ def run_del2ph(
       lam = 0.5
     """
     TEMPLATE_DIR = str(template_dir)
+    to_write = None
+    if which_ablation is None:
+        pass
+    elif which_ablation == "l":
+        to_write = "lambda"
+    elif which_ablation == "e":
+        to_write = "epsilon"
+    else:
+        raise ValueError("which_ablation must be one of: None, 'l' (lambda), 'e' (epsilon)")
 
-    with open(out_csv, "w", newline="") as f:
-        write_csv_header(f)
+    with open(out_csv, "a", newline = "") as f:
+        if verbose:
+            write_csv_header(f)
+        else:
+            f.write(f"{to_write},leakage,utility,mask_size\n")
 
         for ds in DATASETS:
             ds = normalize_dataset_name(ds)
@@ -777,35 +730,24 @@ def run_del2ph(
                         template_dir=TEMPLATE_DIR,
                         mask_method=mask_method,
                     )
-
-                    # ensure params are present for CSV
-                    raw.setdefault("epsilon", float(epsilon))
-                    raw.setdefault("lam", float(lam))
-                    raw.setdefault("leakage_method", str(leakage_method))
-
-                    mask_obj = raw.get("mask", set())
-                    upd_t, upd_cnt = update_mask_to_null(ds, key, (mask_obj.update({attr})))
-                    print(upd_t, upd_cnt)
-                    num_paths = int(raw.get("num_paths", -1) or -1)
-                    if "paths_blocked" in raw and raw.get("paths_blocked") is not None:
-                        paths_blocked = int(raw.get("paths_blocked") or 0)
-                    else:
-                        leakage = raw.get("leakage", None)
-                        paths_blocked = estimate_paths_blocked(num_paths, leakage)
-
-                    memory_overhead = int(raw.get("memory_overhead_bytes", 0) or 0)
-                    print(raw)
-                    row = standardize_row(
+                    if verbose:
+                        mask_obj = raw.get("mask", set())
+                        upd_t, upd_cnt = update_mask_to_null(ds, key, (mask_obj.update({attr})))
+                        raw["del_time"] = upd_t
+                        row = standardize_row(
                         method=method_name,
                         dataset=ds,
                         attr=attr,
                         raw=raw,
-                        update_time=upd_t,
-                        num_cells_updated=upd_cnt,
-                        paths_blocked=paths_blocked,
-                        memory_overhead_bytes=memory_overhead,
-                    )
-                    write_csv_row(f, row)
+                        update_time = upd_t
+                        )
+                        write_csv_row(f, row)
+                    else:
+                        if to_write == "lambda":
+                            f.write(f"{lam},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+                        elif to_write == "epsilon":
+                            f.write(
+                                f"{epsilon},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
 
                 except Exception as e:
                     print(f"  [del2ph] iter {i+1} error: {e}")
@@ -855,13 +797,38 @@ def main():
     # cleanup_database_copies()
     setup_database_copies()
     run_del2ph(f"del2ph_{time.strftime("%B%d,%Y%I:%M:%S%p")}_hinge.csv",
-                         epsilon = 25, lam = 0.75, leakage_method = "greedy_disjoint",)
+                         epsilon = 25, lam = 0.75, leakage_method = "greedy_disjoint",verbose=True)
     cleanup_database_copies()
     setup_database_copies()
     run_delgum(f"delgum_{time.strftime("%B%d,%Y%I:%M:%S%p")}_hinge.csv",
-                         epsilon = 25, lam = 0.75, leakage_method = "greedy_disjoint", verbose = True)
+               epsilon = 25, lam = 0.75, leakage_method = "greedy_disjoint", verbose=True)
     cleanup_database_copies()
 
+    # setup_database_copies()
+    # for i in range(1, 11):
+    #     run_delgum(f"data/delgum_{i}.csv",
+    #                      epsilon = 25, lam = i/10, leakage_method = "greedy_disjoint", which_ablation = "l")
+    # cleanup_database_copies()
+    # setup_database_copies()
+    # for i in range(1, 11):
+    #     run_del2ph(f"data/del2ph_{i}.csv", epsilon =25, lam =i/10, leakage_method = "greedy_disjoint", which_ablation = "l")
+    # cleanup_database_copies()
+    # values = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300]
+    # setup_database_copies()
+    # for i in values:
+    #     run_delgum(f"epsilon_ablation_original/delgum_{i}.csv",
+    #                epsilon = i, lam = 0.75, leakage_method = "greedy_disjoint",
+    #                which_ablation = "e")
+    # cleanup_database_copies()
+    # setup_database_copies()
+    # for i in values:
+    #     run_del2ph(f"epsilon_ablation_original/del2ph_{i}.csv",
+    #                epsilon = i, lam = 0.75, leakage_method = "greedy_disjoint",
+    #                which_ablation = "e")
+    # cleanup_database_copies()
+    # setup_database_copies()
+    # run_delmin("delmin_final_data.csv")
+    # cleanup_database_copies()
     # setup_database_copies()
     # run_delexp_canonical(f"delexp_canonical_data_{time.strftime("%B%d,%Y%I:%M:%S%p")}_1.0lam.csv",
     #                      epsilon = 25, lam = .75, leakage_method = "greedy_disjoint")
@@ -891,7 +858,7 @@ if __name__ == "__main__":
     # #
     # # #exp 2
     # setup_database_copies()
-    # VALUES = [0.1, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300]
+    # VALUES = [0.1, 0.51, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300]
     # for i in VALUES:
     #     run_delgum("ablation_delgum_epsilon_v1.csv", lam = 0.5, which_ablation = "e", epsilon = i)
     # cleanup_database_copies()

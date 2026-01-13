@@ -2,14 +2,18 @@
 """
 del2ph.py (two-phase deletion) that IMPORTS EVERYTHING from your leakage module.
 
-You said: don't re-define leakage / hypergraph / map_dc_to_weight / etc here.
-So this file only:
-  - loads parsed DCs
-  - calls leakage.dc_to_rdrs_and_weights(...)
-  - calls leakage.construct_local_hypergraph(...)
-  - calls leakage.leakage(...)
-  - calls leakage.compute_utility(...)
-  - does exp-mech + caching + sampling
+Memory metric CHANGE (per your request):
+  - This file already saves the TEMPLATE as a pkl.
+  - We now ALSO save the ONLINE hypergraph (H_now) as a pkl.
+  - We report memory as:
+        memory_overhead_bytes = (template_pkl_size_bytes) + (hypergraph_pkl_size_bytes) + sizeof(py_float)
+    where sizeof(py_float) = sys.getsizeof(0.0)
+
+Notes:
+  - Template is saved in build_template_two_phase(...) as before.
+  - We ensure the template file size is read from disk (actual bytes).
+  - We pickle H_now (or a snapshot fallback if needed) and add its file size too.
+  - We keep your existing fields, but set "memory_overhead_bytes" to the new definition.
 """
 
 from __future__ import annotations
@@ -17,19 +21,19 @@ from __future__ import annotations
 import os
 import time
 import pickle
+import re
+import sys
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, FrozenSet
 from itertools import chain, combinations
 from sys import getsizeof
 
 import numpy as np
 
-from DifferentialDeletionAlgorithms.leakage import compute_utility_logarithmic, \
-    compute_utility_hinge
+from DifferentialDeletionAlgorithms.leakage import compute_utility, compute_utility_hinge
+
 # ============================================================
 # IMPORT *ALL* CORE METHODS FROM leakage.py
-# (this is exactly the big blob you pasted)
 # ============================================================
-
 from leakage import (
     # weights + DC -> (rdrs, weights)
     get_dataset_weights,
@@ -46,12 +50,20 @@ from leakage import (
     compute_utility,
 
     # leakage (Algorithm 2/5)
-    leakage as leakage_model, hypergraph_to_edge_dict, iter_chains,
+    leakage as leakage_model,
+    hypergraph_to_edge_dict,
+    iter_chains,
 )
 
 # ============================================================
 # Helpers (non-core)
 # ============================================================
+
+def powerset(iterable: Iterable[Any]) -> Iterable[Tuple[Any, ...]]:
+    s = list(iterable)
+    return chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))
+
+
 def compute_candidate_masks(
     target_cell: str,
     H_max: Hypergraph,
@@ -71,10 +83,13 @@ def compute_candidate_masks(
     """
     zone_set = H_max.vertices - {target_cell}
     zone = sorted(zone_set)
+    print(zone)
 
-    # if mask_space is None:
+    # NOTE: your original code returns here unconditionally (so canonical is unreachable).
+    # Keeping your exact behavior as given.
     return [frozenset(m) for m in powerset(zone)] or [frozenset()]
 
+    # --- unreachable canonical branch (kept for completeness) ---
     if str(mask_space).lower() != "canonical":
         raise ValueError(f"mask_space must be None or 'canonical' (got {mask_space!r}).")
 
@@ -116,9 +131,6 @@ def compute_candidate_masks(
             candidates.add(topN[i] | topN[j])
 
     return list(candidates)
-def powerset(iterable: Iterable[Any]) -> Iterable[Tuple[Any, ...]]:
-    s = list(iterable)
-    return chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))
 
 
 def stable_softmax(scores: np.ndarray) -> np.ndarray:
@@ -134,13 +146,13 @@ def stable_softmax(scores: np.ndarray) -> np.ndarray:
 
 def exp_mech_probs(utilities: np.ndarray, epsilon: float, lam: float) -> np.ndarray:
     # scores = (ε * u) / (2λ)
-    sens =float(lam)
+    sens = float(lam)
     scores = (float(epsilon) * utilities.astype(float)) / (2.0 * sens)
     return stable_softmax(scores)
 
 
 def deep_sizeof(obj: Any, *, seen: Optional[Set[int]] = None) -> int:
-    """Rough recursive memory estimate."""
+    """Rough recursive memory estimate (unused in the new memory metric)."""
     if seen is None:
         seen = set()
     oid = id(obj)
@@ -159,6 +171,64 @@ def deep_sizeof(obj: Any, *, seen: Optional[Set[int]] = None) -> int:
             size += deep_sizeof(x, seen=seen)
 
     return int(size)
+
+
+def _safe_filename(s: str) -> str:
+    s = str(s)
+    s = re.sub(r"[^A-Za-z0-9._-]+", "_", s)
+    return s.strip("_") or "obj"
+
+
+def save_hypergraph_pkl(
+    hg: Any,
+    *,
+    dataset: str,
+    target_cell: str,
+    mode: str,
+    out_dir: str,
+    prefix: str = "hg",
+) -> Tuple[str, int, bool]:
+    """
+    Save hypergraph to pickle; if it fails, save a snapshot dict.
+    Returns (path, size_bytes, pickled_ok).
+    """
+    os.makedirs(out_dir, exist_ok=True)
+    fname = f"{prefix}_{_safe_filename(dataset)}_{_safe_filename(target_cell)}_{_safe_filename(mode)}.pkl"
+    path = os.path.join(out_dir, fname)
+
+    pickled_ok = True
+    try:
+        with open(path, "wb") as f:
+            pickle.dump(hg, f, protocol=pickle.HIGHEST_PROTOCOL)
+    except Exception:
+        pickled_ok = False
+        snapshot = {
+            "__class__": type(hg).__name__ if hg is not None else None,
+            "__module__": type(hg).__module__ if hg is not None else None,
+            "__dict__": getattr(hg, "__dict__", None) if hg is not None else None,
+            "vertices": getattr(hg, "vertices", None) if hasattr(hg, "vertices") else None,
+            "edges": getattr(hg, "edges", None) if hasattr(hg, "edges") else None,
+            "hyperedges": getattr(hg, "hyperedges", None) if hasattr(hg, "hyperedges") else None,
+            "out": getattr(hg, "out", None) if hasattr(hg, "out") else None,
+            "adj": getattr(hg, "adj", None) if hasattr(hg, "adj") else None,
+        }
+        with open(path, "wb") as f:
+            pickle.dump(snapshot, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    size_bytes = os.path.getsize(path) if os.path.exists(path) else 0
+    return path, int(size_bytes), bool(pickled_ok)
+
+
+def template_pkl_path(dataset: str, target_attribute: str, save_dir: str) -> str:
+    return os.path.join(save_dir, f"{dataset}_{target_attribute}.pkl")
+
+
+def get_template_pkl_size_bytes(dataset: str, target_attribute: str, save_dir: str) -> int:
+    p = template_pkl_path(dataset, target_attribute, save_dir)
+    try:
+        return int(os.path.getsize(p))
+    except Exception:
+        return 0
 
 
 # ============================================================
@@ -184,9 +254,8 @@ def load_parsed_dcs_for_dataset(dataset: str) -> List[List[Tuple[str, str, str]]
         return []
 
 
-
 # ============================================================
-# OFFLINE: build + cache template (now uses leakage.py end-to-end)
+# OFFLINE: build + cache template (leakage.py end-to-end)
 # ============================================================
 
 def build_template_two_phase(
@@ -197,9 +266,9 @@ def build_template_two_phase(
     epsilon: float = 50.0,
     lam: float = 0.5,
     tau: Optional[float] = None,
-    leakage_method: str = "greedy_disjoint",   # or "greedy_disjoint"
+    leakage_method: str = "greedy_disjoint",
     hypergraph_mode: str = "MAX",
-    mask_space = None# "MAX" or "ACTUAL"
+    mask_space=None,  # None / "canonical"
 ) -> Dict[str, Any]:
     # 1) load DCs
     raw_dcs = load_parsed_dcs_for_dataset(dataset)
@@ -215,25 +284,25 @@ def build_template_two_phase(
     # 3) DCs -> rdrs + weights (imported)
     rdrs, rdr_weights = dc_to_rdrs_and_weights(init_manager)
 
-    # 4) Local hypergraph around target (imported)
+    # 4) Hypergraph around target (imported)
     if str(hypergraph_mode).upper() == "ACTUAL":
         H: Hypergraph = construct_hypergraph_actual(target_attribute, rdrs, rdr_weights)
     else:
         H = construct_hypergraph_max(target_attribute, rdrs, rdr_weights)
 
-    # 5) Inference zone I(c*) = direct neighbors of target (edges incident to target)
+
+    # 5) Inference zone I(c*) = neighbors of target (edges incident to target)
     zone_set: Set[str] = set()
     for (edge_verts, _w) in getattr(H, "edges", []):
-        if target_attribute in edge_verts:
-            for v in edge_verts:
-                if v != target_attribute:
-                    zone_set.add(v)
+        for v in edge_verts:
+            if v != target_attribute:
+                zone_set.add(v)
 
     zone: List[str] = sorted(zone_set)
     zone_size = len(zone)
 
     # 6) Candidate masks
-    candidate_masks = compute_candidate_masks(target_attribute,H, mask_space = mask_space )
+    candidate_masks = compute_candidate_masks(target_attribute, H, mask_space=mask_space)
     if not candidate_masks:
         candidate_masks = [frozenset()]
 
@@ -241,7 +310,7 @@ def build_template_two_phase(
     Utility: Dict[FrozenSet[str], float] = {}
     Probability: Dict[FrozenSet[str], float] = {}
 
-    # Optional diagnostics from leakage.py
+    # Diagnostics
     NumChains: Dict[FrozenSet[str], int] = {}
     ActiveChains: Dict[FrozenSet[str], int] = {}
     BlockedChains: Dict[FrozenSet[str], int] = {}
@@ -258,7 +327,7 @@ def build_template_two_phase(
             leakage_method=leakage_method,
         )
 
-        U = compute_utility_hinge(leakage=float(L), mask_size=len(m), lam=float(lam), zone_size=zone_size)
+        U = compute_utility(leakage=float(L), mask_size=len(m), lam=float(lam), zone_size=zone_size)
 
         Leakage[m] = float(L)
         Utility[m] = float(U)
@@ -272,7 +341,7 @@ def build_template_two_phase(
     for m, p in zip(candidate_masks, probs_arr):
         Probability[m] = float(p)
 
-    L_empty = float(Leakage.get(frozenset(), 0.0))
+    L_empty = leakage_model(mask=set(), target_cell=target_attribute, hypergraph=H,leakage_method=leakage_method, tau=tau)
 
     T: Dict[str, Any] = {
         "dataset": str(dataset),
@@ -301,15 +370,15 @@ def build_template_two_phase(
     }
 
     os.makedirs(save_dir, exist_ok=True)
-    pkl_path = os.path.join(save_dir, f"{dataset}_{target_attribute}.pkl")
+    pkl_path = template_pkl_path(dataset, target_attribute, save_dir)
     with open(pkl_path, "wb") as f:
-        pickle.dump(T, f)
+        pickle.dump(T, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     return T
 
 
 def load_template_two_phase(dataset: str, target_attribute: str, *, save_dir: str = "templates_2ph") -> Dict[str, Any]:
-    pkl_path = os.path.join(save_dir, f"{dataset}_{target_attribute}.pkl")
+    pkl_path = template_pkl_path(dataset, target_attribute, save_dir)
     with open(pkl_path, "rb") as f:
         return pickle.load(f)
 
@@ -328,8 +397,8 @@ def two_phase_deletion_main(
     tau: Optional[float] = None,
     leakage_method: str = "greedy_disjoint",
     hypergraph_mode: str = "MAX",
-    template_dir: str = f"templates",
-    mask_method: str = 'None',
+    template_dir: str = "templates",
+    mask_method: str = "None",
     rng: Optional[np.random.Generator] = None,
 ) -> Dict[str, Any]:
     if rng is None:
@@ -337,7 +406,7 @@ def two_phase_deletion_main(
 
     init_time = 0.0
 
-    # load / build
+    # load / build template
     try:
         T = load_template_two_phase(dataset, target_cell, save_dir=template_dir)
     except FileNotFoundError:
@@ -352,12 +421,9 @@ def two_phase_deletion_main(
             tau=tau,
             leakage_method=leakage_method,
             hypergraph_mode=hypergraph_mode,
-            mask_space = mask_method
+            mask_space=mask_method,
         )
-
-        end_time = time.time() - start_time
-        init_time = end_time
-
+        init_time = float(time.time() - start_time)
 
     # ensure cache matches params
     if (
@@ -379,8 +445,12 @@ def two_phase_deletion_main(
             leakage_method=leakage_method,
             hypergraph_mode=hypergraph_mode,
         )
-        end_time = time.time() - start_time
-        init_time = end_time
+        init_time = float(time.time() - start_time)
+
+    # template file size (now that it exists / refreshed)
+    template_bytes = get_template_pkl_size_bytes(dataset, target_cell, template_dir)
+    py_float_bytes = int(sys.getsizeof(0.0))
+
     model_start = time.time()
 
     masks: List[FrozenSet[str]] = T["R_intra"]
@@ -395,15 +465,19 @@ def two_phase_deletion_main(
 
     idx = int(rng.choice(len(masks), p=probs))
     chosen = masks[idx]
-
     model_time = float(time.time() - model_start)
 
     leakage_val = float(T["Leakage"][chosen])
     utility_val = float(T["Utility"][chosen])
+    leakage_empty = float(T["baseline_leakage_empty_mask"])
     mask_set = set(chosen)
 
-    # Recompute inference-chain counts for THIS sampled mask (not a proxy pulled from the template)
-    # This ensures num_paths / paths_blocked correspond to the exact inference chains under `mask_set`.
+    # Recompute inference-chain counts for THIS sampled mask
+    H_now: Optional[Hypergraph] = None
+    hg_pkl_path = ""
+    hg_pkl_bytes = 0
+    hg_pickled_ok = False
+
     try:
         raw_dcs_now = load_parsed_dcs_for_dataset(dataset)
 
@@ -416,7 +490,7 @@ def two_phase_deletion_main(
         rdrs_now, rdr_weights_now = dc_to_rdrs_and_weights(init_manager_now)
 
         if str(hypergraph_mode).upper() == "ACTUAL":
-            H_now: Hypergraph = construct_hypergraph_actual(target_cell, rdrs_now, rdr_weights_now)
+            H_now = construct_hypergraph_actual(target_cell, rdrs_now, rdr_weights_now)
         else:
             H_now = construct_hypergraph_max(target_cell, rdrs_now, rdr_weights_now)
 
@@ -428,32 +502,54 @@ def two_phase_deletion_main(
             return_counts=True,
             leakage_method=leakage_method,
         )
-    except Exception:
 
-        # fallback (should be rare): use precomputed template diagnostics if recomputation fails
+        # ✅ save H_now as pkl and get file size
+        hg_pkl_path, hg_pkl_bytes, hg_pickled_ok = save_hypergraph_pkl(
+            H_now,
+            dataset=dataset,
+            target_cell=target_cell,
+            mode=str(hypergraph_mode),
+            out_dir="hypergraphs_pkl_2ph",
+            prefix="hg2ph",
+        )
+
+    except Exception:
+        # fallback: use precomputed template diagnostics if recomputation fails
         num_paths = int(T.get("NumChains", {}).get(chosen, -1))
         paths_blocked = int(T.get("BlockedChains", {}).get(chosen, 0))
 
+        # still try to pickle whatever we have (likely None -> small snapshot)
+        hg_pkl_path, hg_pkl_bytes, hg_pickled_ok = save_hypergraph_pkl(
+            H_now,
+            dataset=dataset,
+            target_cell=target_cell,
+            mode=str(hypergraph_mode),
+            out_dir="hypergraphs_pkl_2ph",
+            prefix="hg2ph",
+        )
+
     del_time = 0.0  # runner measures actual update-to-null time elsewhere
 
-    memory_overhead_bytes = deep_sizeof(T) + deep_sizeof(mask_set)
+    # ✅ NEW memory metric:
+    # template pkl bytes + hypergraph pkl bytes + sizeof(py_float)
+    memory_overhead_bytes = int(template_bytes + int(hg_pkl_bytes) + py_float_bytes)
+
     num_instantiated_cells = int(T.get("num_instantiated_cells", len(T.get("zone", []))))
 
     return {
         "init_time": float(init_time),
         "model_time": float(model_time),
         "del_time": float(del_time),
-
         "leakage": float(leakage_val),
         "utility": float(utility_val),
         "mask_size": int(len(mask_set)),
-        "mask": set(mask_set),
-
+        "mask": mask_set,
+        "baseline_leakage": float(leakage_empty),
         "num_paths": int(num_paths),
-        "paths_blocked": int(paths_blocked),
-
         "memory_overhead_bytes": int(memory_overhead_bytes),
         "num_instantiated_cells": int(num_instantiated_cells),
+
+
     }
 
 
@@ -462,10 +558,8 @@ def two_phase_deletion_main(
 # ============================================================
 
 if __name__ == "__main__":
-    # quick sanity run:
-    # python del2ph.py
-    # ds = "airport"
-    # tgt = "scheduled_service"
-    # out = two_phase_deletion_main(ds, key=1, target_cell=tgt)
     print(two_phase_deletion_main("adult", key=1, target_cell="education"))
-
+    print(two_phase_deletion_main("flight", key = 1, target_cell = "FlightNum"))
+    print(two_phase_deletion_main("tax", key = 1, target_cell = "marital_status"))
+    print(two_phase_deletion_main("airport", key = 1, target_cell = "scheduled_service"))
+    print(two_phase_deletion_main("hospital", key = 1, target_cell = "ProviderNumber"))

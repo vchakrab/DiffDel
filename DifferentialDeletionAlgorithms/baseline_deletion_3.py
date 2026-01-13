@@ -10,10 +10,15 @@ FIX (this version):
   - "instantiated cell count" now reports ALL cells/attributes that are "touched/considered"
     while scanning relevant edges (even if later filtered by insertion-time).
   - Still returns the ILP-instantiated count separately for memory sizing correctness.
+
+NEW (this version):
+  - Saves the built ILP model to a .ilp file (Gurobi write()).
+  - Reports the .ilp file size (bytes) and adds it into memory_bytes as “memory overhead”.
 """
 
 from __future__ import annotations
 import time
+import os
 from dataclasses import dataclass
 from typing import Any, Dict, Set, Tuple, Optional
 from leakage import (
@@ -140,7 +145,7 @@ def instantiate_edges_with_time_filter(
 ):
     """
     Returns instantiated edges (after insertion-time filtering).
-    Additionally (FIX): if touched_cells is provided, we count ALL cells appearing
+    Additionally: if touched_cells is provided, we count ALL cells appearing
     in any relevant edge (i.e., edge contains curr attr) as "touched/considered",
     even if they do not survive the time filter.
     """
@@ -150,7 +155,7 @@ def instantiate_edges_with_time_filter(
         if attr not in edge_attr_names:
             continue
 
-        # ✅ Count all cells in this relevant edge as "touched"
+        # Count all cells in this relevant edge as "touched"
         if touched_cells is not None:
             for edge_attr in edge_attrs:
                 touched_cells.add(CellILP(edge_attr, key))
@@ -175,7 +180,19 @@ def ilp_approach_matching_java(
     target_attr,
     target_time,
     hypergraph: Dict[Tuple[str, ...], float],
-):
+    *,
+    ilp_write_path: Optional[str] = None,  # ✅ NEW
+) -> Tuple[
+    Set[CellILP],
+    float,
+    int,
+    int,
+    int,
+    int,
+    int,
+    int,
+    int,  # ✅ NEW: ilp_file_bytes
+]:
     if not GUROBI_AVAILABLE:
         raise RuntimeError("Gurobi required")
 
@@ -188,7 +205,7 @@ def ilp_approach_matching_java(
     instantiated_cells: Set[CellILP] = set()
     cells_to_visit = deque()
 
-    # ✅ NEW: touched/considered cells count
+    # touched/considered cells count
     touched_cells: Set[CellILP] = set()
 
     cell_to_depth = {}
@@ -213,7 +230,6 @@ def ilp_approach_matching_java(
     cells_to_visit.append(deleted_cell)
     instantiated_cells.add(deleted_cell)
 
-    # ✅ touched includes the target cell
     touched_cells.add(deleted_cell)
 
     while cells_to_visit:
@@ -246,9 +262,6 @@ def ilp_approach_matching_java(
             tail_tji_vars = []
             for cell_attr in edge:
                 cell = CellILP(cell_attr, key)
-
-                # Note: cell_attr is already in touched_cells (because we touched whole edge),
-                # but leaving this harmless.
                 touched_cells.add(cell)
 
                 if cell not in cell_to_id:
@@ -277,6 +290,19 @@ def ilp_approach_matching_java(
                 model.addConstr(quicksum(tail_tji_vars) >= bi, name=f"tail_req_{edge_counter}")
 
     model.setObjective(obj, GRB.MINIMIZE)
+
+    # ✅ NEW: write model to disk before optimize (captures full model)
+    ilp_file_bytes = 0
+    if ilp_write_path:
+        try:
+            os.makedirs(os.path.dirname(ilp_write_path) or ".", exist_ok=True)
+            model.write(ilp_write_path)
+            if os.path.exists(ilp_write_path):
+                ilp_file_bytes = int(os.path.getsize(ilp_write_path))
+        except Exception as e:
+            print(f"[WARN] Failed to write ILP model to {ilp_write_path}: {e}")
+            ilp_file_bytes = 0
+
     model.optimize()
 
     if model.status == GRB.INFEASIBLE:
@@ -302,7 +328,6 @@ def ilp_approach_matching_java(
     model.dispose()
     total_ilp_time = time.time() - start_total_ilp
 
-    # ✅ Return both:
     num_cells_instantiated = len(cell_to_id)   # vars/cells created in ILP
     num_cells_touched = len(touched_cells)     # all cells considered/touched
 
@@ -315,6 +340,7 @@ def ilp_approach_matching_java(
         activated_dependencies_count,
         ilp_num_vars,
         ilp_num_constrs,
+        ilp_file_bytes,  # ✅ NEW
     )
 
 
@@ -368,12 +394,14 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
     memory_bytes = 0
     max_depth = 0
 
-    # We'll keep both; use touched for reporting, instantiated for memory.
     num_cells_instantiated = 0
     num_cells_touched = 0
 
     leakage_val = 0.0
     utility = 0.0
+
+    # ✅ NEW: ILP file accounting
+    ilp_file_bytes = 0
 
     try:
         deletion_start = time.time()
@@ -393,6 +421,10 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
 
         target_time = get_insertion_time(cursor, table, key, target)
 
+        # ✅ NEW: choose an .ilp filename per run
+        ilp_dir = "ilp_models"
+        ilp_path = os.path.join(ilp_dir, f"{dataset}_{table}_{target}_key{key}.lp")
+
         (
             to_del_cells,
             total_ilp_time,
@@ -401,8 +433,12 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
             num_cells_touched,
             activated_dependencies_count,
             ilp_num_vars,
-            ilp_num_constrs
-        ) = ilp_approach_matching_java(cursor, table, key, target, target_time, hyperedge_dict)
+            ilp_num_constrs,
+            ilp_file_bytes,   # ✅ NEW
+        ) = ilp_approach_matching_java(
+            cursor, table, key, target, target_time, hyperedge_dict,
+            ilp_write_path=ilp_path,
+        )
 
         model_time = float(total_ilp_time)
 
@@ -424,24 +460,8 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
 
         zone_size = len(H_max.vertices - {target})
 
-        # DEBUG (keep)
-        E_star = [(vs, w) for (vs, w) in H_actual.edges if target in vs]
-        print("\n[DEBUG leakage]")
-        print("target:", target)
-        print("target in vertices:", target in H_actual.vertices)
-        print("num_edges:", len(H_actual.edges))
-        print("num_E_star:", len(E_star))
-        if E_star:
-            ws = [float(w) for _, w in E_star]
-            print("E* weight min/max/mean:", min(ws), max(ws), sum(ws) / len(ws))
-        else:
-            print("No channels into target => leakage must be 0 for all masks.")
-
-        # ✅ FAST leakage-only call (no chains returned)
+        # leakage
         leakage_val, paths, active, blocked = leakage(mask_for_leakage, target, H_actual, return_counts=True)
-
-        print("Leakage:", leakage_val)
-
         utility = compute_utility(
             leakage=leakage_val,
             mask_size=len(mask_for_leakage),
@@ -453,8 +473,8 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
         edge_members = sum(len(vs) for vs, _w in H_actual.edges)
         num_vertices = len(H_actual.vertices)
 
-        # ✅ For memory sizing, use instantiated ILP cells (vars created), not touched.
-        memory_bytes = estimate_memory_bytes_standard(
+        # For memory sizing, use instantiated ILP cells (vars created), not touched.
+        memory_bytes_est = estimate_memory_bytes_standard(
             num_vertices=num_vertices,
             num_edges=num_edges,
             edge_members=edge_members,
@@ -467,6 +487,13 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
             ilp_num_constrs=int(ilp_num_constrs),
         )
 
+        # ✅ NEW: treat the ILP file size as additional memory overhead
+        memory_bytes = int(ilp_file_bytes)
+
+        # Optional: print file size for debugging/verification
+        if ilp_file_bytes > 0:
+            print(f"[ILP] wrote {ilp_path} ({ilp_file_bytes} bytes)")
+
     except Exception as e:
         print(f"Error in Baseline 3: {e}")
         import traceback
@@ -478,8 +505,7 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
         if conn:
             conn.close()
 
-    # ✅ Report "touched/considered" cells (what you asked for).
-    # If you want "touched excluding target cell", subtract 1:
+    # Report "touched/considered" cells (excluding target cell)
     num_cells_aux = max(0, int(num_cells_touched) - 1)
 
     return (
@@ -492,15 +518,17 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
         float(deletion_time),
         float(leakage_val),
         float(utility),
-        int(num_cells_aux),
+        int(zone_size),
         int(paths),
         int(blocked)
     )
 
 
 if __name__ == '__main__':
-    # Example:
-    # print(baseline_deletion_3("ProviderNumber", 500, "hospital", 0))
     print(baseline_deletion_3("marital_status", 500, "tax", 0))
-    print(baseline_deletion_3("iso_region", 500, "airport", 0))
+    print(baseline_deletion_3("scheduled_service", 500, "airport", 0))
     print(baseline_deletion_3("education", 500, "adult", 0))
+    print(baseline_deletion_3("FlightNum", 500, "flight", 0))
+    print(baseline_deletion_3("ProviderNumber", 500, "hospital", 0))
+
+# hospital 10, flight 13, adult 12, airport 6, tax 3
