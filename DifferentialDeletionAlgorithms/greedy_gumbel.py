@@ -7,6 +7,9 @@ import random
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 import numpy as np
 
+import math
+import dataclasses
+
 from DifferentialDeletionAlgorithms.leakage import compute_utility_logarithmic, compute_utility, compute_utility_hinge
 # ✅ import YOUR heavy lifting module
 from leakage import (
@@ -21,6 +24,179 @@ from leakage import (
 import sys
 import struct
 from typing import Any, Iterable, Optional, Tuple
+
+
+from dataclasses import dataclass
+
+@dataclass
+class _Chain:
+    """
+    Internal representation of an inference chain.
+
+    edges: list of edge_ids (strings) in forward order, with the last edge enabling the target.
+    cells: set of all cells/vertices appearing in any edge along the chain.
+    active: whether this chain can still contribute non-zero weight under the evolving mask.
+    currWeight: current chain weight w(p, M) under the mask semantics in ComputeChainWeight.
+    masked: (cells ∩ M) \\{target}
+    """
+    edges: List[str]
+    cells: Set[str]
+    active: bool = True
+    currWeight: float = 0.0
+    masked: Set[str] = dataclasses.field(default_factory=set)
+
+
+def _compute_chain_weight(
+    chain: _Chain,
+    *,
+    mask: Set[str],
+    target_cell: str,
+    edge_verts: Dict[str, Set[str]],
+    edge_w: Dict[str, float],
+) -> float:
+    """
+    Implements Algorithm 'ComputeChainWeight' from the paper-style pseudocode.
+
+    Semantics:
+      - Walk edges in order.
+      - Find earliest edge that is 'active' (some prerequisite is visible OR already reachable).
+      - Weight is product of edge weights from that earliest active edge to the end.
+      - If no edge becomes active, weight is 0.
+
+    Note: For edges containing the target, prerequisites are verts \\{target}.
+          For all other edges, prerequisites are verts.
+    """
+    reachable: Set[str] = set()
+    first_active_idx: Optional[int] = None
+
+    for i, eid in enumerate(chain.edges):
+        verts = edge_verts[eid]
+        prereqs = set(verts)
+        if target_cell in prereqs:
+            prereqs.remove(target_cell)
+
+        is_active = False
+        for c in prereqs:
+            if c not in mask:
+                is_active = True
+                break
+            if c in reachable:
+                is_active = True
+                break
+
+        if is_active and first_active_idx is None:
+            first_active_idx = i
+
+        reachable |= verts
+
+    if first_active_idx is None:
+        return 0.0
+
+    w = 1.0
+    for eid in chain.edges[first_active_idx:]:
+        w *= float(edge_w[eid])
+    return float(w)
+
+
+def _mask_disjoint_select(
+    chains: List[_Chain],
+    *,
+    mask: Set[str],
+    target_cell: str,
+    edge_verts: Dict[str, Set[str]],
+    edge_w: Dict[str, float],
+) -> Tuple[List[_Chain], float]:
+    """
+    Algorithm 'MaskDisjointSelect': select a greedy mask-disjoint subset D*
+    and compute P_all = Π_{p in D*} (1 - w(p, M)).
+    """
+    active_chains: List[_Chain] = []
+    for p in chains:
+        if not p.active:
+            continue
+        p.masked = (p.cells & mask) - {target_cell}
+        p.currWeight = _compute_chain_weight(
+            p, mask=mask, target_cell=target_cell, edge_verts=edge_verts, edge_w=edge_w
+        )
+        if p.currWeight > 0.0:
+            active_chains.append(p)
+
+    active_chains.sort(key=lambda p: float(p.currWeight), reverse=True)
+
+    D_star: List[_Chain] = []
+    used_cells: Set[str] = set()
+    P_all = 1.0
+
+    for p in active_chains:
+        if p.masked.isdisjoint(used_cells):
+            D_star.append(p)
+            used_cells |= p.masked
+            P_all *= (1.0 - float(p.currWeight))
+
+    return D_star, float(P_all)
+
+
+def _compute_premoved(
+    D_star: List[_Chain],
+    candidates: Set[str],
+) -> Dict[str, float]:
+    """
+    Algorithm 'ComputePRemoved'.
+    Returns P_removed[c] = Π_{p in D*, c in p.cells} (1 - p.currWeight).
+    """
+    P_removed: Dict[str, float] = {c: 1.0 for c in candidates}
+    if not candidates:
+        return P_removed
+
+    for p in D_star:
+        one_minus = 1.0 - float(p.currWeight)
+        for c in p.cells:
+            if c in P_removed:
+                P_removed[c] *= one_minus
+
+    return P_removed
+
+
+def _build_chains_and_index(
+    *,
+    hypergraph: Hypergraph,
+    target_cell: str,
+    tau: Optional[float] = None,
+) -> Tuple[List[_Chain], Dict[str, List[_Chain]], Dict[str, Set[str]], Dict[str, float]]:
+    """
+    Phase 1 preprocessing:
+      - Convert hypergraph to edge_dict (edge_id -> (verts, weight))
+      - Enumerate chains once
+      - Build CellToChains inverted index
+
+    Returns:
+      chains, cell_to_chains, edge_verts, edge_w
+    """
+    # leakage.py helper: edge_dict is {edge_id: (set(verts), weight)}
+    from leakage import hypergraph_to_edge_dict, iter_chains_with_masked
+
+    edge_dict = hypergraph_to_edge_dict(hypergraph, tau=tau)
+    edge_verts = {eid: set(vs) for eid, (vs, _w) in edge_dict.items()}
+    edge_w = {eid: float(_w) for eid, (_vs, _w) in edge_dict.items()}
+
+    # Enumerate chains in the hypergraph. We enumerate under an empty mask
+    # to get the *structural* chain edge sequences; weights are recomputed per-iteration.
+    chains: List[_Chain] = []
+    cell_to_chains: Dict[str, List[_Chain]] = {}
+
+    empty_mask: Set[str] = set()
+    for (edge_ids, _masked_cells) in iter_chains_with_masked(empty_mask, target_cell, edge_dict):
+        # edge_ids is a list[str] of edge identifiers
+        cells: Set[str] = set()
+        for eid in edge_ids:
+            cells |= edge_verts.get(eid, set())
+        p = _Chain(edges=list(edge_ids), cells=cells, active=True, currWeight=0.0)
+        chains.append(p)
+        for c in cells:
+            cell_to_chains.setdefault(c, []).append(p)
+
+    return chains, cell_to_chains, edge_verts, edge_w
+
 
 def _p2e2_pointer_size() -> int:
     """Approx bytes for a reference/pointer on this Python build (usually 8 on 64-bit)."""
@@ -362,23 +538,129 @@ def marginal_gain(
     return float(delta_u), float(L_curr), float(L_new)
 
 
+
 def greedy_gumbel_max_deletion(
     *,
     hypergraph: Hypergraph,
-    hyperedges: List[Tuple[str, ...]],
+    hyperedges: List[Tuple[str, ...]],  # kept for backward-compat; unused (hypergraph already contains edges)
     target_cell: str,
     lam: float,
     epsilon: float,
     K: int,
-    leakage_method: str = "greedy_disjoint",     # or "greedy_disjoint"
+    leakage_method: str = "greedy_disjoint",  # kept for signature compatibility
     edge_tau: Optional[float] = None,
 ) -> Tuple[Set[str], float]:
-    t0 = time.time()
-    I = inference_zone_union(target_cell, hypergraph)
-    M: Set[str] = set()
+    """
+    DelGum: Fast Greedy Gumbel-Max Deletion (paper-style implementation).
 
-    if K <= 0 or epsilon <= 0:
-        return M, float(time.time() - t0)
+    Key differences vs the older version in this repo:
+      - Preprocesses *all chains once* using leakage.py iter_chains_with_masked + hypergraph_to_edge_dict.
+      - Per-iteration updates only affected chains via an inverted index (cell -> chains).
+      - Uses the closed-form lower bound ΔL_lb(c) and per-iteration Gumbel-Max selection.
+      - Includes DP-compatible early stopping as a 'stop' action with Gumbel noise.
+
+    Returns:
+      (mask M, wall_time_seconds)
+    """
+    t0 = time.time()
+
+    if K <= 0 or epsilon <= 0.0:
+        return set(), float(time.time() - t0)
+    if not (0.0 <= lam <= 1.0):
+        raise ValueError("lam must be in [0,1].")
+
+    # ----------------------------
+    # Phase 1: preprocessing
+    # ----------------------------
+    chains, cell_to_chains, edge_verts, edge_w = _build_chains_and_index(
+        hypergraph=hypergraph,
+        target_cell=target_cell,
+        tau=edge_tau,
+    )
+
+    # Inference zone I(c*): union of vertices reachable in local hypergraph.
+    # We reuse your existing helper (union over edges).
+    I = inference_zone_union(target_cell, hypergraph)
+    I.discard(target_cell)
+
+    M: Set[str] = set()
+    epsilon_prime = float(epsilon) / float(K)
+
+    # ----------------------------
+    # Phase 2: iterative selection
+    # ----------------------------
+    for _k in range(1, K + 1):
+        # Step 2a: current leakage state under mask-disjoint approx
+        D_star, P_all = _mask_disjoint_select(
+            chains,
+            mask=M,
+            target_cell=target_cell,
+            edge_verts=edge_verts,
+            edge_w=edge_w,
+        )
+
+        # If leakage already ~0, early stop quickly (still DP-safe due to stop action below).
+        candidates = set(I) - set(M)
+        if not candidates:
+            break
+
+        # Step 2b: compute P_removed(c) for all candidates
+        P_removed = _compute_premoved(D_star, candidates)
+
+        # Step 2c: score candidates with ΔL_lb and add Gumbel noise
+        best_c: Optional[str] = None
+        best_score = -float("inf")
+
+        # Constant deletion cost term as written in your pseudocode
+        size_penalty = (1.0 - float(lam)) * (1.0 / float(max(1, len(I))))
+
+        for c in candidates:
+            pr = float(P_removed.get(c, 1.0))
+
+            # Guard against divide-by-zero; if pr==0 then keeping prob is undefined but
+            # it means this candidate would remove essentially all surviving probability.
+            if pr <= 0.0:
+                P_keep = 0.0
+                delta_L_lb = float(P_all)  # maximal
+            else:
+                P_keep = float(P_all) / pr
+                delta_L_lb = P_keep * (1.0 - pr)
+
+            delta_u = (float(lam) * float(delta_L_lb)) - float(size_penalty)
+
+            # Gumbel noise with scale = 2*lam/epsilon' (matches your algorithm listing)
+            u = random.random()
+            g = -(2.0 * float(lam) / float(epsilon_prime)) * math.log(-math.log(max(1e-12, u)))
+            score = float(delta_u) + float(g)
+
+            if score > best_score:
+                best_score = score
+                best_c = c
+
+        # Step 2d: early stopping action (zero utility + Gumbel noise)
+        u_stop = random.random()
+        g_stop = -(2.0 * float(lam) / float(epsilon_prime)) * math.log(-math.log(max(1e-12, u_stop)))
+        s_stop = float(g_stop)
+
+        if best_c is None or s_stop > best_score:
+            break
+
+        # Step 2e: commit choice and update only affected chains
+        M.add(best_c)
+
+        affected = cell_to_chains.get(best_c, [])
+        for p in affected:
+            if not p.active:
+                continue
+            w_new = _compute_chain_weight(
+                p, mask=M, target_cell=target_cell, edge_verts=edge_verts, edge_w=edge_w
+            )
+            p.currWeight = float(w_new)
+            if w_new <= 0.0:
+                p.active = False
+
+    return M, float(time.time() - t0)
+
 
     denom_I_minus_1 = max(1, len(I) - 1)
 

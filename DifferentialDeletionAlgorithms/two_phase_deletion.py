@@ -558,8 +558,8 @@ def two_phase_deletion_main(
 # ============================================================
 
 if __name__ == "__main__":
-    print(two_phase_deletion_main("adult", key=1, target_cell="education"))
-    print(two_phase_deletion_main("flight", key = 1, target_cell = "FlightNum"))
+    # print(two_phase_deletion_main("adult", key=1, target_cell="education"))
+    # print(two_phase_deletion_main("flight", key = 1, target_cell = "FlightNum"))
     print(two_phase_deletion_main("tax", key = 1, target_cell = "marital_status"))
     print(two_phase_deletion_main("airport", key = 1, target_cell = "scheduled_service"))
     print(two_phase_deletion_main("hospital", key = 1, target_cell = "ProviderNumber"))

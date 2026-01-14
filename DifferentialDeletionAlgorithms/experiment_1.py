@@ -596,7 +596,7 @@ def run_delexp_canonical(
 def run_delgum(
     out_csv: str,
     verbose: bool = False,
-    lam: float = 0.75,
+    lam: float = .1,
     epsilon: float = 25,
     K: int = 1,
     which_ablation=None,
@@ -673,7 +673,7 @@ def run_delgum(
 def run_del2ph(
     out_csv: str,
     *,
-    epsilon: float = 25,
+    epsilon: float = .1,
     lam: float = 0.75,
     mask_method: Optional[str] = None,
     leakage_method: str = "greedy_disjoint",
@@ -795,37 +795,37 @@ def main():
     # setup_database_copies()
     # run_delexp_canonical(f"delexp_canonical_data_{time.strftime("%B%d,%Y%I:%M:%S%p")}_75.csv", epsilon=75, lam=0.75, leakage_method="noisy_or")
     # cleanup_database_copies()
-    setup_database_copies()
-    run_del2ph(f"del2ph_{time.strftime("%B%d,%Y%I:%M:%S%p")}_hinge.csv",
-                         epsilon = 25, lam = 0.75, leakage_method = "greedy_disjoint",verbose=True)
-    cleanup_database_copies()
-    setup_database_copies()
-    run_delgum(f"delgum_{time.strftime("%B%d,%Y%I:%M:%S%p")}_hinge.csv",
-               epsilon = 25, lam = 0.75, leakage_method = "greedy_disjoint", verbose=True)
-    cleanup_database_copies()
+    # setup_database_copies()
+    # run_del2ph(f"del2ph_{time.strftime("%B%d,%Y%I:%M:%S%p")}_original.csv",
+    #                      epsilon = 25, lam = 0.75, leakage_method = "greedy_disjoint",verbose=True)
+    # cleanup_database_copies()
+    # setup_database_copies()
+    # run_delgum(f"delgum_{time.strftime("%B%d,%Y%I:%M:%S%p")}_original_new_gum.csv",
+    #            epsilon = 25, lam = 0.75, leakage_method = "greedy_disjoint", verbose=True)
+    # cleanup_database_copies()
 
-    # setup_database_copies()
-    # for i in range(1, 11):
-    #     run_delgum(f"data/delgum_{i}.csv",
-    #                      epsilon = 25, lam = i/10, leakage_method = "greedy_disjoint", which_ablation = "l")
-    # cleanup_database_copies()
-    # setup_database_copies()
-    # for i in range(1, 11):
-    #     run_del2ph(f"data/del2ph_{i}.csv", epsilon =25, lam =i/10, leakage_method = "greedy_disjoint", which_ablation = "l")
-    # cleanup_database_copies()
-    # values = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300]
-    # setup_database_copies()
-    # for i in values:
-    #     run_delgum(f"epsilon_ablation_original/delgum_{i}.csv",
-    #                epsilon = i, lam = 0.75, leakage_method = "greedy_disjoint",
-    #                which_ablation = "e")
-    # cleanup_database_copies()
-    # setup_database_copies()
-    # for i in values:
-    #     run_del2ph(f"epsilon_ablation_original/del2ph_{i}.csv",
-    #                epsilon = i, lam = 0.75, leakage_method = "greedy_disjoint",
-    #                which_ablation = "e")
-    # cleanup_database_copies()
+    setup_database_copies()
+    for i in range(1, 11):
+        run_delgum(f"data2/delgum_{i}.csv",
+                         epsilon = 25, lam = i/10, leakage_method = "greedy_disjoint", which_ablation = "l")
+    cleanup_database_copies()
+    setup_database_copies()
+    for i in range(1, 11):
+        run_del2ph(f"data2/del2ph_{i}.csv", epsilon =25, lam =i/10, leakage_method = "greedy_disjoint", which_ablation = "l")
+    cleanup_database_copies()
+    values = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300]
+    setup_database_copies()
+    for i in values:
+        run_delgum(f"data2/edelgum_{i}.csv",
+                   epsilon = i, lam = 0.75, leakage_method = "greedy_disjoint",
+                   which_ablation = "e")
+    cleanup_database_copies()
+    setup_database_copies()
+    for i in values:
+        run_del2ph(f"data2/edel2ph_{i}.csv",
+                   epsilon = i, lam = 0.75, leakage_method = "greedy_disjoint",
+                   which_ablation = "e")
+    cleanup_database_copies()
     # setup_database_copies()
     # run_delmin("delmin_final_data.csv")
     # cleanup_database_copies()
