@@ -17,6 +17,7 @@ Fixes / guarantees:
 
 from __future__ import annotations
 
+import os
 import time
 from typing import Any, Dict, Optional, Tuple, Union, List
 
@@ -54,18 +55,18 @@ ORIGINAL_TABLE_NAMES = {
     "tax" : "tax_data",
 }
 K_SIZE = {
-    "airport": 6,
-    "hospital": 10,
-    "adult": 12,
-    "flight": 13,
+    "airport": 5,
+    "hospital": 9,
+    "adult": 9,
+    "flight": 11,
     "tax": 3,
 }
 TARGET_ATTR = {
-    "airport": "scheduled_service",
+    "airport": "home_link",
     "hospital": "ProviderNumber",
-    "tax": "marital_status",
+    "tax": "city",
     "adult": "education",
-    "flight": "FlightNum"
+    "flight": "FlightDate"
 }
 
 ITERS = 100
@@ -408,46 +409,21 @@ def run_delmin(out_csv: str):
                 key = get_random_key(ds)
                 if key is None:
                     continue
-                int(activated_dependencies_count),
                 try:
-                    (
-                        activated_dependencies_count,
-                        mask_set,
-                        memory_bytes_baseline,
-                        _max_depth,
-                        init_time,
-                        model_time,
-                        del_time,
-                        leakage,
-                        utility,
-                        num_instantiated,
-                        total_paths,
-                        paths_blocked,
-                    ) = baseline_deletion_3.baseline_deletion_3(
+                    raw = baseline_deletion_3.baseline_deletion_3(
                         target=attr,
                         key=key,
                         dataset=ds,
                         threshold=0.0,
                     )
-                    raw = {
-                        "init_time": init_time,
-                        "model_time": model_time,
-                        "del_time": del_time,
-                        "num_instantiated_cells": num_instantiated,
-                        "leakage": leakage,   # REQUIRED: delmin leakage == 0
-                        "utility": utility,
-                        "mask_size": len(mask_set) if mask_set else 0,
-                        "num_paths": total_paths,
-                        "mask": set(mask_set) if mask_set else set(),
-                    }
 
                     # update-to-null measured separately
                     upd_t, upd_cnt = update_mask_to_null(ds, key, raw["mask"])
-
+                    raw["del_time"] = upd_t
                     # since leakage=0 => all blocked
 
                     # use baseline-provided memory (MEDIUM)
-                    memory_overhead = int(memory_bytes_baseline)
+                    memory_overhead = int(raw["memory_overhead_bytes"])
 
                     row = standardize_row(
                         method="delmin",
@@ -455,9 +431,6 @@ def run_delmin(out_csv: str):
                         attr=attr,
                         raw=raw,
                         update_time=upd_t,
-                        num_cells_updated=upd_cnt,
-                        paths_blocked=paths_blocked,
-                        memory_overhead_bytes=memory_overhead,
                     )
                     write_csv_row(f, row)
 
@@ -469,8 +442,8 @@ def run_delmin(out_csv: str):
 def run_delexp(
     out_csv: str,
     verbose: bool,
-    lam: float = 0.75,
-    epsilon: float = 25,
+    lam: float = 0.1,
+    epsilon: float = 0.1,
     which_ablation: str = None,
     *,
     mask_method: Optional[str] = None,
@@ -596,9 +569,9 @@ def run_delexp_canonical(
 def run_delgum(
     out_csv: str,
     verbose: bool = False,
-    lam: float = .1,
-    epsilon: float = 25,
-    K: int = 1,
+    lam: float = .75,
+    epsilon: float = 0.1,
+    L0: float = 0.25,
     which_ablation=None,
     *,
     leakage_method: str = "greedy_disjoint",
@@ -616,6 +589,8 @@ def run_delgum(
         to_write = "lambda"
     elif which_ablation == "e":
         to_write = "epsilon"
+    elif which_ablation == "eo":
+        to_write = "epslo"
     else:
         raise ValueError("which_ablation must be one of: None, 'l' (lambda), 'e' (epsilon)")
 
@@ -623,7 +598,11 @@ def run_delgum(
         if verbose:
             write_csv_header(f)
         else:
-            f.write(f"{to_write},leakage,utility,mask_size\n")
+            if to_write != "epslo":
+                f.write(f"{to_write},leakage,utility,mask_size\n")
+                return
+            f.write(f"epsilon,L0,leakage,utility,mask_size\n")
+
 
         for ds in DATASETS:
             ds = normalize_dataset_name(ds)
@@ -641,6 +620,7 @@ def run_delgum(
                         dataset=ds,
                         target_cell=attr,
                         epsilon=float(epsilon),
+                        L0=L0,
                         lam=float(lam),
                         K=int(K_SIZE[ds]),
                         leakage_method=str(leakage_method),
@@ -664,6 +644,9 @@ def run_delgum(
                             f.write(f"{lam},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
                         elif to_write == "epsilon":
                             f.write(f"{epsilon},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+                        else:
+                            f.write(
+                                f"{epsilon},{L0},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
 
                 except Exception as e:
                     print(f"  [delgum] iter {i+1} error: {e}")
@@ -674,7 +657,8 @@ def run_del2ph(
     out_csv: str,
     *,
     epsilon: float = .1,
-    lam: float = 0.75,
+    lam: float = .75,
+    L0: float = 0.25,
     mask_method: Optional[str] = None,
     leakage_method: str = "greedy_disjoint",
     template_dir: str = "templates",
@@ -700,6 +684,8 @@ def run_del2ph(
         to_write = "lambda"
     elif which_ablation == "e":
         to_write = "epsilon"
+    elif which_ablation == "eo":
+        to_write = "epslo"
     else:
         raise ValueError("which_ablation must be one of: None, 'l' (lambda), 'e' (epsilon)")
 
@@ -707,7 +693,10 @@ def run_del2ph(
         if verbose:
             write_csv_header(f)
         else:
-            f.write(f"{to_write},leakage,utility,mask_size\n")
+            if to_write != "epslo":
+                f.write(f"{to_write},leakage,utility,mask_size\n")
+            else:
+                f.write(f"epsilon,L0,leakage,utility,mask_size\n")
 
         for ds in DATASETS:
             ds = normalize_dataset_name(ds)
@@ -726,6 +715,7 @@ def run_del2ph(
                         target_cell=attr,
                         epsilon=float(epsilon),
                         lam=float(lam),
+                        L0=L0,
                         leakage_method=str(leakage_method),
                         template_dir=TEMPLATE_DIR,
                         mask_method=mask_method,
@@ -746,8 +736,9 @@ def run_del2ph(
                         if to_write == "lambda":
                             f.write(f"{lam},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
                         elif to_write == "epsilon":
-                            f.write(
-                                f"{epsilon},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+                            f.write(f"{epsilon},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+                        else:
+                            f.write(f"{epsilon},{L0},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
 
                 except Exception as e:
                     print(f"  [del2ph] iter {i+1} error: {e}")
@@ -759,6 +750,7 @@ def run_del2ph_canonical(
     *,
     epsilon: float = 10.0,
     lam: float = 0.5,
+    L0: float = 0.25,
     leakage_method: str = "greedy_disjoint",
     template_dir: str = "templates_2ph_canonical",
 ):
@@ -778,65 +770,59 @@ def run_del2ph_canonical(
 # ----------------------------
 
 def main():
+    #RUN MIN (BASELINE DELETION)
     # setup_database_copies()
+    # run_delmin(f"min_{time.strftime('%Y%m%d-%H%M%S')}.csv")
     # cleanup_database_copies()
 
+    # #RUN GUMBEL
     # setup_database_copies()
-    # run_delmin("delmin_data_v2026_2.csv")
+    # run_delgum(f"gum_{time.strftime('%Y%m%d-%H%M%S')}.csv", leakage_method="greedy_disjoint", verbose=True)
     # cleanup_database_copies()
+    # setup_database_copies()
+    # run_del2ph(f"2ph_{time.strftime('%Y%m%d-%H%M%S')}.csv", leakage_method = "greedy_disjoint",
+    #            verbose = True)
+    # setup_database_copies()
+    # for epsilon in [.1, 1, 10]:
+    #     for l0 in [.1, .2, .25,  .3, .4, .5, .75]:
+    #         run_delgum(f"data_jan15_elo/delgum_{epsilon}_{l0}", epsilon=epsilon, lam=0.75, L0=l0, leakage_method="greedy_disjoint", which_ablation = "eo")
+    # cleanup_database_copies()
+    """with epsilon = 1, Lambda = .25, and L0 = .25.
 
+Then keeping other parameters fixed as above:
+1. eblate with L0 = .1, .3, .6, .9
+2. Eblate \lambda = 0, .25, .5, 1"""
     # setup_database_copies()
-    # run_delexp("delexp_data_v2026_2.csv", verbose = True)
+    # for l0 in [0.1, .3, .6, .9]:
+    #     run_del2ph(f"data_ablation_jan21_l0_del2ph_{l0}", epsilon = 1, lam = 0.25, L0 = l0,
+    #         leakage_method = "greedy_disjoint", which_ablation = "eo")
     # cleanup_database_copies()
-    # setup_database_copies()
-    # run_delexp_canonical(f"delexp_canonical_data_{time.strftime("%B%d,%Y%I:%M:%S%p")}_10.csv",
-    #                      epsilon = 10, lam = 0.75, leakage_method = "noisy_or")
-    # cleanup_database_copies()
-    # setup_database_copies()
-    # run_delexp_canonical(f"delexp_canonical_data_{time.strftime("%B%d,%Y%I:%M:%S%p")}_75.csv", epsilon=75, lam=0.75, leakage_method="noisy_or")
-    # cleanup_database_copies()
-    # setup_database_copies()
-    # run_del2ph(f"del2ph_{time.strftime("%B%d,%Y%I:%M:%S%p")}_original.csv",
-    #                      epsilon = 25, lam = 0.75, leakage_method = "greedy_disjoint",verbose=True)
-    # cleanup_database_copies()
-    # setup_database_copies()
-    # run_delgum(f"delgum_{time.strftime("%B%d,%Y%I:%M:%S%p")}_original_new_gum.csv",
-    #            epsilon = 25, lam = 0.75, leakage_method = "greedy_disjoint", verbose=True)
-    # cleanup_database_copies()
-
     setup_database_copies()
-    for i in range(1, 11):
-        run_delgum(f"data2/delgum_{i}.csv",
-                         epsilon = 25, lam = i/10, leakage_method = "greedy_disjoint", which_ablation = "l")
-    cleanup_database_copies()
-    setup_database_copies()
-    for i in range(1, 11):
-        run_del2ph(f"data2/del2ph_{i}.csv", epsilon =25, lam =i/10, leakage_method = "greedy_disjoint", which_ablation = "l")
-    cleanup_database_copies()
-    values = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300]
-    setup_database_copies()
-    for i in values:
-        run_delgum(f"data2/edelgum_{i}.csv",
-                   epsilon = i, lam = 0.75, leakage_method = "greedy_disjoint",
-                   which_ablation = "e")
-    cleanup_database_copies()
-    setup_database_copies()
-    for i in values:
-        run_del2ph(f"data2/edel2ph_{i}.csv",
-                   epsilon = i, lam = 0.75, leakage_method = "greedy_disjoint",
-                   which_ablation = "e")
+    for lam in [0.1]:
+        run_del2ph(f"data_ablation_jan21_lam_del2ph_{lam}", epsilon = 1, lam = lam, L0 = .25,
+                   leakage_method = "greedy_disjoint", which_ablation = "l")
     cleanup_database_copies()
     # setup_database_copies()
-    # run_delmin("delmin_final_data.csv")
+    # for i in range(0, 11):
+    #     run_delgum(f"data3/delgum_{i}.csv",
+    #                      epsilon = 0.1, lam = i/10, leakage_method = "greedy_disjoint", which_ablation = "l")
     # cleanup_database_copies()
     # setup_database_copies()
-    # run_delexp_canonical(f"delexp_canonical_data_{time.strftime("%B%d,%Y%I:%M:%S%p")}_1.0lam.csv",
-    #                      epsilon = 25, lam = .75, leakage_method = "greedy_disjoint")
+    # for i in range(0, 11):
+    #     run_del2ph(f"data3/del2ph_{i}.csv", epsilon =0.1, lam =i/10, leakage_method = "greedy_disjoint", which_ablation = "l")
     # cleanup_database_copies()
-    #
-
+    # values = [0.05, 0.1, 0.15, 0.20, 0.30, 0.40, 0.50, 0.75, 1, 2, 8, 16, 32]
     # setup_database_copies()
-    # run_delgum(f"delgum_data_{time.time()}.csv", verbose = True)
+    # for i in values:
+    #     run_delgum(f"data3/edelgum_{i}.csv",
+    #                epsilon = i, lam = 0.75, leakage_method = "greedy_disjoint",
+    #                which_ablation = "e")
+    # cleanup_database_copies()
+    # setup_database_copies()
+    # for i in values:
+    #     run_del2ph(f"data3/edel2ph_{i}.csv",
+    #                epsilon = i, lam = 0.75, leakage_method = "greedy_disjoint",
+    #                which_ablation = "e")
     # cleanup_database_copies()
 
 if __name__ == "__main__":

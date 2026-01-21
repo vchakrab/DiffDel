@@ -3,6 +3,9 @@ import math
 from collections import Counter
 from typing import Tuple, List, Set, Iterable, Optional, Dict, Any
 
+import numpy as np
+
+
 def get_dataset_weights(dataset: str) -> Any:
     """
     Loads edge weights using the same convention as delexp:
@@ -173,6 +176,9 @@ def compute_utility(*, leakage: float, mask_size: int, lam: float, zone_size: in
     denom = max(1, int(zone_size) - 1)
     norm = float(mask_size) / float(denom)
     return float(-(lam * float(leakage)) - ((1.0 - lam) * norm))
+def compute_utility_max(*, leakage: float, mask_size: int, lam: float, zone_size: int, L0 = 0.25) -> float:
+    """U(M) = - | M | + max(0, L₀ - L(M))"""
+    return  -1* float(mask_size)/float(zone_size) + max(0.0, L0 - leakage)
 
 def compute_utility_log(*, leakage: float, mask_size: int, lam: float, zone_size: int):
     """
@@ -194,10 +200,6 @@ def compute_utility_logarithmic(*, leakage: float, mask_size: int, lam: float, z
         return float((lam * log_term) + ((1.0 - lam) * ratio_term))
 def compute_utility_hinge(* ,leakage, mask_size, zone_size, lam, L0 = 0.25):
     """ Cap-aware hinge utility. u(M) = - lam * max(0, L(M,c*,D) - L0) - (1-lam) * (|M|/I_max) where: - L0 is the permissible leakage cap (policy knob) - lam in (0,1) weights policy compliance vs deletion cost - |M|/I_max is normalized mask size in [0,1] Returns a finite, bounded utility in [-1, 0] (assuming L in [0,1]). """
-    if not (0.0 < lam < 1.0):
-        raise ValueError("lam must be in (0,1).")
-    if not (0.0 <= L0 <= 1.0):
-        raise ValueError("L0 must be in [0,1].")
     violation = max(0.0, leakage - L0)
     size_term = mask_size/zone_size
     return -lam * violation - (1.0 - lam) * size_term

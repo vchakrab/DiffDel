@@ -1,32 +1,41 @@
 #!/usr/bin/env python3
 """
-Ablation Study Figure for VLDB Paper
-Generates a single-row figure with 5 panels:
-  (a) Exp leakage heatmap (λ sweep)
-  (b) Gum leakage heatmap (λ sweep)
-  (c) Mask size vs λ (both mechanisms)
-  (d) Pareto frontier (Exp only)  [FIXED: true Pareto frontier + float-robust λ markers]
-  (e) ε-Convergence: Std(leakage) vs ε
+Ablation Study Figure for VLDB Paper (2 rows) — FINAL
+
+ALL PANELS ARE LINE GRAPHS (NO HEATMAPS).
+
+TOP ROW (λ sweep):
+  (a) Exp: Leakage vs λ (5 dataset lines)
+  (b) Gum: Leakage vs λ (5 dataset lines)
+  (c) Leakage vs λ (Exp+Gum overlaid; more distinguishable via markers)
+  (d) Mask improvement vs λ  [% vs DelMin mask]
+  (e) Utility vs λ
+
+BOTTOM ROW (ε sweep) — LOG SCALE X ON ALL PANELS:
+  (f) Exp: Leakage vs ε (5 dataset lines)            [LOG X]
+  (g) Gum: Leakage vs ε (5 dataset lines)            [LOG X]
+  (h) Leakage vs ε (Exp+Gum overlaid; markers)       [LOG X]
+  (i) Mask improvement vs ε  [% vs DelMin mask]      [LOG X]
+  (j) Utility vs ε                                   [LOG X]
 
 Usage:
     python plot_ablation.py --data_dir ./data --output ./fig_ablation.pdf
 
 Data files expected:
-    Lambda sweep: del2ph_1.csv ... del2ph_10.csv, delgum_1.csv ... delgum_10.csv
-    Epsilon sweep: edel2ph_1.csv ... edel2ph_300.csv, edelgum_1.csv ... edelgum_300.csv
+  Lambda sweep:   del2ph_0.csv ... delgum_10.csv
+  Epsilon sweep:  edel2ph_<eps>.csv and edelgum_<eps>.csv where <eps> in:
+      [0.05, 0.1, 0.15, 0.20, 0.30, 0.40, 0.50, 0.75, 1, 2, 8, 16, 32]
 """
 
 import argparse
 from pathlib import Path
+from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-import matplotlib.cm as cm
-import matplotlib.colors as mcolors
 from matplotlib.lines import Line2D
-import seaborn as sns
 
 # =============================================================================
 # Configuration
@@ -50,12 +59,10 @@ plt.rcParams.update({
     'text.usetex': False,
 })
 
-# Small caps style names (Unicode approximation)
 SC_EXP = 'Exᴘ'
 SC_GUM = 'Gᴜᴍ'
 SC_MIN = 'Mɪɴ'
 
-# Dataset configuration
 DATASETS = ['airport', 'hospital', 'adult', 'flight', 'tax']
 SAMPLES_PER_DATASET = 100
 
@@ -67,50 +74,69 @@ DATASET_LABELS = {
     'tax': 'Tax',
 }
 
-# Colorblind-friendly palette
 DATASET_COLORS = {
-    'airport': '#E69F00',    # Orange
-    'hospital': '#56B4E9',   # Sky blue
-    'adult': '#009E73',      # Teal/green
-    'flight': '#CC79A7',     # Pink/magenta
-    'tax': '#D55E00',        # Vermillion/red-orange
+    'airport': '#E69F00',
+    'hospital': '#56B4E9',
+    'adult': '#009E73',
+    'flight': '#CC79A7',
+    'tax': '#D55E00',
 }
 
-# DelMin baseline mask sizes per dataset
 DELMIN_MASK_SIZES = {
-    'airport': 6,
-    'hospital': 10,
-    'adult': 12,
-    'flight': 13,
-    'tax': 3,
+    "airport": 5,
+    "hospital": 9,
+    "adult": 9,
+    "flight": 11,
+    "tax": 3,
+}
+
+UTILITY_COL_CANDIDATES = [
+    "utility",
+    "utility_hinge",
+    "hinge_utility",
+    "utility_log",
+    "log_utility",
+    "util",
+]
+
+EPS_TICKS_PLOT = [0.05, 0.1, 0.2, 0.5, 1, 2, 8, 32]
+EPS_VALUES = [0.05, 0.1, 0.15, 0.20, 0.30, 0.40, 0.50, 0.75, 1, 2, 8, 16, 32]# Exp/Gum distinguishability (combined plots)
+MECH_STYLE = {
+    "exp": {"linestyle": "-",  "marker": "o", "markersize": 2.8},
+    "gum": {"linestyle": "--", "marker": "s", "markersize": 2.8},
+}
+
+# Single-mechanism leakage panels: clean 5 dataset lines
+SINGLE_MECH_STYLE = {
+    "exp": {"linestyle": "-",  "marker": None},
+    "gum": {"linestyle": "--", "marker": None},
 }
 
 # =============================================================================
 # Data Loading
 # =============================================================================
 
-def _assign_dataset_by_index(n_rows: int) -> list[str]:
-    """Assign dataset labels based on row index blocks of SAMPLES_PER_DATASET."""
+def _assign_dataset_by_index(n_rows: int) -> List[str]:
     datasets = []
     for idx in range(n_rows):
         dataset_idx = idx // SAMPLES_PER_DATASET
-        if dataset_idx < len(DATASETS):
-            datasets.append(DATASETS[dataset_idx])
-        else:
-            datasets.append('unknown')
+        datasets.append(DATASETS[dataset_idx] if dataset_idx < len(DATASETS) else "unknown")
     return datasets
 
 
-def load_lambda_data(data_dir: Path) -> dict[str, pd.DataFrame]:
-    """
-    Load lambda sweep data from del2ph_*.csv and delgum_*.csv files.
-    Each file contains 500 rows (100 samples × 5 datasets) (as assumed).
-    """
-    data: dict[str, list[pd.DataFrame]] = {'exp': [], 'gum': []}
+def _pick_utility_column(df: pd.DataFrame) -> Optional[str]:
+    for c in UTILITY_COL_CANDIDATES:
+        if c in df.columns:
+            return c
+    return None
+
+
+def load_lambda_data(data_dir: Path) -> Dict[str, pd.DataFrame]:
+    data: Dict[str, List[pd.DataFrame]] = {'exp': [], 'gum': []}
     mechanism_map = {'del2ph': 'exp', 'delgum': 'gum'}
 
     for file_prefix, mech_key in mechanism_map.items():
-        for i in range(1, 11):  # λ = 0.1 to 1.0
+        for i in range(0, 11):
             filepath = data_dir / f"{file_prefix}_{i}.csv"
             if not filepath.exists():
                 continue
@@ -119,37 +145,50 @@ def load_lambda_data(data_dir: Path) -> dict[str, pd.DataFrame]:
             if len(df) == 0:
                 continue
 
-            # Extract lambda from file or column
-            lam = df['lambda'].iloc[0] if 'lambda' in df.columns else i / 10.0
-            df['lambda'] = pd.to_numeric(lam)
+            if 'lambda' in df.columns:
+                lam = pd.to_numeric(df['lambda'].iloc[0], errors='coerce')
+                if not np.isfinite(lam):
+                    lam = float(i) / 10.0
+            else:
+                lam = float(i) / 10.0
+
+            df = df.copy()
+            df['lambda'] = float(lam)
             df['mechanism'] = mech_key
 
-            # Coerce expected numeric cols if present
             for col in ['leakage', 'mask_size']:
                 if col in df.columns:
                     df[col] = pd.to_numeric(df[col], errors='coerce')
 
-            # Assign dataset labels based on row index
+            util_col = _pick_utility_column(df)
+            if util_col is not None:
+                df[util_col] = pd.to_numeric(df[util_col], errors='coerce')
+                df['utility'] = df[util_col]
+            else:
+                df['utility'] = np.nan
+
             df['dataset'] = _assign_dataset_by_index(len(df))
+
+            expected_rows = len(DATASETS) * SAMPLES_PER_DATASET
+            if len(df) != expected_rows:
+                print(f"WARNING: {filepath.name} has {len(df)} rows; expected {expected_rows}. "
+                      f"Dataset-by-index mapping may be wrong.")
+
             data[mech_key].append(df)
 
-    out = {}
+    out: Dict[str, pd.DataFrame] = {}
     for m in ['exp', 'gum']:
         if data[m]:
             out[m] = pd.concat(data[m], ignore_index=True)
     return out
 
 
-def load_epsilon_data(data_dir: Path) -> dict[str, pd.DataFrame]:
-    """
-    Load epsilon sweep data from edel2ph_*.csv and edelgum_*.csv files.
-    """
-    data: dict[str, list[pd.DataFrame]] = {'exp': [], 'gum': []}
+def load_epsilon_data(data_dir: Path) -> Dict[str, pd.DataFrame]:
+    data: Dict[str, List[pd.DataFrame]] = {'exp': [], 'gum': []}
     mechanism_map = {'edel2ph': 'exp', 'edelgum': 'gum'}
-    eps_values = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300]
 
     for file_prefix, mech_key in mechanism_map.items():
-        for eps in eps_values:
+        for eps in EPS_VALUES:
             filepath = data_dir / f"{file_prefix}_{eps}.csv"
             if not filepath.exists():
                 continue
@@ -162,114 +201,230 @@ def load_epsilon_data(data_dir: Path) -> dict[str, pd.DataFrame]:
             if 'epsilon' in df.columns and isinstance(df.iloc[0]['epsilon'], str) and df.iloc[0]['epsilon'] == 'epsilon':
                 df = df.iloc[1:].copy()
 
-            # Ensure expected columns exist and are numeric
+            df = df.copy()
             if 'epsilon' in df.columns:
                 df['epsilon'] = pd.to_numeric(df['epsilon'], errors='coerce')
+                if not np.isfinite(df['epsilon'].iloc[0]):
+                    df['epsilon'] = float(eps)
             else:
-                df['epsilon'] = eps
+                df['epsilon'] = float(eps)
 
             for col in ['leakage', 'mask_size']:
                 if col in df.columns:
                     df[col] = pd.to_numeric(df[col], errors='coerce')
 
+            util_col = _pick_utility_column(df)
+            if util_col is not None:
+                df[util_col] = pd.to_numeric(df[util_col], errors='coerce')
+                df['utility'] = df[util_col]
+            else:
+                df['utility'] = np.nan
+
             df['mechanism'] = mech_key
             df['dataset'] = _assign_dataset_by_index(len(df))
+
+            expected_rows = len(DATASETS) * SAMPLES_PER_DATASET
+            if len(df) != expected_rows:
+                print(f"WARNING: {filepath.name} has {len(df)} rows; expected {expected_rows}. "
+                      f"Dataset-by-index mapping may be wrong.")
+
             data[mech_key].append(df)
 
-    out = {}
+    out: Dict[str, pd.DataFrame] = {}
     for m in ['exp', 'gum']:
         if data[m]:
             out[m] = pd.concat(data[m], ignore_index=True)
     return out
 
 # =============================================================================
-# Statistics Computation
+# Statistics
 # =============================================================================
 
-def compute_lambda_stats(data: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
-    """Compute mean and std statistics grouped by lambda and dataset."""
-    stats = {}
-    for mechanism, df in data.items():
-        # Only keep known datasets
-        df = df[df['dataset'].isin(DATASETS)].copy()
+def compute_stats(df: pd.DataFrame, xcol: str) -> pd.DataFrame:
+    df = df[df['dataset'].isin(DATASETS)].copy()
 
-        grouped = df.groupby(['lambda', 'dataset']).agg({
-            'leakage': ['mean', 'std', 'count'],
-            'mask_size': ['mean', 'std'],
-        }).reset_index()
+    agg = {
+        'leakage': ['mean', 'std', 'count'],
+        'mask_size': ['mean', 'std'],
+        'utility': ['mean', 'std'],
+    }
+    grouped = df.groupby([xcol, 'dataset']).agg(agg).reset_index()
 
-        grouped.columns = [
-            'lambda', 'dataset',
-            'leakage_mean', 'leakage_std', 'leakage_count',
-            'mask_size_mean', 'mask_size_std'
-        ]
-        stats[mechanism] = grouped
-    return stats
+    # flatten columns
+    new_cols = []
+    for c in grouped.columns:
+        if isinstance(c, tuple):
+            new_cols.append(f"{c[0]}_{c[1]}" if c[1] else c[0])
+        else:
+            new_cols.append(c)
+    grouped.columns = new_cols
+
+    # normalize count col name
+    for c in list(grouped.columns):
+        if c.startswith("leakage_") and c.endswith("count") and c != "leakage_count":
+            grouped.rename(columns={c: "leakage_count"}, inplace=True)
+
+    for c in ["utility_mean", "utility_std", "leakage_count"]:
+        if c not in grouped.columns:
+            grouped[c] = np.nan
+
+    return grouped
 
 
-def compute_epsilon_stats(data: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
-    """Compute mean and std statistics grouped by epsilon and dataset."""
-    stats = {}
-    for mechanism, df in data.items():
-        # Only keep known datasets
-        df = df[df['dataset'].isin(DATASETS)].copy()
+def compute_lambda_stats(data: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+    return {mech: compute_stats(df, "lambda") for mech, df in data.items()}
 
-        grouped = df.groupby(['epsilon', 'dataset']).agg({
-            'leakage': ['mean', 'std', 'count'],
-            'mask_size': ['mean', 'std'],
-        }).reset_index()
 
-        grouped.columns = [
-            'epsilon', 'dataset',
-            'leakage_mean', 'leakage_std', 'leakage_count',
-            'mask_size_mean', 'mask_size_std'
-        ]
-        stats[mechanism] = grouped
-    return stats
+def compute_epsilon_stats(data: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+    return {mech: compute_stats(df, "epsilon") for mech, df in data.items()}
 
 # =============================================================================
-# Pareto helper
+# Plotting helpers
 # =============================================================================
 
-def pareto_frontier_min_xy(x: np.ndarray, y: np.ndarray) -> np.ndarray:
+def compute_mask_improvement(stats: Dict[str, pd.DataFrame]) -> None:
     """
-    Indices of Pareto frontier points for minimizing both x and y.
-    Returns indices in increasing x order.
-
-    Implementation: sort by x asc, keep points that strictly improve best y so far.
+    Adds mask_impr_mean (%) to each mechanism stats DF:
+      100 * (DelMin - mask) / DelMin   (positive = better than DelMin)
     """
-    order = np.argsort(x)
-    best_y = np.inf
-    keep = []
-    for idx in order:
-        if np.isfinite(x[idx]) and np.isfinite(y[idx]) and (y[idx] < best_y - 1e-12):
-            keep.append(idx)
-            best_y = y[idx]
-    return np.array(keep, dtype=int)
+    for mech in ['exp', 'gum']:
+        if mech not in stats or stats[mech].empty:
+            continue
+        dfm = stats[mech].copy()
+
+        def _impr(row):
+            base = float(DELMIN_MASK_SIZES[row['dataset']])
+            m = row['mask_size_mean']
+            if not np.isfinite(m) or base <= 0:
+                return np.nan
+            return 100.0 * (base - float(m)) / base
+
+        dfm['mask_impr_mean'] = dfm.apply(_impr, axis=1)
+        stats[mech] = dfm
+
+
+def _apply_eps_ticks(ax):
+    ax.set_xticks(EPS_TICKS_PLOT)
+    ax.set_xticklabels([f"{x:g}" for x in EPS_TICKS_PLOT], fontsize=6, rotation=25, ha='right')
+    ax.tick_params(axis='x', which='minor', bottom=False)  # hide minor tick marks
+
+
+def plot_single_mech_leakage_lines(ax, stats_df: pd.DataFrame, xcol: str, mech: str,
+                                  xscale: Optional[str] = None,
+                                  xlim: Optional[tuple] = None,
+                                  ylim: Optional[tuple] = None,
+                                  set_eps_ticks: bool = False):
+    """
+    5 lines = 5 datasets, one mechanism only.
+    """
+    if stats_df is None or stats_df.empty:
+        return
+
+    st = SINGLE_MECH_STYLE[mech]
+
+    for ds in DATASETS:
+        df_ds = stats_df[stats_df['dataset'] == ds].sort_values(xcol)
+        if df_ds.empty:
+            continue
+        ax.plot(
+            df_ds[xcol].to_numpy(dtype=float),
+            df_ds['leakage_mean'].to_numpy(dtype=float),
+            color=DATASET_COLORS[ds],
+            linestyle=st["linestyle"],
+            linewidth=1.0,
+            alpha=0.95
+        )
+
+    ax.set_xlabel(r'$\lambda$' if xcol == "lambda" else r'$\varepsilon$', fontsize=7)
+    ax.set_ylabel(r'$\mathcal{L}$', fontsize=7, labelpad=2)
+    ax.grid(True, alpha=0.3)
+    ax.tick_params(axis='both', labelsize=6)
+
+    if xscale:
+        ax.set_xscale(xscale)
+    if xlim:
+        ax.set_xlim(*xlim)
+    if ylim:
+        ax.set_ylim(*ylim)
+
+    if set_eps_ticks and xcol == "epsilon":
+        _apply_eps_ticks(ax)
+
+
+def plot_metric_vs_x(ax, stats: Dict[str, pd.DataFrame], xcol: str, ycol: str,
+                     ylabel: str, panel_label: str,
+                     xscale: Optional[str] = None,
+                     xlim: Optional[tuple] = None,
+                     ylim: Optional[tuple] = None,
+                     y0_line: Optional[float] = None,
+                     set_eps_ticks: bool = False):
+    """
+    Combined Exp + Gum plot with distinguishable styles (linestyle + marker).
+    """
+    for mech in ['exp', 'gum']:
+        if mech not in stats or stats[mech].empty:
+            continue
+        dfm = stats[mech]
+        st = MECH_STYLE[mech]
+
+        for ds in DATASETS:
+            df_ds = dfm[dfm['dataset'] == ds].sort_values(xcol)
+            if df_ds.empty or ycol not in df_ds.columns:
+                continue
+            ax.plot(
+                df_ds[xcol].to_numpy(dtype=float),
+                df_ds[ycol].to_numpy(dtype=float),
+                color=DATASET_COLORS[ds],
+                linestyle=st["linestyle"],
+                marker=st["marker"],
+                markersize=st["markersize"],
+                markevery=1,
+                linewidth=1.0,
+                alpha=0.95,
+            )
+
+    if y0_line is not None:
+        ax.axhline(y=y0_line, color='black', linestyle=':', linewidth=0.8, alpha=0.7)
+
+    ax.set_xlabel(r'$\lambda$' if xcol == "lambda" else r'$\varepsilon$', fontsize=7)
+    ax.set_ylabel(ylabel, fontsize=7, labelpad=2)
+    ax.grid(True, alpha=0.3)
+    ax.tick_params(axis='both', labelsize=6)
+
+    if xscale:
+        ax.set_xscale(xscale)
+    if xlim:
+        ax.set_xlim(*xlim)
+    if ylim:
+        ax.set_ylim(*ylim)
+
+    if set_eps_ticks and xcol == "epsilon":
+        _apply_eps_ticks(ax)
+
+    ax.text(0.5, -0.32, panel_label, transform=ax.transAxes, ha='center', fontsize=7)
 
 # =============================================================================
-# Plotting
+# Main Figure
 # =============================================================================
 
-def plot_ablation_figure(lambda_stats: dict[str, pd.DataFrame],
-                        epsilon_stats: dict[str, pd.DataFrame],
-                        output_path: Path) -> None:
-    """Generate the single-row ablation figure with 5 panels."""
-    fig = plt.figure(figsize=(12, 2.4))
+def plot_ablation_figure(lambda_stats: Dict[str, pd.DataFrame],
+                         epsilon_stats: Dict[str, pd.DataFrame],
+                         output_path: Path) -> None:
+    """
+    Legend row + 2 plot rows (lambda on top, epsilon on bottom).
+    Each plot row: [exp_leak_lines | spacer | gum_leak_lines | leakage_combined | mask_impr | utility]
+    """
+    fig = plt.figure(figsize=(12, 4.8))
 
-    # Grid layout: legend row + plot row
-    # Column widths: [heatmap, labels, heatmap, mask, pareto, epsilon]
     gs = fig.add_gridspec(
-        2, 6,
-        height_ratios=[0.08, 1],
+        3, 6,
+        height_ratios=[0.08, 1, 1],
         width_ratios=[1, 0.01, 1, 1.2, 1.2, 1.2],
-        hspace=0.35, wspace=0.35,
-        left=0.02, right=0.99, top=0.85, bottom=0.18
+        hspace=0.55, wspace=0.35,
+        left=0.02, right=0.99, top=0.90, bottom=0.10
     )
 
-    # =========================================================================
-    # Legend (centred over panels c, d, e)
-    # =========================================================================
+    # Legend
     ax_legend = fig.add_subplot(gs[0, :])
     ax_legend.axis('off')
 
@@ -278,234 +433,136 @@ def plot_ablation_figure(lambda_stats: dict[str, pd.DataFrame],
         for d in DATASETS
     ]
     mech_handles = [
-        Line2D([0], [0], color='dimgray', linestyle='-', linewidth=1.5, label=SC_EXP),
-        Line2D([0], [0], color='dimgray', linestyle='--', linewidth=1.5, label=SC_GUM),
-        Line2D([0], [0], color='black', linestyle=':', linewidth=1.2, label=SC_MIN),
+        Line2D([0], [0], color='dimgray', linestyle='-',  marker='o', markersize=4, linewidth=1.5, label=SC_EXP),
+        Line2D([0], [0], color='dimgray', linestyle='--', marker='s', markersize=4, linewidth=1.5, label=SC_GUM),
+        Line2D([0], [0], color='black',   linestyle=':',  linewidth=1.2, label=SC_MIN),
     ]
 
-    all_handles = dataset_handles + mech_handles
     ax_legend.legend(
-        handles=all_handles,
+        handles=dataset_handles + mech_handles,
         loc='center', ncol=8, frameon=False, fontsize=7,
-        handlelength=1.8, handletextpad=0.4, columnspacing=1.0,
+        handlelength=1.6, handletextpad=0.4, columnspacing=1.0,
         bbox_to_anchor=(0.72, 0.5)
     )
 
-    # =========================================================================
-    # Create subplot axes
-    # =========================================================================
-    ax_exp_heat = fig.add_subplot(gs[1, 0])
-    ax_labels = fig.add_subplot(gs[1, 1])
-    ax_gum_heat = fig.add_subplot(gs[1, 2])
-    ax_mask = fig.add_subplot(gs[1, 3])
-    ax_pareto = fig.add_subplot(gs[1, 4])  # (remove duplicate bug)
-    ax_eps_std = fig.add_subplot(gs[1, 5])
+    # Add mask improvement columns
+    compute_mask_improvement(lambda_stats)
+    compute_mask_improvement(epsilon_stats)
 
-    # =========================================================================
-    # (a) Exp leakage heatmap
-    # =========================================================================
+    # ---------------------------
+    # Row 1 (lambda)
+    # ---------------------------
+    ax_exp_l  = fig.add_subplot(gs[1, 0])
+    ax_sp_l   = fig.add_subplot(gs[1, 1])
+    ax_gum_l  = fig.add_subplot(gs[1, 2])
+    ax_leak_l = fig.add_subplot(gs[1, 3])
+    ax_impr_l = fig.add_subplot(gs[1, 4])
+    ax_util_l = fig.add_subplot(gs[1, 5])
+
+    ax_sp_l.axis('off')
+
     if 'exp' in lambda_stats:
-        df = lambda_stats['exp']
-        pivot = df.pivot(index='dataset', columns='lambda', values='leakage_mean')
-        pivot = pivot.reindex(DATASETS)
-        pivot.index = [DATASET_LABELS[d] for d in pivot.index]
+        plot_single_mech_leakage_lines(ax_exp_l, lambda_stats['exp'], "lambda", "exp",
+                                       xlim=(0.0, 1.0), ylim=(0.0, 1.05))
+    ax_exp_l.text(0.5, -0.32, f'(a) {SC_EXP}: Leakage vs $\\lambda$', transform=ax_exp_l.transAxes,
+                  ha='center', fontsize=7)
 
-        sns.heatmap(
-            pivot, ax=ax_exp_heat, cmap='Greys', vmin=0, vmax=1,
-            annot=False, cbar=False,
-            linewidths=0.3, linecolor='white'
-        )
-
-        ax_exp_heat.set_xlabel(r'$\lambda$', fontsize=7)
-        ax_exp_heat.set_ylabel('')
-        ax_exp_heat.set_yticklabels([])
-        ax_exp_heat.yaxis.tick_right()
-
-        # Ensure stable tick labels even if float columns are messy
-        cols = list(pivot.columns)
-        ax_exp_heat.set_xticklabels([f'{float(x):.1f}' for x in cols], rotation=0, fontsize=5)
-
-    ax_exp_heat.text(
-        0.5, -0.32, f'(a) {SC_EXP}: Leakage',
-        transform=ax_exp_heat.transAxes, ha='center', fontsize=7
-    )
-
-    # =========================================================================
-    # Shared dataset labels (between heatmaps)
-    # =========================================================================
-    ax_labels.axis('off')
-    ax_labels.set_xlim(0, 1)
-    ax_labels.set_ylim(0, 1)
-    for i, dataset in enumerate(DATASETS):
-        y_pos = 1 - (i + 0.5) / len(DATASETS)
-        ax_labels.text(
-            0.5, y_pos, DATASET_LABELS[dataset],
-            ha='center', va='center', fontsize=5
-        )
-
-    # =========================================================================
-    # (b) Gum leakage heatmap
-    # =========================================================================
     if 'gum' in lambda_stats:
-        df = lambda_stats['gum']
-        pivot = df.pivot(index='dataset', columns='lambda', values='leakage_mean')
-        pivot = pivot.reindex(DATASETS)
-        pivot.index = [DATASET_LABELS[d] for d in pivot.index]
+        plot_single_mech_leakage_lines(ax_gum_l, lambda_stats['gum'], "lambda", "gum",
+                                       xlim=(0.0, 1.0), ylim=(0.0, 1.05))
+    ax_gum_l.text(0.5, -0.32, f'(b) {SC_GUM}: Leakage vs $\\lambda$', transform=ax_gum_l.transAxes,
+                  ha='center', fontsize=7)
 
-        sns.heatmap(
-            pivot, ax=ax_gum_heat, cmap='Greys', vmin=0, vmax=1,
-            annot=False, cbar=False,
-            linewidths=0.3, linecolor='white'
-        )
-
-        ax_gum_heat.set_xlabel(r'$\lambda$', fontsize=7)
-        ax_gum_heat.set_ylabel('')
-        ax_gum_heat.set_yticklabels([])
-
-        cols = list(pivot.columns)
-        ax_gum_heat.set_xticklabels([f'{float(x):.1f}' for x in cols], rotation=0, fontsize=5)
-
-    ax_gum_heat.text(
-        0.5, -0.32, f'(b) {SC_GUM}: Leakage',
-        transform=ax_gum_heat.transAxes, ha='center', fontsize=7
+    plot_metric_vs_x(
+        ax_leak_l, lambda_stats, "lambda", "leakage_mean",
+        ylabel=r'$\mathcal{L}$',
+        panel_label=r'(c) Leakage vs $\lambda$',
+        xlim=(0.0, 1.0), ylim=(0.0, 1.05)
     )
 
-    # =========================================================================
-    # Colorbar for heatmaps
-    # =========================================================================
-    cbar_ax = fig.add_axes([0.02, 0.92, 0.20, 0.02])
-    norm = mcolors.Normalize(vmin=0, vmax=1)
-    sm = cm.ScalarMappable(cmap='Greys', norm=norm)
-    sm.set_array([])
-    cbar = fig.colorbar(sm, cax=cbar_ax, orientation='horizontal')
-    cbar.ax.tick_params(labelsize=5)
-    cbar.set_ticks([0, 0.5, 1.0])
-    cbar.set_label(r'$\mathcal{L}$', fontsize=6, labelpad=1)
-
-    # =========================================================================
-    # (c) Mask size vs λ (both mechanisms)
-    # =========================================================================
-    for mechanism in ['exp', 'gum']:
-        if mechanism not in lambda_stats:
-            continue
-        df = lambda_stats[mechanism]
-        linestyle = '-' if mechanism == 'exp' else '--'
-
-        for dataset in DATASETS:
-            df_ds = df[df['dataset'] == dataset].sort_values('lambda')
-            ax_mask.plot(
-                df_ds['lambda'], df_ds['mask_size_mean'],
-                color=DATASET_COLORS[dataset],
-                linestyle=linestyle,
-                linewidth=1.0
-            )
-
-    # DelMin reference lines
-    for dataset in DATASETS:
-        ax_mask.axhline(
-            y=DELMIN_MASK_SIZES[dataset],
-            color=DATASET_COLORS[dataset],
-            linestyle=':', linewidth=0.8, alpha=0.7
-        )
-
-    ax_mask.set_xlabel(r'$\lambda$', fontsize=7)
-    ax_mask.set_ylabel(r'$|M|$', fontsize=7, labelpad=2)
-    ax_mask.grid(True, alpha=0.3)
-    ax_mask.set_xlim(0.05, 1.05)
-    ax_mask.tick_params(axis='both', labelsize=6)
-
-    ax_mask.text(
-        0.5, -0.32, '(c) Mask Size',
-        transform=ax_mask.transAxes, ha='center', fontsize=7
+    plot_metric_vs_x(
+        ax_impr_l, lambda_stats, "lambda", "mask_impr_mean",
+        ylabel=r'$\%\Delta |M|$ vs ' + SC_MIN,
+        panel_label=r'(d) Mask Improvement vs $\lambda$',
+        xlim=(0.0, 1.0), y0_line=0.0
     )
 
-    # =========================================================================
-    # (d) Pareto frontier (Exp only) -- FIXED (true Pareto over all λ)
-    # =========================================================================
-    key_lambdas = np.array([0.3, 0.5, 0.7, 0.9], dtype=float)
+    any_util_l = any(
+        mech in lambda_stats and not lambda_stats[mech].empty and
+        np.isfinite(lambda_stats[mech]['utility_mean'].to_numpy(dtype=float)).any()
+        for mech in ['exp', 'gum']
+    )
+    if not any_util_l:
+        print("WARNING: No usable utility column found for LAMBDA sweep. "
+              f"Expected one of {UTILITY_COL_CANDIDATES}.")
 
-    if 'exp' in lambda_stats:
-        df = lambda_stats['exp'].copy()
-
-        for dataset in DATASETS:
-            df_ds = df[df['dataset'] == dataset].copy()
-            if df_ds.empty:
-                continue
-
-            x = df_ds['mask_size_mean'].to_numpy(dtype=float)
-            y = df_ds['leakage_mean'].to_numpy(dtype=float)
-
-            keep_idx = pareto_frontier_min_xy(x, y)
-            x_f = x[keep_idx]
-            y_f = y[keep_idx]
-
-            ax_pareto.plot(
-                x_f, y_f,
-                color=DATASET_COLORS[dataset],
-                linestyle='-',
-                linewidth=1.0,
-                marker='o',
-                markersize=3
-            )
-
-            # Overlay markers for selected λ values (float-robust)
-            lam = df_ds['lambda'].to_numpy(dtype=float)
-            for kl in key_lambdas:
-                m = np.isclose(lam, kl, atol=1e-9, rtol=0)
-                if np.any(m):
-                    ax_pareto.scatter(
-                        df_ds.loc[m, 'mask_size_mean'],
-                        df_ds.loc[m, 'leakage_mean'],
-                        color=DATASET_COLORS[dataset],
-                        s=18,
-                        zorder=5
-                    )
-
-    ax_pareto.set_xlabel(r'$|M|$', fontsize=7)
-    ax_pareto.set_ylabel(r'$\mathcal{L}$', fontsize=7, labelpad=1)
-    ax_pareto.grid(True, alpha=0.3)
-    ax_pareto.set_ylim(0, 1.05)
-    ax_pareto.tick_params(axis='both', labelsize=6)
-
-    ax_pareto.text(
-        0.5, -0.32, '(d) Pareto Frontier',
-        transform=ax_pareto.transAxes, ha='center', fontsize=7
+    plot_metric_vs_x(
+        ax_util_l, lambda_stats, "lambda", "utility_mean",
+        ylabel=r'$\mathcal{U}$',
+        panel_label=r'(e) Utility vs $\lambda$',
+        xlim=(0.0, 1.0)
     )
 
-    # =========================================================================
-    # (e) ε-Convergence: Std(leakage) vs ε
-    # =========================================================================
-    for mechanism in ['exp', 'gum']:
-        if mechanism not in epsilon_stats:
-            continue
-        df = epsilon_stats[mechanism]
-        linestyle = '-' if mechanism == 'exp' else '--'
+    # ---------------------------
+    # Row 2 (epsilon) — LOG SCALE ON ALL PANELS
+    # ---------------------------
+    ax_exp_e  = fig.add_subplot(gs[2, 0])
+    ax_sp_e   = fig.add_subplot(gs[2, 1])
+    ax_gum_e  = fig.add_subplot(gs[2, 2])
+    ax_leak_e = fig.add_subplot(gs[2, 3])
+    ax_impr_e = fig.add_subplot(gs[2, 4])
+    ax_util_e = fig.add_subplot(gs[2, 5])
 
-        for dataset in DATASETS:
-            df_ds = df[df['dataset'] == dataset].sort_values('epsilon')
-            ax_eps_std.plot(
-                df_ds['epsilon'], df_ds['leakage_std'],
-                color=DATASET_COLORS[dataset],
-                linestyle=linestyle,
-                linewidth=1.0
-            )
+    ax_sp_e.axis('off')
 
-    ax_eps_std.set_xlabel(r'$\varepsilon$', fontsize=7)
-    ax_eps_std.set_ylabel(r'Std($\mathcal{L}$)', fontsize=7, labelpad=2)
-    ax_eps_std.set_xscale('log')
-    ax_eps_std.set_xlim(0.8, 400)
-    ax_eps_std.set_ylim(0, 0.55)
-    ax_eps_std.grid(True, alpha=0.3)
-    ax_eps_std.tick_params(axis='both', labelsize=6)
+    if 'exp' in epsilon_stats:
+        plot_single_mech_leakage_lines(ax_exp_e, epsilon_stats['exp'], "epsilon", "exp",
+                                       xscale='log', xlim=(0.05, 32), ylim=(0.0, 1.05),
+                                       set_eps_ticks=True)
+    ax_exp_e.text(0.5, -0.32, f'(f) {SC_EXP}: Leakage vs $\\varepsilon$', transform=ax_exp_e.transAxes,
+                  ha='center', fontsize=7)
 
-    ax_eps_std.text(
-        0.5, -0.32, r'(e) $\varepsilon$-Convergence',
-        transform=ax_eps_std.transAxes, ha='center', fontsize=7
+    if 'gum' in epsilon_stats:
+        plot_single_mech_leakage_lines(ax_gum_e, epsilon_stats['gum'], "epsilon", "gum",
+                                       xscale='log', xlim=(0.05, 32), ylim=(0.0, 1.05),
+                                       set_eps_ticks=True)
+    ax_gum_e.text(0.5, -0.32, f'(g) {SC_GUM}: Leakage vs $\\varepsilon$', transform=ax_gum_e.transAxes,
+                  ha='center', fontsize=7)
+
+    plot_metric_vs_x(
+        ax_leak_e, epsilon_stats, "epsilon", "leakage_mean",
+        ylabel=r'$\mathcal{L}$',
+        panel_label=r'(h) Leakage vs $\varepsilon$',
+        xscale='log', xlim=(0.05, 32), ylim=(0.0, 1.05),
+        set_eps_ticks=True
     )
 
-    # =========================================================================
-    # Save figure
-    # =========================================================================
+    plot_metric_vs_x(
+        ax_impr_e, epsilon_stats, "epsilon", "mask_impr_mean",
+        ylabel=r'$\%\Delta |M|$ vs ' + SC_MIN,
+        panel_label=r'(i) Mask Improvement vs $\varepsilon$',
+        xscale='log', xlim=(0.05, 32), y0_line=0.0,
+        set_eps_ticks=True
+    )
+
+    any_util_e = any(
+        mech in epsilon_stats and not epsilon_stats[mech].empty and
+        np.isfinite(epsilon_stats[mech]['utility_mean'].to_numpy(dtype=float)).any()
+        for mech in ['exp', 'gum']
+    )
+    if not any_util_e:
+        print("WARNING: No usable utility column found for EPSILON sweep. "
+              f"Expected one of {UTILITY_COL_CANDIDATES}.")
+
+    plot_metric_vs_x(
+        ax_util_e, epsilon_stats, "epsilon", "utility_mean",
+        ylabel=r'$\mathcal{U}$',
+        panel_label=r'(j) Utility vs $\varepsilon$',
+        xscale='log', xlim=(0.05, 32),
+        set_eps_ticks=True
+    )
+
+    # Save
     plt.savefig(output_path, format='pdf', bbox_inches='tight', pad_inches=0.03)
     plt.close()
     print(f"Saved: {output_path}")
@@ -515,8 +572,8 @@ def plot_ablation_figure(lambda_stats: dict[str, pd.DataFrame],
 # =============================================================================
 
 def main():
-    parser = argparse.ArgumentParser(description='Generate ablation study figure for VLDB paper')
-    parser.add_argument('--data_dir', type=str, default='./data2',
+    parser = argparse.ArgumentParser(description='Generate 2-row ablation figure (lambda top, epsilon bottom)')
+    parser.add_argument('--data_dir', type=str, default='./data3',
                         help='Directory containing CSV data files')
     parser.add_argument('--output', type=str, default='./fig_ablation.pdf',
                         help='Output PDF path')
@@ -530,8 +587,8 @@ def main():
     lambda_stats = compute_lambda_stats(lambda_data)
 
     print("Loading epsilon data...")
-    epsilon_data = load_epsilon_data(data_dir)
-    epsilon_stats = compute_epsilon_stats(epsilon_data)
+    eps_data = load_epsilon_data(data_dir)
+    epsilon_stats = compute_epsilon_stats(eps_data)
 
     print("Generating ablation figure...")
     plot_ablation_figure(lambda_stats, epsilon_stats, output_path)

@@ -29,7 +29,8 @@ from sys import getsizeof
 
 import numpy as np
 
-from DifferentialDeletionAlgorithms.leakage import compute_utility, compute_utility_hinge
+from DifferentialDeletionAlgorithms.leakage import compute_utility, compute_utility_hinge, \
+    compute_utility_max
 
 # ============================================================
 # IMPORT *ALL* CORE METHODS FROM leakage.py
@@ -47,7 +48,7 @@ from leakage import (
     construct_hypergraph_actual,
 
     # utility
-    compute_utility,
+    compute_utility_hinge,
 
     # leakage (Algorithm 2/5)
     leakage as leakage_model,
@@ -265,6 +266,7 @@ def build_template_two_phase(
     save_dir: str = "templates_2ph",
     epsilon: float = 50.0,
     lam: float = 0.5,
+    L0: float = 0.25,
     tau: Optional[float] = None,
     leakage_method: str = "greedy_disjoint",
     hypergraph_mode: str = "MAX",
@@ -327,7 +329,7 @@ def build_template_two_phase(
             leakage_method=leakage_method,
         )
 
-        U = compute_utility(leakage=float(L), mask_size=len(m), lam=float(lam), zone_size=zone_size)
+        U = compute_utility_hinge(leakage=float(L), mask_size=len(m), lam=float(lam), zone_size=zone_size, L0 = L0)
 
         Leakage[m] = float(L)
         Utility[m] = float(U)
@@ -352,7 +354,7 @@ def build_template_two_phase(
         "tau": tau,
         "leakage_method": str(leakage_method),
         "hypergraph_mode": str(hypergraph_mode),
-
+        "L0": float(L0),
         "zone": zone,
         "R_intra": candidate_masks,
         "Leakage": Leakage,
@@ -394,6 +396,7 @@ def two_phase_deletion_main(
     *,
     epsilon: float = 50.0,
     lam: float = 0.5,
+    L0: float = 0.25,
     tau: Optional[float] = None,
     leakage_method: str = "greedy_disjoint",
     hypergraph_mode: str = "MAX",
@@ -419,6 +422,7 @@ def two_phase_deletion_main(
             epsilon=epsilon,
             lam=lam,
             tau=tau,
+            L0=L0,
             leakage_method=leakage_method,
             hypergraph_mode=hypergraph_mode,
             mask_space=mask_method,
@@ -429,6 +433,7 @@ def two_phase_deletion_main(
     if (
         float(T.get("epsilon", -1.0)) != float(epsilon)
         or float(T.get("lam", -1.0)) != float(lam)
+        or float(T.get("L0", -1.0)) != float(L0)
         or (T.get("tau", None) != tau)
         or str(T.get("leakage_method", "")) != str(leakage_method)
         or str(T.get("hypergraph_mode", "")) != str(hypergraph_mode)
@@ -438,13 +443,16 @@ def two_phase_deletion_main(
         T = build_template_two_phase(
             dataset,
             target_cell,
-            save_dir=template_dir,
-            epsilon=epsilon,
-            lam=lam,
-            tau=tau,
-            leakage_method=leakage_method,
-            hypergraph_mode=hypergraph_mode,
+            save_dir = template_dir,
+            epsilon = epsilon,
+            lam = lam,
+            L0 = L0,
+            tau = tau,
+            leakage_method = leakage_method,
+            hypergraph_mode = hypergraph_mode,
+            mask_space = mask_method,
         )
+
         init_time = float(time.time() - start_time)
 
     # template file size (now that it exists / refreshed)

@@ -10,7 +10,133 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/DifferentialDeletionAlgorithms/2ph_20260115-102726.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/2ph_20260115-181356.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/all_masks_all_datasets_with_leakage.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/DifferentialDeletionAlgorithms/avg_plots/aggregated_avgs.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/data3/del2ph_4.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/data3/del2ph_8.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/data3/delgum_0.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/data3/delgum_1.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/data3/delgum_10.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/data3/delgum_3.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/data3/delgum_5.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/data3/delgum_9.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/data3/edel2ph_0.2.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/data3/edel2ph_0.3.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/data3/edelgum_0.1.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/data3/edelgum_0.2.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/data3/edelgum_0.5.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/data3/edelgum_1.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/data3/edelgum_32.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -45,13 +171,6 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="/DifferentialDeletionAlgorithms/del2ph_January09,202611:06:15AM_highlog.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="/DifferentialDeletionAlgorithms/del2ph_January09,202611:08:04AM_highlog.csv">
           <value>
             <Attribute>
@@ -60,6 +179,27 @@
           </value>
         </entry>
         <entry key="/DifferentialDeletionAlgorithms/del2ph_January09,202612:46:38PM_orig.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/del2ph_January11,202608:05:46PM_original.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/del2ph_January12,202608:08:10PM_original.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/del2ph_January14,202601:27:57PM_original.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -129,6 +269,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/DifferentialDeletionAlgorithms/delexp_canonical_data_January08,202610:52:13PM_0.9lam.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/DifferentialDeletionAlgorithms/delexp_canonical_data_v2026_2.csv">
           <value>
             <Attribute>
@@ -171,6 +318,27 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/DifferentialDeletionAlgorithms/delgum_January11,202608:07:25PM_original.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/delgum_January12,202608:09:45PM_original_new_gum.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/delgum_January14,202601:29:33PM_original_new_gum.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/DifferentialDeletionAlgorithms/delgum_data_1767915914.1431308.csv">
           <value>
             <Attribute>
@@ -192,7 +360,42 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/DifferentialDeletionAlgorithms/delmin_final_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/gum_20260115-092135.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/gum_20260115-102659.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/gum_20260115-181307.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/DifferentialDeletionAlgorithms/masks_delexp_leakage.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/min_20260115-085305.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -249,6 +452,13 @@
           </value>
         </entry>
         <entry key="/experiment_2_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/leakage_data/leakage_trends_actuals_fixed_10.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

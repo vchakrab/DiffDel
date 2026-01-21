@@ -1,0 +1,15 @@
+dc_file,target_attr,num_dcs_total,num_dcs_with_target,num_attrs_total,mask_size_excl_target,total_deleted_including_target,mask_attrs_excl_target,ilp_time_sec,max_depth,zone_cells_instantiated,zone_edges,ilp_num_vars,ilp_num_constrs,ilp_file_bytes
+topNCVoterDCs_parsed.py,c0,17,2,14,1,2,c1,0.000210,1,2,1,4,5,0
+topNCVoterDCs_parsed.py,c1,17,2,14,1,2,c0,0.000164,1,2,1,4,5,0
+topNCVoterDCs_parsed.py,c3,17,4,14,3,4,c4;c5;c6,0.000319,1,4,6,8,17,0
+topNCVoterDCs_parsed.py,c4,17,4,14,3,4,c3;c5;c6,0.000302,1,4,6,8,17,0
+topNCVoterDCs_parsed.py,c42,17,2,14,1,2,c43,0.000151,1,2,1,4,5,0
+topNCVoterDCs_parsed.py,c43,17,2,14,1,2,c42,0.000146,1,2,1,4,5,0
+topNCVoterDCs_parsed.py,c44,17,2,14,1,2,c45,0.000143,1,2,1,4,5,0
+topNCVoterDCs_parsed.py,c45,17,2,14,1,2,c44,0.000144,1,2,1,4,5,0
+topNCVoterDCs_parsed.py,c46,17,2,14,1,2,c47,0.000146,1,2,1,4,5,0
+topNCVoterDCs_parsed.py,c47,17,2,14,1,2,c46,0.000143,1,2,1,4,5,0
+topNCVoterDCs_parsed.py,c48,17,1,14,1,2,c90,0.000142,1,2,1,4,5,0
+topNCVoterDCs_parsed.py,c5,17,4,14,3,4,c3;c4;c6,0.000303,1,4,6,8,17,0
+topNCVoterDCs_parsed.py,c6,17,4,14,3,4,c3;c4;c5,0.000291,1,4,6,8,17,0
+topNCVoterDCs_parsed.py,c90,17,1,14,1,2,c48,0.000143,1,2,1,4,5,0

@@ -1,0 +1,9 @@
+dc_file,target_attr,num_dcs_total,num_dcs_with_target,num_attrs_total,mask_size_excl_target,total_deleted_including_target,mask_attrs_excl_target,ilp_time_sec,max_depth,zone_cells_instantiated,zone_edges,ilp_num_vars,ilp_num_constrs,ilp_file_bytes
+topTaxDCs_parsed.py,area_code,31,1,8,3,4,city;state;zip,0.000285,3,4,3,8,11,0
+topTaxDCs_parsed.py,child_exemp,31,23,8,2,3,married_exemp;single_exemp,0.000416,1,4,5,8,20,0
+topTaxDCs_parsed.py,city,31,1,8,3,4,area_code;state;zip,0.000248,3,4,3,8,11,0
+topTaxDCs_parsed.py,marital_status,31,26,8,2,3,married_exemp;single_exemp,0.000386,1,4,5,8,20,0
+topTaxDCs_parsed.py,married_exemp,31,25,8,2,3,marital_status;single_exemp,0.000380,1,4,5,8,20,0
+topTaxDCs_parsed.py,single_exemp,31,25,8,2,3,marital_status;married_exemp,0.000366,1,4,5,8,20,0
+topTaxDCs_parsed.py,state,31,2,8,3,4,area_code;city;zip,0.000231,2,4,3,8,11,0
+topTaxDCs_parsed.py,zip,31,2,8,3,4,area_code;city;state,0.000229,2,4,3,8,11,0

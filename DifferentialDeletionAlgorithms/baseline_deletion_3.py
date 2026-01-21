@@ -181,7 +181,7 @@ def ilp_approach_matching_java(
     target_time,
     hypergraph: Dict[Tuple[str, ...], float],
     *,
-    ilp_write_path: Optional[str] = None,  # ✅ NEW
+    ilp_write_path: Optional[str] = None,
 ) -> Tuple[
     Set[CellILP],
     float,
@@ -191,107 +191,150 @@ def ilp_approach_matching_java(
     int,
     int,
     int,
-    int,  # ✅ NEW: ilp_file_bytes
+    int,
 ]:
+    """
+    CASCADING / CLOSURE SEMANTICS ILP.
+
+    Variables:
+      a_v in {0,1}: delete v
+      r_v in {0,1}: v is known/reachable in inference closure
+
+    Semantics:
+      - initially known: if not deleted -> known   (r_v >= 1 - a_v)
+      - for each hyperedge e and each x in e:
+            if all other members are known then x becomes known
+        linearized as: r_x >= sum_{y in e\{x}} r_y - (|e|-1) + 1
+      - target must NOT be inferable: r_target = 0
+      - target must be deleted: a_target = 1
+      - objective: minimize total deletions sum(a_v)
+    """
     if not GUROBI_AVAILABLE:
         raise RuntimeError("Gurobi required")
 
     start_total_ilp = time.time()
 
-    max_id = 0
-    edge_counter = -1
+    # ---------- Phase 1: Build the relevant zone (vertices + edges) by BFS ----------
     cell_to_id: Dict[CellILP, int] = {}
-    cell_to_var = {}
     instantiated_cells: Set[CellILP] = set()
-    cells_to_visit = deque()
-
-    # touched/considered cells count
     touched_cells: Set[CellILP] = set()
 
-    cell_to_depth = {}
+    # unique edges as frozensets of CellILP
+    unique_edges: Dict[frozenset[CellILP], int] = {}  # edge -> index
+    edges_list: list[Set[CellILP]] = []
+
+    cells_to_visit = deque()
+    cell_to_depth: Dict[CellILP, int] = {}
     max_depth = 0
 
-    edge_vars = []
-    existing_rdr_vars: Dict[frozenset, Any] = {}
+    target_cell = CellILP(f"t1.{target_attr}", key)
+    cells_to_visit.append(target_cell)
+    instantiated_cells.add(target_cell)
+    touched_cells.add(target_cell)
+    cell_to_depth[target_cell] = 0
 
-    model = Model("P2E2_ILP")
-    model.setParam('OutputFlag', 0)
-    model.setParam('LogToConsole', 0)
-
-    obj = quicksum([])
-
-    deleted_cell = CellILP(f"t1.{target_attr}", key)
-    a0 = model.addVar(lb=1, ub=1, vtype=GRB.BINARY, name=f"a{max_id}")
-    cell_to_var[deleted_cell] = a0
-    cell_to_id[deleted_cell] = max_id
-    cell_to_depth[deleted_cell] = 0
-    max_id += 1
-
-    cells_to_visit.append(deleted_cell)
-    instantiated_cells.add(deleted_cell)
-
-    touched_cells.add(deleted_cell)
+    # Assign IDs as we discover cells
+    cell_to_id[target_cell] = 0
+    next_id = 1
 
     while cells_to_visit:
         curr = cells_to_visit.popleft()
-        curr_id = cell_to_id[curr]
         curr_depth = cell_to_depth[curr]
-        aj = cell_to_var[curr]
-        obj += aj
-
         curr_attr = curr.attribute.split(".")[-1]
-        edges = instantiate_edges_with_time_filter(
-            cursor, table, key, curr_attr, target_time, hypergraph,
-            touched_cells=touched_cells
+
+        # returns list[set[str]] of "t1.attr" names, already time-filtered
+        raw_edges = instantiate_edges_with_time_filter(
+            cursor,
+            table,
+            key,
+            curr_attr,
+            target_time,
+            hypergraph,
+            touched_cells=touched_cells,
         )
 
-        for edge in edges:
-            frozenset_edge = frozenset(edge)
-            if frozenset_edge in existing_rdr_vars:
-                bi = existing_rdr_vars[frozenset_edge]
-            else:
-                edge_counter += 1
-                bi = model.addVar(lb=0, ub=1, vtype=GRB.BINARY, name=f"b{edge_counter}")
-                edge_vars.append(bi)
-                existing_rdr_vars[frozenset_edge] = bi
+        for raw_edge in raw_edges:
+            # Map edge members (strings) -> CellILP
+            edge_cells: Set[CellILP] = set()
+            for cell_attr in raw_edge:
+                c = CellILP(cell_attr, key)
+                edge_cells.add(c)
+                touched_cells.add(c)
+                if c not in cell_to_id:
+                    cell_to_id[c] = next_id
+                    next_id += 1
 
-            hij = model.addVar(lb=0, ub=1, vtype=GRB.BINARY, name=f"h{edge_counter}_{curr_id}")
-            model.addConstr(aj == hij, name=f"head_hidden_{edge_counter}")
-            model.addConstr(bi == hij, name=f"rdr_addr_{edge_counter}")
+            if len(edge_cells) < 2:
+                continue
 
-            tail_tji_vars = []
-            for cell_attr in edge:
-                cell = CellILP(cell_attr, key)
-                touched_cells.add(cell)
+            fe = frozenset(edge_cells)
+            if fe not in unique_edges:
+                unique_edges[fe] = len(edges_list)
+                edges_list.append(set(edge_cells))
 
-                if cell not in cell_to_id:
-                    t_id = max_id
-                    cell_to_id[cell] = max_id
-                    max_id += 1
-                    a_cell = model.addVar(lb=0, ub=1, vtype=GRB.BINARY, name=f"a{t_id}")
-                    cell_to_var[cell] = a_cell
-                else:
-                    t_id = cell_to_id[cell]
-                    a_cell = cell_to_var[cell]
-
-                tji = model.addVar(lb=0, ub=1, vtype=GRB.BINARY, name=f"t{edge_counter}_{t_id}")
-                model.addConstr(tji == a_cell, name=f"tail_sync_{edge_counter}_{t_id}")
-
-                if cell != curr:
-                    tail_tji_vars.append(tji)
-
-                if cell not in instantiated_cells:
-                    instantiated_cells.add(cell)
-                    cells_to_visit.append(cell)
-                    cell_to_depth[cell] = curr_depth + 1
+            # BFS expansion: any cell in an edge with curr is in the zone
+            for c in edge_cells:
+                if c not in instantiated_cells:
+                    instantiated_cells.add(c)
+                    cells_to_visit.append(c)
+                    cell_to_depth[c] = curr_depth + 1
                     max_depth = max(max_depth, curr_depth + 1)
 
-            if tail_tji_vars:
-                model.addConstr(quicksum(tail_tji_vars) >= bi, name=f"tail_req_{edge_counter}")
+    # ---------- Phase 2: Build cascading ILP ----------
+    model = Model("CASCADING_ILP")
+    model.setParam("OutputFlag", 0)
+    model.setParam("LogToConsole", 0)
 
+    # Decision vars
+    a_var: Dict[CellILP, Any] = {}  # delete
+    r_var: Dict[CellILP, Any] = {}  # reachable/known
+
+    # Create variables for all instantiated cells (zone)
+    for cell, cid in cell_to_id.items():
+        # deletion var a
+        if cell == target_cell:
+            a = model.addVar(lb=1, ub=1, vtype=GRB.BINARY, name=f"a{cid}")  # target must be deleted
+        else:
+            a = model.addVar(lb=0, ub=1, vtype=GRB.BINARY, name=f"a{cid}")
+        a_var[cell] = a
+
+        # reachability var r
+        r = model.addVar(lb=0, ub=1, vtype=GRB.BINARY, name=f"r{cid}")
+        r_var[cell] = r
+
+    model.update()
+
+    # Initial knowledge: if not deleted, then known (reachable)
+    #   visible = (1 - a), so r >= 1 - a
+    for cell, cid in cell_to_id.items():
+        model.addConstr(r_var[cell] >= 1 - a_var[cell], name=f"visible_implies_known_{cid}")
+
+    # Target must not be inferable in closure
+    model.addConstr(r_var[target_cell] == 0, name="target_not_inferable")
+
+    # Cascading closure constraints:
+    # For each edge e and each head x in e:
+    #    if all others known => x known
+    # Linearization:
+    #    r_x >= sum_{y != x} r_y - (k-1) + 1
+    # where k = |e|
+    for ei, edge in enumerate(edges_list):
+        k = len(edge)
+        if k < 2:
+            continue
+        for head in edge:
+            tail = [r_var[y] for y in edge if y != head]
+            # RHS becomes 1 iff all tail vars are 1; otherwise <= 0
+            model.addConstr(
+                r_var[head] >= quicksum(tail) - (k - 1) + 1,
+                name=f"closure_e{ei}_h{cell_to_id[head]}",
+            )
+
+    # Objective: minimize number of deletions (including target is constant 1)
+    obj = quicksum(a_var[cell] for cell in cell_to_id.keys())
     model.setObjective(obj, GRB.MINIMIZE)
 
-    # ✅ NEW: write model to disk before optimize (captures full model)
+    # Optional: write .lp before solving
     ilp_file_bytes = 0
     if ilp_write_path:
         try:
@@ -307,16 +350,18 @@ def ilp_approach_matching_java(
 
     if model.status == GRB.INFEASIBLE:
         model.computeIIS()
-        model.write("infeasible.ilp")
-        raise RuntimeError("Infeasible")
+        model.write("infeasible.lp")
+        raise RuntimeError("Infeasible cascading ILP")
 
-    to_delete = set()
-    for cell, cell_id in cell_to_id.items():
-        var_name = f"a{cell_id}"
-        if model.getVarByName(var_name).X == 1.0:
+    # Extract solution
+    to_delete: Set[CellILP] = set()
+    for cell, cid in cell_to_id.items():
+        if model.getVarByName(f"a{cid}").X > 0.5:
             to_delete.add(cell)
 
-    activated_dependencies_count = sum(1 for bi_var in edge_vars if bi_var.X == 1.0)
+    # “Activated dependencies” no longer meaningful without b-vars.
+    # Best proxy: number of edges in the instantiated zone.
+    activated_dependencies_count = len(edges_list)
 
     try:
         ilp_num_vars = int(model.NumVars)
@@ -328,8 +373,8 @@ def ilp_approach_matching_java(
     model.dispose()
     total_ilp_time = time.time() - start_total_ilp
 
-    num_cells_instantiated = len(cell_to_id)   # vars/cells created in ILP
-    num_cells_touched = len(touched_cells)     # all cells considered/touched
+    num_cells_instantiated = len(cell_to_id)
+    num_cells_touched = len(touched_cells)
 
     return (
         to_delete,
@@ -340,7 +385,7 @@ def ilp_approach_matching_java(
         activated_dependencies_count,
         ilp_num_vars,
         ilp_num_constrs,
-        ilp_file_bytes,  # ✅ NEW
+        ilp_file_bytes,
     )
 
 
@@ -469,24 +514,6 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
             zone_size=zone_size
         )
 
-        num_edges = len(H_actual.edges)
-        edge_members = sum(len(vs) for vs, _w in H_actual.edges)
-        num_vertices = len(H_actual.vertices)
-
-        # For memory sizing, use instantiated ILP cells (vars created), not touched.
-        memory_bytes_est = estimate_memory_bytes_standard(
-            num_vertices=num_vertices,
-            num_edges=num_edges,
-            edge_members=edge_members,
-            mask_size=len(mask_for_leakage),
-            stores_candidate_masks=False,
-            includes_inferable_model=False,
-            includes_channel_map=False,
-            ilp_num_cells=int(num_cells_instantiated),
-            ilp_num_vars=int(ilp_num_vars),
-            ilp_num_constrs=int(ilp_num_constrs),
-        )
-
         # ✅ NEW: treat the ILP file size as additional memory overhead
         memory_bytes = int(ilp_file_bytes)
 
@@ -504,31 +531,36 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
             cursor.close()
         if conn:
             conn.close()
-
+    final_mask.discard(target)
     # Report "touched/considered" cells (excluding target cell)
     num_cells_aux = max(0, int(num_cells_touched) - 1)
+    baseline_leakage = leakage(set(), target, H_actual)
+    return {
+        "init_time": init_time,
+        "model_time": model_time,
+        "del_time": 0.0,
 
-    return (
-        int(activated_dependencies_count),
-        set(final_mask),
-        int(memory_bytes),
-        int(max_depth),
-        float(init_time),
-        float(model_time),
-        float(deletion_time),
-        float(leakage_val),
-        float(utility),
-        int(zone_size),
-        int(paths),
-        int(blocked)
-    )
+        "leakage": float(leakage_val),
+        "utility": float(utility),
+        "mask": final_mask,
+        "mask_size": int(len(final_mask)),
+
+        # ✅ now these are real chain counts, non-negative
+        "num_paths": int(paths),
+        "baseline_leakage": float(baseline_leakage),
+        "memory_overhead_bytes": memory_bytes,
+        "num_instantiated_cells": int(zone_size),
+    }
 
 
 if __name__ == '__main__':
-    print(baseline_deletion_3("marital_status", 500, "tax", 0))
-    print(baseline_deletion_3("scheduled_service", 500, "airport", 0))
-    print(baseline_deletion_3("education", 500, "adult", 0))
-    print(baseline_deletion_3("FlightNum", 500, "flight", 0))
-    print(baseline_deletion_3("ProviderNumber", 500, "hospital", 0))
+    time_start = time.time()
+    for i in range(100):
+        print(baseline_deletion_3("marital_status", 500, "tax", 0))
+    print(time.time() - time_start)
+    # print(baseline_deletion_3("scheduled_service", 500, "airport", 0))
+    # print(baseline_deletion_3("education", 500, "adult", 0))
+    # print(baseline_deletion_3("FlightNum", 500, "flight", 0))
+    # print(baseline_deletion_3("ProviderNumber", 500, "hospital", 0))
 
 # hospital 10, flight 13, adult 12, airport 6, tax 3

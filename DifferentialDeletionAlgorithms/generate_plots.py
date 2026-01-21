@@ -63,34 +63,104 @@ ZONE_SIZES = {
 
 
 def load_data(data_dir: Path) -> pd.DataFrame:
-    delmin = pd.read_csv(data_dir / 'delmin_final_data.csv')
-    del2ph = pd.read_csv(data_dir / 'del2ph_January12,202608:08:10PM_original.csv')
-    delgum = pd.read_csv(data_dir / 'delgum_January12,202608:09:45PM_original_new_gum.csv')
+    # --- 2ph/gum: correct schema (NO header, skip junk first row) ---
+    new_columns = [
+        'method', 'dataset', 'target_attribute', 'total_time', 'init_time',
+        'model_time', 'del_time', 'leakage', 'baseline_leakage_empty_mask',
+        'utility', 'total_paths', 'mask_size', 'model_size', 'num_instantiated_cells'
+    ]
 
-    delmin['method'] = 'DelMin'
+    del2ph = pd.read_csv(data_dir / '2ph_20260115-181356.csv',
+                         header=None, skiprows=1, names=new_columns)
+    delgum = pd.read_csv(data_dir / 'gum_20260115-181307.csv',
+                         header=None, skiprows=1, names=new_columns)
+
     del2ph['method'] = 'Del2Ph'
     delgum['method'] = 'DelGum'
 
+    # --- DelMin: read normally, then normalize column names into same schema ---
+    delmin = pd.read_csv(data_dir / 'min_20260115-085305.csv')
+    delmin.columns = [str(c).strip() for c in delmin.columns]
+    delmin['method'] = 'DelMin'
+
+    # Common alias mapping (edit if your DelMin uses different names)
+    aliases = {
+        'Dataset': 'dataset',
+        'ds': 'dataset',
+
+        'deletion_time': 'del_time',
+        'delete_time': 'del_time',
+        'update_time': 'del_time',
+
+        'masked_cells': 'mask_size',
+        'num_masked_cells': 'mask_size',
+        'mask': 'mask_size',
+
+        'instantiated_cells': 'num_instantiated_cells',
+        'model_cells': 'num_instantiated_cells',
+        'num_inst_cells': 'num_instantiated_cells',
+
+        # some DelMin logs model_size as bytes/cells; we keep it too
+        'instantiated_model_size': 'model_size',
+    }
+    for src, dst in aliases.items():
+        if src in delmin.columns and dst not in delmin.columns:
+            delmin = delmin.rename(columns={src: dst})
+
+    # If DelMin doesn’t have a decomposition, keep it plottable by zero-filling
+    for col in ['init_time', 'model_time', 'del_time']:
+        if col not in delmin.columns:
+            delmin[col] = 0.0
+
+    # If DelMin lacks these, create them (plots that need them may show gaps instead of wrong values)
+    for col in ['total_time', 'leakage', 'utility', 'total_paths', 'mask_size', 'model_size', 'num_instantiated_cells']:
+        if col not in delmin.columns:
+            delmin[col] = np.nan
+
+    # --- Merge ---
     df = pd.concat([delmin, del2ph, delgum], ignore_index=True)
 
-    # Normalize dataset labels to match keys in dicts
+    # Normalize dataset labels
     df['dataset'] = df['dataset'].astype(str).str.strip().str.capitalize()
 
-    # Derived columns
+    # Force numeric conversion (critical: avoids string concat / wrong math)
+    numeric_cols = [
+        'total_time', 'init_time', 'model_time', 'del_time',
+        'mask_size', 'model_size', 'num_instantiated_cells',
+        'leakage', 'utility', 'total_paths'
+    ]
+    for c in numeric_cols:
+        df[c] = pd.to_numeric(df[c], errors='coerce')
+
+    # Derived columns (seconds -> ms)
+    # IMPORTANT: "time" is ALWAYS defined as init + model + del (not total_time)
+    # so it matches generate_runtime_plot.py exactly.
     df['total_time_ms'] = df['total_time'] * 1000.0
     df['init_time_ms'] = df['init_time'] * 1000.0
     df['model_time_ms'] = df['model_time'] * 1000.0
-    df['update_time_ms'] = df['update_time'] * 1000.0
-    df['memory_kb'] = df['memory_overhead_bytes'] / 1024.0
+    df['update_time_ms'] = df['del_time'] * 1000.0
+    df['time_ms'] = df['init_time_ms'] + df['model_time_ms'] + df['update_time_ms']
 
-    # --- FIX: compute per-row deletion ratio first, then average later ---
+    # Memory
+    df['memory_kb'] = df['model_size'] / 1024.0
+
+    # Deletion ratio: row-wise then avg later (you did this right)
     df['zone_size'] = df['dataset'].map(ZONE_SIZES).astype(float)
-    df['deletion_ratio'] = df['mask_size'].astype(float) / df['zone_size'].clip(lower=1.0)
-
-    # Optional: enforce invariant visually (keeps plot from ever exceeding 1 due to weird inputs)
+    df['deletion_ratio'] = (df['mask_size'].astype(float) /
+                            df['zone_size'].clip(lower=1.0))
     df['deletion_ratio'] = df['deletion_ratio'].clip(lower=0.0, upper=1.0)
 
+    # Optional debug: confirm columns are sane per method
+    print("\nSanity check (mean mask_size, mean instantiated) by method/dataset:")
+    dbg = df.groupby(['method', 'dataset']).agg(
+        mask_mean=('mask_size', 'mean'),
+        inst_mean=('num_instantiated_cells', 'mean'),
+        rows=('mask_size', 'size')
+    ).reset_index()
+    print(dbg.to_string(index=False))
+
     return df
+
 
 
 def fig_deletion_ratio_vs_constraints(df: pd.DataFrame, output_path: Path) -> None:
@@ -169,7 +239,7 @@ def fig_leakage_vs_mask_tradeoff(df: pd.DataFrame, output_path: Path) -> None:
             row = summary[(summary['dataset'] == dataset) & (summary['method'] == method)]
             if len(row) == 0:
                 continue
-
+            print(dataset, method, row["leakage"], row["mask_size"])
             ax.scatter(
                 float(row['leakage'].values[0]),
                 float(row['mask_size'].values[0]),
@@ -187,8 +257,8 @@ def fig_leakage_vs_mask_tradeoff(df: pd.DataFrame, output_path: Path) -> None:
 
     ax.set_xlabel(r'Leakage $\mathcal{L}$')
     ax.set_ylabel(r'Auxiliary Deletions $|M|$')
-    ax.set_xlim(-0.03, 0.55)
-    ax.set_ylim(0, 17)
+    ax.set_xlim(-0.03, 0.77)
+    ax.set_ylim(0, 12)
 
     dataset_handles = [
         Line2D([0], [0], marker='o', color='w',
@@ -246,12 +316,14 @@ def fig_radar_plots(df: pd.DataFrame, output_path: Path) -> None:
 
             paths = float(m_data['total_paths'].mean())
 
+            # NO log transforms (you asked for no log). We still normalize per-dataset
+            # across methods, so scales don't explode the radar plot.
             raw_values[method] = [
-                float(m_data['deletion_ratio'].mean()),                 # FIXED
+                float(m_data['deletion_ratio'].mean()),
                 float(m_data['leakage'].mean()),
-                float(np.log10(m_data['memory_kb'].mean() + 1.0)),
-                float(np.log10(m_data['total_time_ms'].mean() + 1.0)),
-                float(np.log10(max(paths, 1.0) + 1.0)),
+                float(m_data['memory_kb'].mean()),
+                float(m_data['time_ms'].mean()),
+                float(paths),
             ]
 
         # Per-dataset normalization across methods (prevents Flight leakage from saturating due to global max)
@@ -345,7 +417,6 @@ def fig_runtime_decomposition(df: pd.DataFrame, output_path: Path) -> None:
         ax.bar(pos, update, width, bottom=init + model, color=PHASE_COLORS['update'],
                edgecolor='black', linewidth=0.5, hatch=hatches[i])
 
-    ax.set_yscale('log')
     ax.set_ylabel('Time (ms)')
     ax.set_xticks(x)
     ax.set_xticklabels(DATASET_ORDER)
@@ -369,7 +440,6 @@ def fig_runtime_decomposition(df: pd.DataFrame, output_path: Path) -> None:
     shaded = cells * mask_frac
 
     ax2 = ax.twinx()
-    ax2.set_yscale('log')
     ax2.set_ylabel('Instantiated cells (count)')
 
     cells_width = 0.18
@@ -455,7 +525,6 @@ def fig_cells_masked_bars(df: pd.DataFrame, output_path: Path) -> None:
             hatch=SHADE_HATCH[method], alpha=0.80
         )
 
-    ax.set_yscale('log')
     ax.set_ylabel('Instantiated cells (count)')
     ax.set_xticks(x)
     ax.set_xticklabels(DATASET_ORDER)
