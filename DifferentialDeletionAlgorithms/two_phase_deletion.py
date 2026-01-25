@@ -29,12 +29,6 @@ from sys import getsizeof
 
 import numpy as np
 
-from DifferentialDeletionAlgorithms.leakage import compute_utility, compute_utility_hinge, \
-    compute_utility_max
-
-# ============================================================
-# IMPORT *ALL* CORE METHODS FROM leakage.py
-# ============================================================
 from leakage import (
     # weights + DC -> (rdrs, weights)
     get_dataset_weights,
@@ -47,14 +41,19 @@ from leakage import (
     construct_hypergraph_max,
     construct_hypergraph_actual,
 
-    # utility
+    # utilities
+    compute_utility,
     compute_utility_hinge,
+    compute_utility_max,
+    compute_utility_hinge_leakage,
+    compute_utility_em,
 
     # leakage (Algorithm 2/5)
     leakage as leakage_model,
     hypergraph_to_edge_dict,
     iter_chains,
 )
+
 
 # ============================================================
 # Helpers (non-core)
@@ -145,11 +144,27 @@ def stable_softmax(scores: np.ndarray) -> np.ndarray:
     return ex / z
 
 
-def exp_mech_probs(utilities: np.ndarray, epsilon: float, lam: float) -> np.ndarray:
-    # scores = (ε * u) / (2λ)
-    sens = float(lam)
+# def exp_mech_probs(utilities: np.ndarray, epsilon: float, lam: float) -> np.ndarray:
+#     # scores = (ε * u) / (2λ)
+#     sens = 1000#lam
+#     scores = (float(epsilon) * utilities.astype(float)) / (2.0 * sens)
+#     return stable_softmax(scores)
+def exp_mech_probs(utilities: np.ndarray, epsilon: float, zone_size: int) -> np.ndarray:
+    """
+    P(M) ∝ exp( ε · U(M) / (2Δu) )
+
+    Normalization per Vishal's snippet:
+      - utility uses -|M|/|Z| and a fixed penalty
+      - sensitivity Δu = 1/|Z|
+    """
+    if utilities.size == 0:
+        return np.array([], dtype=float)
+
+    z = max(1, int(zone_size))
+    sens = 1.0 / float(z)
     scores = (float(epsilon) * utilities.astype(float)) / (2.0 * sens)
     return stable_softmax(scores)
+
 
 
 def deep_sizeof(obj: Any, *, seen: Optional[Set[int]] = None) -> int:
@@ -263,10 +278,11 @@ def build_template_two_phase(
     dataset: str,
     target_attribute: str,
     *,
-    save_dir: str = "templates_2ph",
+    save_dir: str = "templates",
     epsilon: float = 50.0,
     lam: float = 0.5,
     L0: float = 0.25,
+    lambda_penalty: float = 100.0,
     tau: Optional[float] = None,
     leakage_method: str = "greedy_disjoint",
     hypergraph_mode: str = "MAX",
@@ -329,7 +345,13 @@ def build_template_two_phase(
             leakage_method=leakage_method,
         )
 
-        U = compute_utility_hinge(leakage=float(L), mask_size=len(m), lam=float(lam), zone_size=zone_size, L0 = L0)
+        U = compute_utility_em(
+            leakage=float(L),
+            mask_size=len(m),
+            zone_size=int(zone_size),
+            L0=float(L0),
+            lambda_penalty=float(lambda_penalty),
+        )
 
         Leakage[m] = float(L)
         Utility[m] = float(U)
@@ -339,7 +361,7 @@ def build_template_two_phase(
 
         utilities_arr[i] = float(U)
 
-    probs_arr = exp_mech_probs(utilities_arr, epsilon=float(epsilon), lam=float(lam))
+    probs_arr = exp_mech_probs(utilities_arr, epsilon=float(epsilon), zone_size = zone_size)
     for m, p in zip(candidate_masks, probs_arr):
         Probability[m] = float(p)
 
@@ -397,6 +419,7 @@ def two_phase_deletion_main(
     epsilon: float = 50.0,
     lam: float = 0.5,
     L0: float = 0.25,
+    lambda_penalty: float = 100.0,
     tau: Optional[float] = None,
     leakage_method: str = "greedy_disjoint",
     hypergraph_mode: str = "MAX",
@@ -423,6 +446,7 @@ def two_phase_deletion_main(
             lam=lam,
             tau=tau,
             L0=L0,
+            lambda_penalty = lambda_penalty,
             leakage_method=leakage_method,
             hypergraph_mode=hypergraph_mode,
             mask_space=mask_method,
@@ -447,6 +471,7 @@ def two_phase_deletion_main(
             epsilon = epsilon,
             lam = lam,
             L0 = L0,
+            lambda_penalty = lambda_penalty,
             tau = tau,
             leakage_method = leakage_method,
             hypergraph_mode = hypergraph_mode,

@@ -25,6 +25,7 @@ Data files expected:
   Lambda sweep:   del2ph_0.csv ... delgum_10.csv
   Epsilon sweep:  edel2ph_<eps>.csv and edelgum_<eps>.csv where <eps> in:
       [0.05, 0.1, 0.15, 0.20, 0.30, 0.40, 0.50, 0.75, 1, 2, 8, 16, 32]
+
 """
 
 import argparse

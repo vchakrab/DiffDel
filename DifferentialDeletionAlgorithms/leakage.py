@@ -201,8 +201,37 @@ def compute_utility_logarithmic(*, leakage: float, mask_size: int, lam: float, z
 def compute_utility_hinge(* ,leakage, mask_size, zone_size, lam, L0 = 0.25):
     """ Cap-aware hinge utility. u(M) = - lam * max(0, L(M,c*,D) - L0) - (1-lam) * (|M|/I_max) where: - L0 is the permissible leakage cap (policy knob) - lam in (0,1) weights policy compliance vs deletion cost - |M|/I_max is normalized mask size in [0,1] Returns a finite, bounded utility in [-1, 0] (assuming L in [0,1]). """
     violation = max(0.0, leakage - L0)
+    print("violation = ", violation)
     size_term = mask_size/zone_size
-    return -lam * violation - (1.0 - lam) * size_term
+    return -lam * violation**2 - (1.0 - lam) * size_term
+def compute_utility_hinge_A(*, leakage, mask_size, zone_size, L0: float, A: float = 1000):
+    violation = max(0.0, leakage - L0)
+    size_term = mask_size / max(1, zone_size)
+
+    return -A * violation - size_term
+
+def compute_utility_hinge_leakage(* ,leakage, mask_size, zone_size, lam, L0 = 0.25):
+    """ Cap-aware hinge utility. u(M) = - lam * max(0, L(M,c*,D) - L0) - (1-lam) * (|M|/I_max) where: - L0 is the permissible leakage cap (policy knob) - lam in (0,1) weights policy compliance vs deletion cost - |M|/I_max is normalized mask size in [0,1] Returns a finite, bounded utility in [-1, 0] (assuming L in [0,1]). """
+    violation = max(0.0, leakage - L0)
+    print("violation = ", violation)
+    return -lam * violation
+def compute_utility_em(*, leakage: float, mask_size: int, zone_size: int, L0: float, lambda_penalty: float = 100.0) -> float:
+    """
+    Exponential-mechanism utility with a hard leakage cap via penalty.
+
+      U(M) = -|M|/|Z|                   if L(M) <= L0
+           = -|M|/|Z| - lambda_penalty  if L(M) > L0
+
+    Notes
+    -----
+    - Mask-size term normalized by |Z| (zone_size).
+    - Natural sensitivity bound: Δu = 1/|Z| (penalty is a fixed constant).
+    """
+    z = max(1, int(zone_size))
+    u = -float(mask_size) / float(z)
+    if float(leakage) > float(L0):
+        u -= float(lambda_penalty)
+    return float(u)
 
 # ============================================================
 # Leakage computation (Algorithm 2) — SINGLE SOURCE OF TRUTH
@@ -603,7 +632,8 @@ def leakage(
             f"Unknown leakage_method={leakage_method!r}. "
             "Use 'noisy_or', 'greedy_disjoint', or 'nor_with_ie'."
         )
-
+    if float(L) <  0.0 or float(L) > 1.0:
+        raise ValueError("Leakage probability must be between 0.0 and 1.0")
     if return_counts:
         return float(L), int(num_chains), int(active_chains), int(blocked_chains)
     return float(L)

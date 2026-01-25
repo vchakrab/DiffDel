@@ -599,9 +599,9 @@ def run_delgum(
             write_csv_header(f)
         else:
             if to_write != "epslo":
-                f.write(f"{to_write},leakage,utility,mask_size\n")
-                return
-            f.write(f"epsilon,L0,leakage,utility,mask_size\n")
+                f.write(f"dataset,{to_write},leakage,utility,mask_size\n")
+            else:
+                f.write(f"dataset,epsilon,L0,leakage,utility,mask_size\n")
 
 
         for ds in DATASETS:
@@ -641,23 +641,33 @@ def run_delgum(
                         write_csv_row(f, row)
                     else:
                         if to_write == "lambda":
-                            f.write(f"{lam},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+                            f.write(f"{ds},{lam},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
                         elif to_write == "epsilon":
-                            f.write(f"{epsilon},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+                            f.write(f"{ds},{epsilon},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
                         else:
                             f.write(
-                                f"{epsilon},{L0},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+                                f"{ds},{epsilon},{L0},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
 
                 except Exception as e:
                     print(f"  [delgum] iter {i+1} error: {e}")
                     continue
 
+import os
+
+def delete_2ph_template(dataset: str, attr: str, template_dir: str) -> None:
+    pkl_path = os.path.join(template_dir, f"{dataset}_{attr}.pkl")
+    try:
+        if os.path.exists(pkl_path):
+            os.remove(pkl_path)
+            print(f"[del2ph] deleted template: {pkl_path}")
+    except Exception as e:
+        print(f"[del2ph] warning: could not delete template {pkl_path}: {e}")
 
 def run_del2ph(
     out_csv: str,
     *,
     epsilon: float = .1,
-    lam: float = .75,
+    lambda_penalty: float = .75,
     L0: float = 0.25,
     mask_method: Optional[str] = None,
     leakage_method: str = "greedy_disjoint",
@@ -694,9 +704,9 @@ def run_del2ph(
             write_csv_header(f)
         else:
             if to_write != "epslo":
-                f.write(f"{to_write},leakage,utility,mask_size\n")
+                f.write(f"dataset,{to_write},leakage,utility,mask_size\n")
             else:
-                f.write(f"epsilon,L0,leakage,utility,mask_size\n")
+                f.write(f"dataset,epsilon,L0,leakage,utility,mask_size\n")
 
         for ds in DATASETS:
             ds = normalize_dataset_name(ds)
@@ -714,7 +724,7 @@ def run_del2ph(
                         key=key,
                         target_cell=attr,
                         epsilon=float(epsilon),
-                        lam=float(lam),
+                        lambda_penalty=float(lambda_penalty),
                         L0=L0,
                         leakage_method=str(leakage_method),
                         template_dir=TEMPLATE_DIR,
@@ -734,15 +744,18 @@ def run_del2ph(
                         write_csv_row(f, row)
                     else:
                         if to_write == "lambda":
-                            f.write(f"{lam},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+                            f.write(f"{ds},{lambda_penalty},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
                         elif to_write == "epsilon":
-                            f.write(f"{epsilon},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+                            f.write(f"{ds},{epsilon},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
                         else:
-                            f.write(f"{epsilon},{L0},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+                            f.write(f"{ds},{epsilon},{L0},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+
 
                 except Exception as e:
                     print(f"  [del2ph] iter {i+1} error: {e}")
                     continue
+            delete_2ph_template(ds, attr, template_dir)
+
 
 
 def run_del2ph_canonical(
@@ -794,14 +807,106 @@ Then keeping other parameters fixed as above:
 2. Eblate \lambda = 0, .25, .5, 1"""
     # setup_database_copies()
     # for l0 in [0.1, .3, .6, .9]:
-    #     run_del2ph(f"data_ablation_jan21_l0_del2ph_{l0}", epsilon = 1, lam = 0.25, L0 = l0,
+    #     run_del2ph(f"data_ablation_jan22_l0_del2ph_{l0}_v2", epsilon = 1, lam = 0.75, L0 = l0,
     #         leakage_method = "greedy_disjoint", which_ablation = "eo")
     # cleanup_database_copies()
+    import os
+    from datetime import datetime
+
+    # Create data/<YYYY-MM-DD>/ directory
+    # TODAY = datetime.now().strftime("%Y-%m-%d")
+    # BASE_DIR = os.path.join("data", TODAY)
+    # os.makedirs(BASE_DIR, exist_ok = True)
+    #
+    # # ---- L0 ablation ----
+    #
+    # setup_database_copies()
+    # for l0 in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]:
+    #     run_del2ph(
+    #         f"{BASE_DIR}/l0_ablation_{l0}",
+    #         epsilon = 1,
+    #         lambda_penalty = 100,
+    #         L0 = l0,
+    #         leakage_method = "greedy_disjoint",
+    #         which_ablation = "eo",
+    #     )
+    # cleanup_database_copies()
+    #
+    # # ---- lambda ablation ----
+    # setup_database_copies()
+    # for lam in [1, 10, 100, 1000]:
+    #     run_del2ph(
+    #         f"{BASE_DIR}/lambda_ablation_{lam}",
+    #         epsilon = 1,
+    #         lambda_penalty = lam,
+    #         L0 = 0.75,
+    #         leakage_method = "greedy_disjoint",
+    #         which_ablation = "l",
+    #     )
+    # cleanup_database_copies()
+    #
+    # # ---- epsilon ablation ----
+    # setup_database_copies()
+    # for ep in [0.1, 1, 10, 100, 1000]:
+    #     run_del2ph(
+    #         f"{BASE_DIR}/epsilon_ablation_{ep}",
+    #         epsilon = ep,
+    #         lambda_penalty = 100,
+    #         L0 = 0.3,
+    #         leakage_method = "greedy_disjoint",
+    #         which_ablation = "e",
+    #     )
+    # cleanup_database_copies()
+
+    TODAY = datetime.now().strftime("%Y-%m-%d")
+    BASE_DIR = os.path.join("data", TODAY, "gum_ablations")
+    os.makedirs(BASE_DIR, exist_ok = True)
+
+    # ---- L0 ablation ----
+
     setup_database_copies()
-    for lam in [0.1]:
-        run_del2ph(f"data_ablation_jan21_lam_del2ph_{lam}", epsilon = 1, lam = lam, L0 = .25,
-                   leakage_method = "greedy_disjoint", which_ablation = "l")
+    for l0 in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]:
+        run_delgum(
+            f"{BASE_DIR}/l0_ablation_{l0}",
+            epsilon = 1,
+            lam = 100,
+            L0 = l0,
+            leakage_method = "greedy_disjoint",
+            which_ablation = "eo",
+        )
     cleanup_database_copies()
+
+    # ---- lambda ablation ----
+    setup_database_copies()
+    for lam in [1, 10, 100, 1000]:
+        run_delgum(
+            f"{BASE_DIR}/lambda_ablation_{lam}",
+            epsilon = 1,
+            lam = lam,
+            L0 = 0.75,
+            leakage_method = "greedy_disjoint",
+            which_ablation = "l",
+        )
+    cleanup_database_copies()
+
+    # ---- epsilon ablation ----
+    setup_database_copies()
+    for ep in [0.1, 1, 10, 100, 1000]:
+        run_delgum(
+            f"{BASE_DIR}/epsilon_ablation_{ep}",
+            epsilon = ep,
+            lam = 100,
+            L0 = 0.3,
+            leakage_method = "greedy_disjoint",
+            which_ablation = "e",
+        )
+    cleanup_database_copies()
+
+    # setup_database_copies()
+    # for lam in [0.1]:
+    #     run_del2ph(f"data_ablation_jan21_lam_del2ph_{lam}", epsilon = 1, lam = lam, L0 = .25,
+    #                leakage_method = "greedy_disjoint", which_ablation = "l")
+    # cleanup_database_copies()
     # setup_database_copies()
     # for i in range(0, 11):
     #     run_delgum(f"data3/delgum_{i}.csv",

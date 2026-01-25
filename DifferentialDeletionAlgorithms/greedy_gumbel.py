@@ -11,7 +11,7 @@ import math
 import dataclasses
 
 from DifferentialDeletionAlgorithms.leakage import compute_utility_logarithmic, compute_utility, \
-    compute_utility_hinge, compute_utility_max
+    compute_utility_hinge, compute_utility_max, compute_utility_em
 # ✅ import YOUR heavy lifting module
 from leakage import (
     get_dataset_weights,   # (if you add the helper)
@@ -742,143 +742,119 @@ def marginal_gain_given_curr(
 #         M.add(best_c)
 #
 #     return M, float(time.time() - t0)
-from typing import Optional, Set, Tuple, List, Dict
-import math
-import random
-import time
+
 def gumbel_noise_scale(scale: float) -> float:
-    # g = -scale * ln(-ln(u)),  u ~ Uniform(0,1)
+    """Standard Gumbel(0, scale) sampler."""
     u = random.random()
     u = max(1e-12, min(1.0 - 1e-12, u))
     return float(-scale * math.log(-math.log(u)))
 
 def greedy_gumbel_max_deletion(
-    *,
-    hypergraph: Hypergraph,
-    hyperedges: List[Tuple[str, ...]],  # kept for backward-compat; unused
-    target_cell: str,
-    lam: float,       # kept for signature compatibility; NOT USED in LaTeX scoring
-    epsilon: float,
-    L0: float,
-    K: int,
-    leakage_method: str = "greedy_disjoint",  # kept for signature compatibility
-    edge_tau: Optional[float] = None,
+        *,
+        hypergraph: Any,
+        hyperedges: List[Tuple[str, ...]],
+        target_cell: str,
+        lam: float,      # This is λ in your algorithm
+        epsilon: float,  # Total ε budget
+        L0: float,       # Leakage threshold
+        K: int,          # Max iterations
+        leakage_method: str = "greedy_disjoint",
+        edge_tau: Optional[float] = None,
 ) -> Tuple[Set[str], float]:
     """
-    MATCHES the LaTeX Algorithm DelGum exactly (Phase 2 scoring):
-
-      - Uses MaskDisjointSelect -> (D*, P_all)
-      - L_curr = 1 - P_all
-      - Reward R = max(0, L0 - L)
-      - Candidate L_upper = 1 - P_all / P_removed[c]
-      - Δu_lb(c) = R_new - R_curr - 1/|Z|
-      - Gumbel noise scale = 2/ε' (NO λ factor)
-      - Stop action uses score = 0 + Gumbel(2/ε')
-
-    NOTE: `lam` is not part of the LaTeX algorithm’s scoring; it is unused here.
+    Implements Algorithm 2: Greedy Gumbel-Max Deletion.
+    Uses Algorithm 1 logic via _mask_disjoint_select and _compute_premoved.
     """
-
     t0 = time.time()
-
     if K <= 0 or epsilon <= 0.0:
         return set(), float(time.time() - t0)
 
-    # Phase 1: preprocessing
+    # 1. Preprocessing & Initialization
     chains, cell_to_chains, edge_verts, edge_w = _build_chains_and_index(
         hypergraph=hypergraph,
         target_cell=target_cell,
         tau=edge_tau,
     )
 
-    # Z = I(c*)
-    Z = inference_zone_union(target_cell, hypergraph)
-    Z.discard(target_cell)
+    # I(c*) is the candidate set C in your algorithm
+    I_zone = inference_zone_union(target_cell, hypergraph)
+    I_zone.discard(target_cell)
+    zone_size = max(1, len(I_zone))
 
     M: Set[str] = set()
+    # ε' = ε / K (line 2 of Alg 2)
     epsilon_prime = float(epsilon) / float(K)
 
-    # Gumbel scale in LaTeX: 2/ε'
-    g_scale = 2.0 / max(1e-12, float(epsilon_prime))
+    # Scale: 4*lambda / epsilon_prime (as per your pseudocode lines 6 & 11)
+    # Note: If lambda is your penalty, this scale controls the privacy noise.
+    g_scale = (4.0 * lam) / max(1e-12, float(epsilon_prime))
 
-    for _k in range(1, K + 1):
-        candidates = set(Z) - set(M)
+    # Initial State (Line 3-4)
+    D_star, P_all = _mask_disjoint_select(
+        chains, mask=M, target_cell=target_cell, edge_verts=edge_verts, edge_w=edge_w
+    )
+    L_curr = 1.0 - float(P_all)
+    # U_curr = -|M|/|Z| - λ * 1[L > L0]
+    u_curr = -(len(M) / zone_size) - (lam if L_curr > L0 else 0.0)
+
+    for k in range(1, K + 1):
+        # Line 6: s_stop
+        s_stop = gumbel_noise_scale(g_scale)
+
+        # Line 7: C
+        candidates = list(I_zone - M)
         if not candidates:
             break
 
-        # (D*, P_all) = MaskDisjointSelect(P, M)
+        # Line 8: EstimateLeakage (Algorithm 1)
+        # Re-select D_star for current mask M
         D_star, P_all = _mask_disjoint_select(
-            chains,
-            mask=M,
-            target_cell=target_cell,
-            edge_verts=edge_verts,
-            edge_w=edge_w,
+            chains, mask=M, target_cell=target_cell, edge_verts=edge_verts, edge_w=edge_w
         )
-
-        # L_curr = 1 - P_all
-        L_curr = 1.0 - float(P_all)
-
-        # R_curr = max(0, L0 - L_curr)
-        R_curr = max(0.0, float(L0) - float(L_curr))
-
-        # Precompute P_removed[c] for all candidates
-        P_removed = _compute_premoved(D_star, candidates)
-
-        # Cost term in LaTeX: 1/|Z|
-        cost = 1.0 / float(max(1, len(Z)))
+        P_removed_map = _compute_premoved(D_star, set(candidates))
 
         best_c: Optional[str] = None
-        best_score = -float("inf")
+        max_s_c = -float("inf")
 
-        # Score each candidate
+        # Lines 9-12: Score candidates
         for c in candidates:
-            pr = float(P_removed.get(c, 1.0))
+            pr = float(P_removed_map.get(c, 1.0))
+            # Leakage estimate: 1 - P_all / P_removed(c)
+            L_est = 1.0 - (float(P_all) / pr) if pr > 0 else 1.0
 
-            # L_upper = 1 - P_all / P_removed[c]
-            # Guard pr<=0
-            if pr <= 0.0:
-                # If pr is ~0, then P_all/pr is huge; L_upper -> -inf, reward saturates at L0
-                L_upper = -float("inf")
-            else:
-                L_upper = 1.0 - (float(P_all) / pr)
+            # U_est = -(|M|+1)/|Z| - λ * 1[L_est > L0]
+            u_est = -((len(M) + 1) / zone_size) - (lam if L_est > L0 else 0.0)
 
-            # R_new = max(0, L0 - L_upper)
-            R_new = max(0.0, float(L0) - float(L_upper))
+            # s_c = (U_est - U_curr) + Gumbel
+            s_c = (u_est - u_curr) + gumbel_noise_scale(g_scale)
 
-            # Δu_lb = R_new - R_curr - 1/|Z|
-            delta_u_lb = float(R_new) - float(R_curr) - float(cost)
-
-            # g_c = Gumbel(scale = 2/ε')
-            g_c = gumbel_noise_scale(g_scale)
-
-            score = float(delta_u_lb) + float(g_c)
-
-            if score > best_score:
-                best_score = score
+            if s_c > max_s_c:
+                max_s_c = s_c
                 best_c = c
 
-        # Early stop option: s_stop = 0 + Gumbel(scale = 2/ε')
-        s_stop = gumbel_noise_scale(g_scale)
-        if best_c is None or s_stop > best_score:
+        # Line 13-15: Stopping condition
+        if s_stop >= max_s_c:
             break
 
-        # Select and update
+        # Line 16: Commit M = M ∪ {c*}
         M.add(best_c)
 
-        # UpdateChainWeights(P, CellToChains[c*], M)
+        # Lines 17-18: Update current state for next iteration
+        # Update only affected chains to keep _mask_disjoint_select efficient
         affected = cell_to_chains.get(best_c, [])
         for p in affected:
-            if not p.active:
-                continue
-            w_new = _compute_chain_weight(
-                p,
-                mask=M,
-                target_cell=target_cell,
-                edge_verts=edge_verts,
-                edge_w=edge_w,
-            )
-            p.currWeight = float(w_new)
-            if w_new <= 0.0:
-                p.active = False
+            if p.active:
+                p.currWeight = _compute_chain_weight(
+                    p, mask=M, target_cell=target_cell, edge_verts=edge_verts, edge_w=edge_w
+                )
+                if p.currWeight <= 0.0:
+                    p.active = False
+
+        D_star, P_all = _mask_disjoint_select(
+            chains, mask=M, target_cell=target_cell, edge_verts=edge_verts, edge_w=edge_w
+        )
+        L_curr = 1.0 - float(P_all)
+        u_curr = -(len(M) / zone_size) - (lam if L_curr > L0 else 0.0)
 
     return M, float(time.time() - t0)
 
@@ -951,7 +927,7 @@ def gumbel_deletion_main(
 
     inference_zone = inference_zone_union(target_cell, H_local)
     denom = max(1, len(inference_zone))
-    utility = compute_utility_max(leakage = L, mask_size = len(final_mask),lam =lam, zone_size = len(inference_zone), L0 = L0)
+    utility = compute_utility_em(leakage = L, mask_size = len(final_mask),lambda_penalty =lam, zone_size = len(inference_zone), L0 = L0)
 
     model_time = float(time.time() - model_start)
 
