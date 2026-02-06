@@ -58,9 +58,9 @@ DATA_DIR = Path(".")   # change to Path("/absolute/path/to/your/csvs") if needed
 OUTPUT_DIR = Path(".")  # change if you want somewhere else
 
 # Your filenames (use exactly what you have)
-DELMIN_CSV = "min_20260115-085305.csv"
-DEL2PH_CSV = "2ph_20260115-181356.csv"
-DELGUM_CSV = "gum_20260115-181307.csv"
+DELMIN_CSV = "jan26_min.csv"
+DEL2PH_CSV = "jan26_del2ph.csv"
+DELGUM_CSV = "jan26_gum.csv"
 
 # =============================================================================
 # UTILITIES

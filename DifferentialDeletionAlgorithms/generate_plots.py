@@ -70,16 +70,16 @@ def load_data(data_dir: Path) -> pd.DataFrame:
         'utility', 'total_paths', 'mask_size', 'model_size', 'num_instantiated_cells'
     ]
 
-    del2ph = pd.read_csv(data_dir / '2ph_20260115-181356.csv',
+    del2ph = pd.read_csv("jan26_del2ph.csv",
                          header=None, skiprows=1, names=new_columns)
-    delgum = pd.read_csv(data_dir / 'gum_20260115-181307.csv',
+    delgum = pd.read_csv('jan26_gum.csv',
                          header=None, skiprows=1, names=new_columns)
 
     del2ph['method'] = 'Del2Ph'
     delgum['method'] = 'DelGum'
 
     # --- DelMin: read normally, then normalize column names into same schema ---
-    delmin = pd.read_csv(data_dir / 'min_20260115-085305.csv')
+    delmin = pd.read_csv('jan26_min.csv')
     delmin.columns = [str(c).strip() for c in delmin.columns]
     delmin['method'] = 'DelMin'
 
@@ -257,7 +257,7 @@ def fig_leakage_vs_mask_tradeoff(df: pd.DataFrame, output_path: Path) -> None:
 
     ax.set_xlabel(r'Leakage $\mathcal{L}$')
     ax.set_ylabel(r'Auxiliary Deletions $|M|$')
-    ax.set_xlim(-0.03, 0.77)
+    ax.set_xlim(-0.03, .95)
     ax.set_ylim(0, 12)
 
     dataset_handles = [
@@ -299,7 +299,7 @@ def fig_radar_plots(df: pd.DataFrame, output_path: Path) -> None:
     fig, axes = plt.subplots(1, 5, figsize=(12, 2.8), subplot_kw=dict(polar=True))
 
     methods = ['DelMin', 'Del2Ph', 'DelGum']
-    metrics_labels = ['|M|/|I|', r'$\mathcal{L}$', 'Mem', 'T', r'$|\Pi|$']
+    metrics_labels = ['|M|/|I|', r'$\mathcal{L}$', 'Model Size', 'Time', "Paths"]
     n_metrics = len(metrics_labels)
 
     angles = np.linspace(0, 2 * np.pi, n_metrics, endpoint=False).tolist()

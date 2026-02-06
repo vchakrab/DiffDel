@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 # =============================
 
 CSV_PATHS = {
-    "Baseline 3": "delmin_final_data.csv",
-    "Exponential Deletion": "del2ph_January09,202610:50:09PM_hinge.csv",
-    "Greedy Gumbel": "delgum_January10,202610:46:58AM_hinge.csv",
+    "Baseline 3": "jan26_min.csv",
+    "Exponential Deletion": "jan26_del2ph.csv",
+    "Greedy Gumbel": "jan26_gum.csv",
 }
 
 DATASETS = ["airport", "hospital", "flight", "adult", "tax"]

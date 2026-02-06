@@ -781,236 +781,152 @@ def run_del2ph_canonical(
 # ----------------------------
 # Main
 # ----------------------------
+import os
+from datetime import datetime
 
-def main():
-    #RUN MIN (BASELINE DELETION)
-    # setup_database_copies()
-    # run_delmin(f"min_{time.strftime('%Y%m%d-%H%M%S')}.csv")
-    # cleanup_database_copies()
 
-    # #RUN GUMBEL
-    # setup_database_copies()
-    # run_delgum(f"gum_{time.strftime('%Y%m%d-%H%M%S')}.csv", leakage_method="greedy_disjoint", verbose=True)
-    # cleanup_database_copies()
-    # setup_database_copies()
-    # run_del2ph(f"2ph_{time.strftime('%Y%m%d-%H%M%S')}.csv", leakage_method = "greedy_disjoint",
-    #            verbose = True)
-    # setup_database_copies()
-    # for epsilon in [.1, 1, 10]:
-    #     for l0 in [.1, .2, .25,  .3, .4, .5, .75]:
-    #         run_delgum(f"data_jan15_elo/delgum_{epsilon}_{l0}", epsilon=epsilon, lam=0.75, L0=l0, leakage_method="greedy_disjoint", which_ablation = "eo")
-    # cleanup_database_copies()
-    """with epsilon = 1, Lambda = .25, and L0 = .25.
+#!/usr/bin/env python3
 
-Then keeping other parameters fixed as above:
-1. eblate with L0 = .1, .3, .6, .9
-2. Eblate \lambda = 0, .25, .5, 1"""
-    # setup_database_copies()
-    # for l0 in [0.1, .3, .6, .9]:
-    #     run_del2ph(f"data_ablation_jan22_l0_del2ph_{l0}_v2", epsilon = 1, lam = 0.75, L0 = l0,
-    #         leakage_method = "greedy_disjoint", which_ablation = "eo")
-    # cleanup_database_copies()
-    import os
-    from datetime import datetime
+import os
+from datetime import datetime
+from typing import Callable
 
-    # Create data/<YYYY-MM-DD>/ directory
-    # TODAY = datetime.now().strftime("%Y-%m-%d")
-    # BASE_DIR = os.path.join("data", TODAY)
-    # os.makedirs(BASE_DIR, exist_ok = True)
-    #
-    # # ---- L0 ablation ----
-    #
-    # setup_database_copies()
-    # for l0 in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]:
-    #     run_del2ph(
-    #         f"{BASE_DIR}/l0_ablation_{l0}",
-    #         epsilon = 1,
-    #         lambda_penalty = 100,
-    #         L0 = l0,
-    #         leakage_method = "greedy_disjoint",
-    #         which_ablation = "eo",
-    #     )
-    # cleanup_database_copies()
-    #
-    # # ---- lambda ablation ----
-    # setup_database_copies()
-    # for lam in [1, 10, 100, 1000]:
-    #     run_del2ph(
-    #         f"{BASE_DIR}/lambda_ablation_{lam}",
-    #         epsilon = 1,
-    #         lambda_penalty = lam,
-    #         L0 = 0.75,
-    #         leakage_method = "greedy_disjoint",
-    #         which_ablation = "l",
-    #     )
-    # cleanup_database_copies()
-    #
-    # # ---- epsilon ablation ----
-    # setup_database_copies()
-    # for ep in [0.1, 1, 10, 100, 1000]:
-    #     run_del2ph(
-    #         f"{BASE_DIR}/epsilon_ablation_{ep}",
-    #         epsilon = ep,
-    #         lambda_penalty = 100,
-    #         L0 = 0.3,
-    #         leakage_method = "greedy_disjoint",
-    #         which_ablation = "e",
-    #     )
-    # cleanup_database_copies()
+# You already have these somewhere in your repo:
+# from your_module import setup_database_copies, cleanup_database_copies, run_delgum, run_del2ph
 
-    TODAY = datetime.now().strftime("%Y-%m-%d")
-    BASE_DIR = os.path.join("data", TODAY, "gum_ablations")
-    os.makedirs(BASE_DIR, exist_ok = True)
 
-    # ---- L0 ablation ----
-
+def with_db_copies(fn: Callable[[], None]) -> None:
+    """Run fn() with fresh DB copies, always cleaning up afterward."""
     setup_database_copies()
-    for l0 in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]:
-        run_delgum(
-            f"{BASE_DIR}/l0_ablation_{l0}",
-            epsilon = 1,
-            lam = 100,
-            L0 = l0,
-            leakage_method = "greedy_disjoint",
-            which_ablation = "eo",
-        )
-    cleanup_database_copies()
+    try:
+        fn()
+    finally:
+        cleanup_database_copies()
 
-    # ---- lambda ablation ----
-    setup_database_copies()
-    for lam in [1, 10, 100, 1000]:
-        run_delgum(
-            f"{BASE_DIR}/lambda_ablation_{lam}",
-            epsilon = 1,
-            lam = lam,
-            L0 = 0.75,
-            leakage_method = "greedy_disjoint",
-            which_ablation = "l",
-        )
-    cleanup_database_copies()
 
-    # ---- epsilon ablation ----
-    setup_database_copies()
-    for ep in [0.1, 1, 10, 100, 1000]:
-        run_delgum(
-            f"{BASE_DIR}/epsilon_ablation_{ep}",
-            epsilon = ep,
-            lam = 100,
-            L0 = 0.3,
-            leakage_method = "greedy_disjoint",
-            which_ablation = "e",
-        )
-    cleanup_database_copies()
+def main() -> None:
+    epsilons = [0.1, 0.2, 0.4, 0.8, 1, 2, 3, 4, 5, 10, 100]
+    # l0s = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+    # lams = [10000]
 
-    # setup_database_copies()
-    # for lam in [0.1]:
-    #     run_del2ph(f"data_ablation_jan21_lam_del2ph_{lam}", epsilon = 1, lam = lam, L0 = .25,
-    #                leakage_method = "greedy_disjoint", which_ablation = "l")
-    # cleanup_database_copies()
-    # setup_database_copies()
-    # for i in range(0, 11):
-    #     run_delgum(f"data3/delgum_{i}.csv",
-    #                      epsilon = 0.1, lam = i/10, leakage_method = "greedy_disjoint", which_ablation = "l")
-    # cleanup_database_copies()
-    # setup_database_copies()
-    # for i in range(0, 11):
-    #     run_del2ph(f"data3/del2ph_{i}.csv", epsilon =0.1, lam =i/10, leakage_method = "greedy_disjoint", which_ablation = "l")
-    # cleanup_database_copies()
-    # values = [0.05, 0.1, 0.15, 0.20, 0.30, 0.40, 0.50, 0.75, 1, 2, 8, 16, 32]
-    # setup_database_copies()
-    # for i in values:
-    #     run_delgum(f"data3/edelgum_{i}.csv",
-    #                epsilon = i, lam = 0.75, leakage_method = "greedy_disjoint",
-    #                which_ablation = "e")
-    # cleanup_database_copies()
-    # setup_database_copies()
-    # for i in values:
-    #     run_del2ph(f"data3/edel2ph_{i}.csv",
-    #                epsilon = i, lam = 0.75, leakage_method = "greedy_disjoint",
-    #                which_ablation = "e")
-    # cleanup_database_copies()
+    RUN_DATE = datetime.now().strftime("%Y-%m-%d")
+    RUN_TIMESTAMP = datetime.now().strftime("%H-%M-%S")
+    BASE_OUTPUT_DIR = "experiment_outputs"
+    RUN_DIR = os.path.join(BASE_OUTPUT_DIR, RUN_DATE, RUN_TIMESTAMP)
+    ABL_DIR = os.path.join(RUN_DIR, "ablation")
+    os.makedirs(ABL_DIR, exist_ok=True)
+
+    # -------------------------
+    # delgum: epsilon ablation
+    # -------------------------
+    def delgum_eps() -> None:
+        for epsilon in epsilons:
+            out = os.path.join(ABL_DIR, f"delgum_epsilon_{epsilon}.csv")
+            run_delgum(
+                out,
+                epsilon=epsilon,
+                L0=0.3,
+                lam=100,
+                verbose=False,
+                leakage_method="greedy_disjoint",
+                which_ablation="e",
+            )
+
+    with_db_copies(delgum_eps)
+
+    # ----------------------
+    # delgum: lambda ablation
+    # ----------------------
+    # def delgum_lam() -> None:
+    #     for lam in lams:
+    #         out = os.path.join(ABL_DIR, f"delgum_lam_{lam}.csv")
+    #         run_delgum(
+    #             out,
+    #             epsilon=0.1,
+    #             L0=0.3,
+    #             lam=lam,
+    #             verbose=False,
+    #             leakage_method="greedy_disjoint",
+    #             which_ablation="l",
+    #         )
+
+    # with_db_copies(delgum_lam)
+
+    # ------------------
+    # delgum: L0 ablation
+    # ------------------
+    # def delgum_l0() -> None:
+    #     for l0 in l0s:
+    #         out = os.path.join(ABL_DIR, f"delgum_L0_{l0}.csv")
+    #         run_delgum(
+    #             out,
+    #             epsilon=0.1,
+    #             L0=l0,
+    #             lam=100,
+    #             verbose=False,
+    #             leakage_method="greedy_disjoint",
+    #             which_ablation="eo",
+    #         )
+    #
+    # with_db_copies(delgum_l0)
+    #
+    # # -------------------------
+    # # del2ph: epsilon ablation
+    # # -------------------------
+    def del2ph_eps() -> None:
+        for epsilon in epsilons:
+            out = os.path.join(ABL_DIR, f"del2ph_epsilon_{epsilon}.csv")
+            run_del2ph(
+                out,
+                epsilon=epsilon,
+                L0=0.3,
+                lambda_penalty=100,
+                verbose=False,
+                leakage_method="greedy_disjoint",
+                which_ablation="e",
+            )
+
+    with_db_copies(del2ph_eps)
+
+    # ----------------------
+    # del2ph: lambda ablation
+    # ----------------------
+    # def del2ph_lam() -> None:
+    #     for lam in lams:
+    #         out = os.path.join(ABL_DIR, f"del2ph_lam_{lam}.csv")
+    #         run_del2ph(
+    #             out,
+    #             epsilon=0.1,
+    #             L0=0.3,
+    #             lambda_penalty=lam,
+    #             verbose=False,
+    #             leakage_method="greedy_disjoint",
+    #             which_ablation="l",
+    #         )
+    #
+    # with_db_copies(del2ph_lam)
+
+    # ------------------
+    # del2ph: L0 ablation
+    # ------------------
+    # def del2ph_l0() -> None:
+    #     for l0 in l0s:
+    #         out = os.path.join(ABL_DIR, f"del2ph_L0_{l0}.csv")
+    #         run_del2ph(
+    #             out,
+    #             epsilon=0.1,
+    #             L0=l0,
+    #             lambda_penalty=100,
+    #             verbose=False,
+    #             leakage_method="greedy_disjoint",
+    #             which_ablation="eo",
+    #         )
+    #
+    # with_db_copies(del2ph_l0)
+
+    print(f"Done. Wrote ablations to: {ABL_DIR}")
+
 
 if __name__ == "__main__":
     main()
 
-
-
-# cleanup_database_copies()
-    # setup_database_copies()
-    # for i in range(5, 100, 5):
-    #     lam = i/100
-    #     run_delgum("ablation_delgum_lambda_v1.csv", lam=lam, which_ablation="l", epsilon=50)
-    # cleanup_database_copies()
-    # setup_database_copies()
-    # for i in range(5, 100, 5):
-    #     lam = i / 100
-    #     run_delexp("ablation_delexp_lambda_v1.csv", lam = lam, which_ablation = "l", verbose = False, epsilon=50)
-    # cleanup_database_copies()
-    # #
-    # # #exp 2
-    # setup_database_copies()
-    # VALUES = [0.1, 0.51, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300]
-    # for i in VALUES:
-    #     run_delgum("ablation_delgum_epsilon_v1.csv", lam = 0.5, which_ablation = "e", epsilon = i)
-    # cleanup_database_copies()
-    # setup_database_copies()
-    # for i in VALUES:
-    #     run_delexp("ablation_delexp_epsilon_v1.csv", lam = 0.5, which_ablation = "e", verbose = False, epsilon = i)
-    # cleanup_database_copies()
-
-    # setup_database_copies()
-    # for i in [1, 2, 5, 10, 15, 20]:
-    #     run_delgum("ablation_delexp_epsilon.csv", lam = 2 / 3, which_ablation = "k",
-    #                K = i)
-    # cleanup_database_copies()
-    # print("\nDone.")
-    # setup_database_copies()
-    # for i in range(1, 301):
-    #     run_delgum("ablation_delgum_epsilon.csv", epsilon = i, which_ablation = "e", verbose = False)
-    # cleanup_database_copies()
-    # setup_database_copies()
-    # for i in range(1, 301):
-    #     run_delexp("ablation_delexp_epsilon.csv", epsilon = i, which_ablation = "e", verbose = False)
-    # cleanup_database_copies()
-
-    # setup_database_copies()
-    # for i in range(1, 301):
-    #     run_delgum("ablation_delgum_alpha.csv", alpha = i, which_ablation = "a", verbose = False)
-    # cleanup_database_copies()
-    # setup_database_copies()
-    # for i in range(1, 301):
-    #     run_delexp("ablation_delexp_alpha.csv", alpha= i, which_ablation = "a", verbose = False)
-    # cleanup_database_copies()
-    #
-    # setup_database_copies()
-    # for i in range(1, 301):
-    #     run_delgum("ablation_delgum_beta.csv", beta = i/2, which_ablation = "b", verbose = False)
-    # cleanup_database_copies()
-    # setup_database_copies()
-    # for i in range(1, 301):
-    #     run_delexp("ablation_delexp_beta.csv", beta = i/2, which_ablation = "b", verbose = False)
-    # cleanup_database_copies()
-
-    # print("=" * 60)
-    # print("Standardized Deletion Experiments (delmin/delexp/delgum)")
-    # print("=" * 60)
-    #
-    # setup_database_copies()
-    # run_delmin("delmin_data_standarized_f3.csv")
-    # cleanup_database_copies()
-    # #
-    # setup_database_copies()
-    # run_delexp("delexp_data_standardized_non_canonical_or_leakage.csv", verbose=True)
-    # cleanup_database_copies()
-    # #
-    # setup_database_copies()
-    # run_delgum("delgum_data_standardized_vFinal.csv", verbose=True)
-    # cleanup_database_copies()
-    # #
-    # setup_database_copies()
-    # run_del2ph("del2ph_data_standardized_v2.csv")
-    # cleanup_database_copies()
-    #
-
-    #ablation studies
-    #exp 1
