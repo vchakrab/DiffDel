@@ -20,7 +20,9 @@ from __future__ import annotations
 import os
 import time
 from typing import Any, Dict, Optional, Tuple, Union, List
-
+from marginal_em import marginal_em_main
+from surrogate_em import surrogate_em_main
+from delmarg import delmarg_main
 import mysql.connector
 
 import config
@@ -438,6 +440,203 @@ def run_delmin(out_csv: str):
                     print(f"  [delmin] iter {i+1} error: {e}")
                     continue
 
+def run_marginal_em(out_csv, verbose=False, lam=0.75, epsilon=0.1, L0=0.25,
+                    which_ablation=None, leakage_method="greedy_disjoint"):
+    if which_ablation is None:
+        to_write = None
+    elif which_ablation == "l":
+        to_write = "lambda"
+    elif which_ablation == "e":
+        to_write = "epsilon"
+    elif which_ablation == "eo":
+        to_write = "epslo"
+    else:
+        raise ValueError("which_ablation must be one of: None, 'l', 'e', 'eo'")
+
+    with open(out_csv, "a", newline="") as f:
+        if verbose:
+            write_csv_header(f)
+        else:
+            if to_write != "epslo":
+                f.write(f"dataset,{to_write},leakage,utility,mask_size\n")
+            else:
+                f.write("dataset,epsilon,L0,leakage,utility,mask_size\n")
+
+        for ds in DATASETS:
+            ds = normalize_dataset_name(ds)
+            attr = TARGET_ATTR[ds]
+            print(f"[marginal_em] Dataset={ds}, attr={attr}")
+
+            for i in range(ITERS):
+                key = get_random_key(ds)
+                if key is None:
+                    continue
+
+                raw = marginal_em_main(
+                    dataset=ds,
+                    target_cell=attr,
+                    epsilon=float(epsilon),
+                    lam=float(lam),
+                    L0=float(L0),
+                    leakage_method=leakage_method,
+                )
+
+                if verbose:
+                    # IMPORTANT: set.update(...) returns None; use union
+                    upd_mask = set(raw["mask"]) | {attr}
+                    upd_time, upd_cnt = update_mask_to_null(ds, key, upd_mask)
+                    raw["del_time"] = upd_time
+
+                    row = standardize_row(
+                        method="marginal_em",
+                        dataset=ds,
+                        attr=attr,
+                        raw=raw,
+                        update_time=upd_time,
+                    )
+                    write_csv_row(f, row)
+                else:
+                    if to_write == "lambda":
+                        f.write(f"{ds},{lam},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+                    elif to_write == "epsilon":
+                        f.write(f"{ds},{epsilon},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+                    else:
+                        f.write(f"{ds},{epsilon},{L0},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+
+
+def run_surrogate_em(out_csv, verbose=False, lam=0.75, epsilon=0.1, L0=0.25,
+                     which_ablation=None, leakage_method="greedy_disjoint"):
+    if which_ablation is None:
+        to_write = None
+    elif which_ablation == "l":
+        to_write = "lambda"
+    elif which_ablation == "e":
+        to_write = "epsilon"
+    elif which_ablation == "eo":
+        to_write = "epslo"
+    else:
+        raise ValueError("which_ablation must be one of: None, 'l', 'e', 'eo'")
+
+    with open(out_csv, "a", newline="") as f:
+        if verbose:
+            write_csv_header(f)
+        else:
+            if to_write != "epslo":
+                f.write(f"dataset,{to_write},leakage,utility,mask_size\n")
+            else:
+                f.write("dataset,epsilon,L0,leakage,utility,mask_size\n")
+
+        for ds in DATASETS:
+            ds = normalize_dataset_name(ds)
+            attr = TARGET_ATTR[ds]
+            print(f"[surrogate_em] Dataset={ds}, attr={attr}")
+
+            for i in range(ITERS):
+                key = get_random_key(ds)
+                if key is None:
+                    continue
+
+                raw = surrogate_em_main(
+                    dataset=ds,
+                    target_cell=attr,
+                    epsilon=float(epsilon),
+                    lam=float(lam),
+                    L0=float(L0),
+                    leakage_method=leakage_method,
+                )
+
+                if verbose:
+                    upd_mask = set(raw["mask"]) | {attr}
+                    upd_time, upd_cnt = update_mask_to_null(ds, key, upd_mask)
+                    raw["del_time"] = upd_time
+
+                    row = standardize_row(
+                        method="surrogate_em",
+                        dataset=ds,
+                        attr=attr,
+                        raw=raw,
+                        update_time=upd_time,
+                    )
+                    write_csv_row(f, row)
+                else:
+                    if to_write == "lambda":
+                        f.write(f"{ds},{lam},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+                    elif to_write == "epsilon":
+                        f.write(f"{ds},{epsilon},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+                    else:
+                        f.write(f"{ds},{epsilon},{L0},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+
+def run_delmarg(out_csv, verbose=False, lam=0.75, epsilon=0.1, L0=0.25,
+                which_ablation=None, leakage_method="greedy_disjoint"):
+    """
+    DelMarg runner that matches the CSV behavior of existing run_* methods.
+
+    which_ablation:
+      None -> verbose standardized CSV rows (requires verbose=True)
+      "l"  -> dataset,lambda,leakage,utility,mask_size
+      "e"  -> dataset,epsilon,leakage,utility,mask_size
+      "eo" -> dataset,epsilon,L0,leakage,utility,mask_size
+    """
+    if which_ablation is None:
+        to_write = None
+    elif which_ablation == "l":
+        to_write = "lambda"
+    elif which_ablation == "e":
+        to_write = "epsilon"
+    elif which_ablation == "eo":
+        to_write = "epslo"
+    else:
+        raise ValueError("which_ablation must be one of: None, 'l', 'e', 'eo'")
+
+    with open(out_csv, "a", newline="") as f:
+        if verbose:
+            write_csv_header(f)
+        else:
+            if to_write != "epslo":
+                f.write(f"dataset,{to_write},leakage,utility,mask_size\n")
+            else:
+                f.write("dataset,epsilon,L0,leakage,utility,mask_size\n")
+
+        for ds in DATASETS:
+            ds = normalize_dataset_name(ds)
+            attr = TARGET_ATTR[ds]
+            print(f"[delmarg] Dataset={ds}, attr={attr}")
+
+            for i in range(ITERS):
+                key = get_random_key(ds)
+                if key is None:
+                    continue
+
+                raw = delmarg_main(
+                    dataset=ds,
+                    target_cell=attr,
+                    epsilon=float(epsilon),
+                    lam=float(lam),
+                    L0=float(L0),
+                    leakage_method=leakage_method,
+                )
+
+                if verbose:
+                    # IMPORTANT: set.update(...) returns None; use union
+                    upd_mask = set(raw["mask"]) | {attr}
+                    upd_time, upd_cnt = update_mask_to_null(ds, key, upd_mask)
+                    raw["del_time"] = upd_time
+
+                    row = standardize_row(
+                        method="delmarg",
+                        dataset=ds,
+                        attr=attr,
+                        raw=raw,
+                        update_time=upd_time,
+                    )
+                    write_csv_row(f, row)
+                else:
+                    if to_write == "lambda":
+                        f.write(f"{ds},{lam},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+                    elif to_write == "epsilon":
+                        f.write(f"{ds},{epsilon},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+                    else:
+                        f.write(f"{ds},{epsilon},{L0},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
 
 def run_delexp(
     out_csv: str,
@@ -926,7 +1125,197 @@ def main() -> None:
 
     print(f"Done. Wrote ablations to: {ABL_DIR}")
 
-
 if __name__ == "__main__":
-    main()
+    # -----------------------------------------
+    # Configuration
+    # -----------------------------------------
+    ITERS = 100
+    LEAKAGE_METHOD = "greedy_disjoint"
 
+    EPSILONS = [0.01, 0.1, 0.2, 0.4, 0.8, 1, 2, 3, 4, 5, 10, 100]
+    L0S      = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+    LAMBDAS = [1, 10, 100, 1000, 10000]
+
+    DEFAULT_EPS = 0.1
+    DEFAULT_L0  = 0.25
+    DEFAULT_LAM = 0.75
+    # setup_database_copies()
+    # run_delmarg("delmarg_data.csv", verbose = True, epsilon = 0.1, lam = 0.75, L0 = 0.25)
+    # cleanup_database_copies()
+    #print("=== Running DelMarg sweeps ===")
+    # setup_database_copies()
+    # run_marginal_em("/Users/adhariya/src/DiffDel/DifferentialDeletionAlgorithms/2-12-experiments/third_experiment_marginal.csv", verbose=True, epsilon = 0.1, lam = 100, L0 = 0.3)
+    # cleanup_database_copies()
+    # setup_database_copies()
+    # run_marginal_em("/Users/adhariya/src/DiffDel/DifferentialDeletionAlgorithms/2-12-experiments/fourth_experiment_marginal.csv", verbose = True, epsilon = 10, lam = 100,
+    #                 L0 = 0.1)
+    # cleanup_database_copies()
+    setup_database_copies()
+    run_marginal_em("/Users/adhariya/src/DiffDel/DifferentialDeletionAlgorithms/2-12-experiments/fifth_experiment_marginal.csv", verbose = True, epsilon = 10, lam = 100,
+                    L0 = 0.3)
+    cleanup_database_copies()
+
+    #2b
+    for i in [0, 0.1, 0.5, 1.0, 5, 10, 100]:
+        setup_database_copies()
+        run_marginal_em(f"/Users/adhariya/src/DiffDel/DifferentialDeletionAlgorithms/2-12-experiments/2b_marginal_{i}.csv", verbose = True, epsilon = i, lam = 100,
+                        L0 = 0.3)
+        cleanup_database_copies()
+    #2c
+    for i in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]:
+        setup_database_copies()
+        run_marginal_em(f"/Users/adhariya/src/DiffDel/DifferentialDeletionAlgorithms/2-12-experiments/2c_marginal_{i}.csv", verbose = True, epsilon = 1, lam = 100,
+                        L0 = i)
+        cleanup_database_copies()
+
+    # for eps in EPSILONS:
+    #     out = f"delmarg_epsilon_{eps}.csv"
+    #     if os.path.exists(out):
+    #         os.remove(out)
+    #
+    #     run_delmarg(
+    #         out_csv = out,
+    #         verbose = True,
+    #         epsilon = eps,
+    #         lam = DEFAULT_LAM,
+    #         L0 = DEFAULT_L0,
+    #         which_ablation = "e",
+    #         leakage_method = LEAKAGE_METHOD,
+    #     )
+    #
+    # for L0 in L0S:
+    #     out = f"delmarg_L0_{L0}.csv"
+    #     if os.path.exists(out):
+    #         os.remove(out)
+    #
+    #     run_delmarg(
+    #         out_csv = out,
+    #         verbose = True,
+    #         epsilon = DEFAULT_EPS,
+    #         lam = DEFAULT_LAM,
+    #         L0 = L0,
+    #         which_ablation = "eo",
+    #         leakage_method = LEAKAGE_METHOD,
+    #     )
+    #
+    # for lam in LAMBDAS:
+    #     out = f"delmarg_lam_{lam}.csv"
+    #     if os.path.exists(out):
+    #         os.remove(out)
+    #
+    #     run_delmarg(
+    #         out_csv = out,
+    #         verbose = True,
+    #         epsilon = DEFAULT_EPS,
+    #         lam = lam,
+    #         L0 = DEFAULT_L0,
+    #         which_ablation = "l",
+    #         leakage_method = LEAKAGE_METHOD,
+    #     )
+    #
+    # print("=== DONE (DelMarg) ===")
+    # cleanup_database_copies()
+    # import os
+    #
+    # # -----------------------------------------
+    # # MarginalEM sweeps
+    # # -----------------------------------------
+    # print("=== Running MarginalEM sweeps ===")
+    # setup_database_copies()
+    # for eps in EPSILONS:
+    #     out = f"marginal_em_epsilon_{eps}.csv"
+    #     if os.path.exists(out):
+    #         os.remove(out)
+    #
+    #     run_marginal_em(
+    #         out_csv=out,
+    #         verbose=True,
+    #         epsilon=eps,
+    #         lam=DEFAULT_LAM,
+    #         L0=DEFAULT_L0,
+    #         which_ablation="e",
+    #         leakage_method=LEAKAGE_METHOD,
+    #     )
+    #
+    # for L0 in L0S:
+    #     out = f"marginal_em_L0_{L0}.csv"
+    #     if os.path.exists(out):
+    #         os.remove(out)
+    #
+    #     run_marginal_em(
+    #         out_csv=out,
+    #         verbose=True,
+    #         epsilon=DEFAULT_EPS,
+    #         lam=DEFAULT_LAM,
+    #         L0=L0,
+    #         which_ablation="eo",
+    #         leakage_method=LEAKAGE_METHOD,
+    #     )
+    #
+    # for lam in LAMBDAS:
+    #     out = f"marginal_em_lam_{lam}.csv"
+    #     if os.path.exists(out):
+    #         os.remove(out)
+    #
+    #     run_marginal_em(
+    #         out_csv=out,
+    #         verbose=True,
+    #         epsilon=DEFAULT_EPS,
+    #         lam=lam,
+    #         L0=DEFAULT_L0,
+    #         which_ablation="l",
+    #         leakage_method=LEAKAGE_METHOD,
+    #     )
+    #
+    # # -----------------------------------------
+    # # SurrogateEM sweeps
+    # # -----------------------------------------
+    # print("=== Running SurrogateEM sweeps ===")
+    #
+    # for eps in EPSILONS:
+    #     out = f"surrogate_em_epsilon_{eps}.csv"
+    #     if os.path.exists(out):
+    #         os.remove(out)
+    #
+    #     run_surrogate_em(
+    #         out_csv=out,
+    #         verbose=True,
+    #         epsilon=eps,
+    #         lam=DEFAULT_LAM,
+    #         L0=DEFAULT_L0,
+    #         which_ablation="e",
+    #         leakage_method=LEAKAGE_METHOD,
+    #     )
+    #
+    # for L0 in L0S:
+    #     out = f"surrogate_em_L0_{L0}.csv"
+    #     if os.path.exists(out):
+    #         os.remove(out)
+    #
+    #     run_surrogate_em(
+    #         out_csv=out,
+    #         verbose=True,
+    #         epsilon=DEFAULT_EPS,
+    #         lam=DEFAULT_LAM,
+    #         L0=L0,
+    #         which_ablation="eo",
+    #         leakage_method=LEAKAGE_METHOD,
+    #     )
+    #
+    # for lam in LAMBDAS:
+    #     out = f"surrogate_em_lam_{lam}.csv"
+    #     if os.path.exists(out):
+    #         os.remove(out)
+    #
+    #     run_surrogate_em(
+    #         out_csv=out,
+    #         verbose=True,
+    #         epsilon=DEFAULT_EPS,
+    #         lam=lam,
+    #         L0=DEFAULT_L0,
+    #         which_ablation="l",
+    #         leakage_method=LEAKAGE_METHOD,
+    #     )
+    #
+    # print("=== DONE ===")
+    # cleanup_database_copies()

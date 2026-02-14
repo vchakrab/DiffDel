@@ -535,6 +535,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/DifferentialDeletionAlgorithms/delmarg_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/DifferentialDeletionAlgorithms/delmin_data_v2026_2.csv">
           <value>
             <Attribute>
@@ -543,6 +550,13 @@
           </value>
         </entry>
         <entry key="/DifferentialDeletionAlgorithms/delmin_final_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/experiment_outputs/2026-01-26/16-01-53/new_greedy/ablation/delgum_epsilon_0.1.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -570,6 +584,27 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/DifferentialDeletionAlgorithms/jan26_del2ph.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/jan26_gum.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/jan26_min.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/DifferentialDeletionAlgorithms/masks_delexp_leakage.csv">
           <value>
             <Attribute>
@@ -578,6 +613,20 @@
           </value>
         </entry>
         <entry key="/DifferentialDeletionAlgorithms/min_20260115-085305.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/paper_table_summary.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/results_marginal_em_verbose.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
