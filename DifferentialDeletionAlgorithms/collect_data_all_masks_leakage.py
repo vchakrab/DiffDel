@@ -33,14 +33,14 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple
 # CONFIG (edit these)
 # =============================================================================
 
-DATASETS = ["airport", "hospital", "adult", "flight", "tax"]
+DATASETS = ["airport"]#, "hospital", "adult", "flight", "tax"]
 
 TARGET_ATTR: Dict[str, str] = {
-    "airport": "home_link",
-    "hospital": "ProviderNumber",
-    "adult": "education",
-    "flight": "FlightDate",
-    "tax": "city",
+    "airport": ["scheduled_service", "type", "continent", "iso_country", "municipality", "home_link", "keywords"],
+    # "hospital": "ProviderNumber",
+    # "adult": "education",
+    # "flight": "FlightDate"
+    # "tax": "city",
 }
 
 HYPERGRAPH_MODE = "MAX"         # "MAX" or "ACTUAL"
@@ -51,7 +51,7 @@ TAU = None
 LAM = 0.75
 L0 = 0.25
 
-OUTPUT_CSV = "all_masks_all_datasets_with_leakage.csv"
+OUTPUT_CSV = "airport_masks_airport_dataset_with_leakage.csv"
 
 # Print progress every N masks
 PROGRESS_EVERY = 10000
@@ -189,79 +189,78 @@ def main() -> None:
             ds = ds.lower()
             if ds not in TARGET_ATTR:
                 raise RuntimeError(f"Missing TARGET_ATTR for dataset '{ds}' (you said don't skip anything).")
+            for target in TARGET_ATTR[ds]:
+                print(f"\n[INFO] Dataset={ds}  Target={target}")
 
-            target = TARGET_ATTR[ds]
-            print(f"\n[INFO] Dataset={ds}  Target={target}")
+                hg = build_hypergraph(ds, target)
+                zone = inference_zone(hg, target)
+                zone_size = len(zone)
 
-            hg = build_hypergraph(ds, target)
-            zone = inference_zone(hg, target)
-            zone_size = len(zone)
+                print(f"[INFO] inference_zone_size |I(c*)| = {zone_size}")
+                expected = None
+                if zone_size < 63:
+                    expected = 1 << zone_size
+                    print(f"[INFO] total masks to enumerate = {expected:,}")
 
-            print(f"[INFO] inference_zone_size |I(c*)| = {zone_size}")
-            expected = None
-            if zone_size < 63:
-                expected = 1 << zone_size
-                print(f"[INFO] total masks to enumerate = {expected:,}")
+                ds_rows = 0
+                t0 = time.time()
 
-            ds_rows = 0
-            t0 = time.time()
+                for mask_tuple in iter_powerset(zone):
+                    mask_set = set(mask_tuple)
 
-            for mask_tuple in iter_powerset(zone):
-                mask_set = set(mask_tuple)
+                    L = leakage_model(
+                        mask=mask_set,
+                        target_cell=target,
+                        hypergraph=hg,
+                        tau=TAU,
+                        leakage_method=LEAKAGE_METHOD,
+                    )
+                    Lf = float(L)
 
-                L = leakage_model(
-                    mask=mask_set,
-                    target_cell=target,
-                    hypergraph=hg,
-                    tau=TAU,
-                    leakage_method=LEAKAGE_METHOD,
-                )
-                Lf = float(L)
-
-                # Utility is optional; safe if zone_size=0
-                if zone_size == 0:
-                    Uf = 0.0
-                else:
-                    Uf = float(
-                        compute_utility_max(
-                            leakage=Lf,
-                            mask_size=len(mask_tuple),
-                            lam=float(LAM),
-                            zone_size=zone_size,
-                            L0=float(L0),
+                    # Utility is optional; safe if zone_size=0
+                    if zone_size == 0:
+                        Uf = 0.0
+                    else:
+                        Uf = float(
+                            compute_utility_max(
+                                leakage=Lf,
+                                mask_size=len(mask_tuple),
+                                lam=float(LAM),
+                                zone_size=zone_size,
+                                L0=float(L0),
+                            )
                         )
+
+                    writer.writerow(
+                        {
+                            "dataset": ds,
+                            "target": target,
+                            "hypergraph_mode": str(HYPERGRAPH_MODE).upper(),
+                            "leakage_method": str(LEAKAGE_METHOD),
+                            "tau": "" if TAU is None else float(TAU),
+                            "mask": mask_to_str(mask_tuple),
+                            "mask_size": int(len(mask_tuple)),
+                            "inference_zone_size": int(zone_size),
+                            "leakage": Lf,
+                            "utility": Uf,
+                        }
                     )
 
-                writer.writerow(
-                    {
-                        "dataset": ds,
-                        "target": target,
-                        "hypergraph_mode": str(HYPERGRAPH_MODE).upper(),
-                        "leakage_method": str(LEAKAGE_METHOD),
-                        "tau": "" if TAU is None else float(TAU),
-                        "mask": mask_to_str(mask_tuple),
-                        "mask_size": int(len(mask_tuple)),
-                        "inference_zone_size": int(zone_size),
-                        "leakage": Lf,
-                        "utility": Uf,
-                    }
-                )
+                    ds_rows += 1
+                    total_rows += 1
 
-                ds_rows += 1
-                total_rows += 1
+                    if PROGRESS_EVERY and (ds_rows % PROGRESS_EVERY == 0):
+                        dt = time.time() - t0
+                        rate = ds_rows / max(1e-9, dt)
+                        msg = f"[PROGRESS] {ds}: wrote {ds_rows:,} rows"
+                        if expected is not None:
+                            msg += f" / {expected:,}"
+                        msg += f"  ({rate:,.1f} rows/s)"
+                        print(msg)
+                        f.flush()  # keep file safe
 
-                if PROGRESS_EVERY and (ds_rows % PROGRESS_EVERY == 0):
-                    dt = time.time() - t0
-                    rate = ds_rows / max(1e-9, dt)
-                    msg = f"[PROGRESS] {ds}: wrote {ds_rows:,} rows"
-                    if expected is not None:
-                        msg += f" / {expected:,}"
-                    msg += f"  ({rate:,.1f} rows/s)"
-                    print(msg)
-                    f.flush()  # keep file safe
-
-            dt = time.time() - t0
-            print(f"[DONE] {ds}: wrote {ds_rows:,} rows in {dt:,.1f}s")
+                dt = time.time() - t0
+                print(f"[DONE] {ds}: wrote {ds_rows:,} rows in {dt:,.1f}s")
 
     print(f"\n[ALL DONE] Total rows written: {total_rows:,}")
     print(f"[ALL DONE] CSV: {out_path}")

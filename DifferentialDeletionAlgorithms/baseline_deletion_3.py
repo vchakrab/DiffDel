@@ -51,6 +51,7 @@ WHERE id = {key};
 
 try:
     from gurobipy import Model, GRB, quicksum
+
     GUROBI_AVAILABLE = True
 except Exception:
     GUROBI_AVAILABLE = False
@@ -555,9 +556,14 @@ def baseline_deletion_3(target: str, key: int, dataset: str, threshold: float):
 
 if __name__ == '__main__':
     time_start = time.time()
-    for i in range(100):
-        print(baseline_deletion_3("marital_status", 500, "tax", 0))
-    print(time.time() - time_start)
+    print(baseline_deletion_3("scheduled_service", 500, "airport", 0))
+    print(baseline_deletion_3("type", 500, "airport", 0))
+    print(baseline_deletion_3("continent", 500, "airport", 0))
+    print(baseline_deletion_3("iso_country", 500, "airport", 0))
+    print(baseline_deletion_3("municipality", 500, "airport", 0))
+    print(baseline_deletion_3("home_link", 500, "airport", 0))
+    print(baseline_deletion_3("keywords", 500, "airport", 0))
+
     # print(baseline_deletion_3("scheduled_service", 500, "airport", 0))
     # print(baseline_deletion_3("education", 500, "adult", 0))
     # print(baseline_deletion_3("FlightNum", 500, "flight", 0))

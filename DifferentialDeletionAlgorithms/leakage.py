@@ -3,7 +3,7 @@ import math
 from collections import Counter
 from typing import Tuple, List, Set, Iterable, Optional, Dict, Any
 
-import numpy as np
+
 
 
 def get_dataset_weights(dataset: str) -> Any:
@@ -227,7 +227,7 @@ def compute_utility_em(*, leakage: float, mask_size: int, zone_size: int, L0: fl
     - Mask-size term normalized by |Z| (zone_size).
     - Natural sensitivity bound: Δu = 1/|Z| (penalty is a fixed constant).
     """
-    z = max(1, int(zone_size))
+    z = 1#max(1, int(zone_size))
     u = -float(mask_size) / float(z)
     if float(leakage) > float(L0):
         u -= float(lambda_penalty)
@@ -278,6 +278,207 @@ def is_edge_active_by_mask_rule(edge_verts: Set[str], mask: Set[str], target_cel
 
 from collections import deque
 from typing import Set, Tuple, Dict, List, Optional, Iterable
+def iter_chains_paper_exact(
+    mask: Set[str],
+    target: str,
+    edges: Dict[str, Tuple[Set[str], float]]
+):
+    """
+    Exact implementation of Algorithm EnumerateChains from paper.
+
+    - Deduplicates by (Seq(p), K)
+    - No visited_K collapse
+    - No mask-rule pruning
+    - Yields ordered edge-id lists
+    """
+
+    if not edges:
+        return
+
+    # Build V and O
+    V = set().union(*(verts for (verts, _w) in edges.values()))
+    O = V - set(mask) - {target}
+
+    # Build incident index
+    incident: Dict[str, Set[str]] = {}
+    for eid, (verts, _w) in edges.items():
+        for v in verts:
+            incident.setdefault(v, set()).add(eid)
+
+    def seq_key(p):
+        return tuple(p)
+
+    def state_key(p, K):
+        return (tuple(p), frozenset(K))
+
+    seen_sequences: Set[Tuple[str, ...]] = set()
+    seen_states: Set[Tuple[Tuple[str, ...], frozenset]] = set()
+
+    # ------------------------------------------------------------
+    # (A) Direct chains
+    # ------------------------------------------------------------
+    for eid, (verts, _w) in edges.items():
+        if target in verts and active(verts, target, O):
+            key = (eid,)
+            if key not in seen_sequences:
+                seen_sequences.add(key)
+                yield [eid]
+
+    # ------------------------------------------------------------
+    # (B) Seed BFS
+    # ------------------------------------------------------------
+    from collections import deque
+    Q = deque()
+
+    for eid, (verts, _w) in edges.items():
+        for x in verts - (O | {target}):
+            if active(verts, x, O):
+                p = [eid]
+                K = set(O) | {x}
+                sk = state_key(p, K)
+                if sk not in seen_states:
+                    seen_states.add(sk)
+                    Q.append((p, K))
+
+    # ------------------------------------------------------------
+    # (C) BFS Expansion
+    # ------------------------------------------------------------
+    while Q:
+        p, K = Q.popleft()
+        used_edges = set(p)
+
+        for eid, (verts, _w) in edges.items():
+
+            if eid in used_edges:
+                continue
+
+            if not (verts & K):
+                continue
+
+            missing = verts - K
+            if len(missing) != 1:
+                continue
+
+            (y,) = tuple(missing)
+
+            if not active(verts, y, K):
+                continue
+
+            # maximality condition
+            if active(verts, y, O):
+                continue
+
+            new_p = p + [eid]
+
+            if y == target:
+                seq = tuple(new_p)
+                if seq not in seen_sequences:
+                    seen_sequences.add(seq)
+                    yield new_p
+            else:
+                new_K = set(K) | {y}
+                sk = state_key(new_p, new_K)
+                if sk not in seen_states:
+                    seen_states.add(sk)
+                    Q.append((new_p, new_K))
+def leakage_greedy_paper_exact(
+    mask: Set[str],
+    target_cell: str,
+    hypergraph: "Hypergraph",
+    *,
+    tau: Optional[float] = None,
+    return_counts: bool = False,
+):
+    """
+    Exact implementation of Algorithm ComputeLeakage from paper.
+
+    Steps:
+      1. EnumerateChains
+      2. Compute w(p)
+      3. Extract Masked(p)
+      4. Sort by weight descending
+      5. Greedy mask-disjoint selection
+      6. Noisy-OR aggregation
+
+    Parameters identical to leakage().
+    Return type identical to leakage().
+    """
+
+    edge_dict = hypergraph_to_edge_dict(hypergraph, tau=tau)
+    if not edge_dict:
+        return (0.0, 0, 0, 0) if return_counts else 0.0
+
+    edge_verts = {eid: verts for eid, (verts, _w) in edge_dict.items()}
+    edge_weight = {eid: float(w) for eid, (_v, w) in edge_dict.items()}
+
+    V = set().union(*(edge_verts[eid] for eid in edge_verts))
+    O = V - set(mask) - {target_cell}
+
+    chains_info: List[Tuple[List[str], float, Set[str]]] = []
+    num_chains = 0
+
+    # ------------------------------------------------------------
+    # Enumerate chains
+    # ------------------------------------------------------------
+    for ch in iter_chains_paper_exact(mask, target_cell, edge_dict):
+        num_chains += 1
+
+        # Compute chain weight
+        cw = 1.0
+        for eid in ch:
+            cw *= edge_weight[eid]
+
+        # Extract masked intermediates
+        K = set(O)
+        masked_intermediates = set()
+
+        for eid in ch:
+            verts = edge_verts[eid]
+            missing = verts - K
+            if len(missing) == 1:
+                (y,) = tuple(missing)
+                if y in mask and y != target_cell:
+                    masked_intermediates.add(y)
+                K.add(y)
+
+        chains_info.append((ch, float(cw), masked_intermediates))
+
+    # ------------------------------------------------------------
+    # Sort by weight descending (ONE sort)
+    # ------------------------------------------------------------
+    chains_info.sort(key=lambda t: t[1], reverse=True)
+
+    # ------------------------------------------------------------
+    # Greedy mask-disjoint selection
+    # ------------------------------------------------------------
+    D = []
+    used = set()
+
+    for ch, cw, masked_cells in chains_info:
+        if masked_cells.isdisjoint(used):
+            D.append((ch, cw, masked_cells))
+            used.update(masked_cells)
+
+    # ------------------------------------------------------------
+    # Noisy-OR aggregation
+    # ------------------------------------------------------------
+    prod_not = 1.0
+    for _ch, cw, _mc in D:
+        prod_not *= (1.0 - cw)
+
+    L = 1.0 - prod_not
+
+    # Clamp
+    if L < 0.0:
+        L = 0.0
+    elif L > 1.0:
+        L = 1.0
+
+    if return_counts:
+        # Paper version does not use edge_active filtering
+        return float(L), int(num_chains), int(num_chains), 0
+
+    return float(L)
 
 def iter_chains(mask: Set[str], target: str, edges: Dict[str, Tuple[Set[str], float]]):
     """
@@ -362,6 +563,111 @@ def iter_chains(mask: Set[str], target: str, edges: Dict[str, Tuple[Set[str], fl
                 yield p + [eid]
             else:
                 Q.append((p + [eid], set(K) | {y}))
+def iter_chains_paper(mask: Set[str], target: str, edges: Dict[str, Tuple[Set[str], float]]):
+    """
+    Paper-accurate EnumerateChains(M, c*, H).
+
+    Yields chains as ordered edge-id lists.
+    Unique by ordered edge IDs.
+    Implements (Seq(p), K) state deduplication exactly as in paper.
+    """
+
+    if not edges:
+        print("Enumeration Computation Complete")
+        return
+
+    # Build V and O
+    V = set().union(*(verts for (verts, _w) in edges.values()))
+    O = V - set(mask) - {target}
+
+    # Incident index
+    incident: Dict[str, Set[str]] = {}
+    for eid, (verts, _w) in edges.items():
+        for v in verts:
+            incident.setdefault(v, set()).add(eid)
+
+    def seq_key(p):
+        print("Enumeration Computation Complete")
+        return tuple(p)
+
+    def state_key(p, K):
+        print("Enumeration Computation Complete")
+        return (tuple(p), frozenset(K))
+
+    seen_sequences: Set[Tuple[str, ...]] = set()
+    seen_states: Set[Tuple[Tuple[str, ...], frozenset]] = set()
+
+    # (A) Direct length-1 chains to target
+    for eid, (verts, _w) in edges.items():
+        if target in verts and active(verts, target, O):
+            key = (eid,)
+            if key not in seen_sequences:
+                seen_sequences.add(key)
+                print("Enumeration Computation Complete")
+                yield [eid]
+
+    # (B) Seed BFS with admissible first inferences
+    from collections import deque
+    Q = deque()
+
+    for eid, (verts, _w) in edges.items():
+        missing = verts - O
+        if len(missing) != 1:
+            continue
+        (x,) = tuple(missing)
+        if x == target:
+            continue
+        if active(verts, x, O):
+            p = [eid]
+            K = set(O) | {x}
+            sk = state_key(p, K)
+            if sk not in seen_states:
+                seen_states.add(sk)
+                Q.append((p, K))
+
+    # (C) BFS over knowledge states
+    while Q:
+        p, K = Q.popleft()
+        used_edges = set(p)
+
+        # Candidate edges must share witness
+        cand_eids = set()
+        for v in K:
+            cand_eids |= incident.get(v, set())
+
+        for eid in cand_eids:
+            if eid in used_edges:
+                continue
+
+            verts, _w = edges[eid]
+
+            missing = verts - K
+            if len(missing) != 1:
+                continue
+
+            (y,) = tuple(missing)
+
+            if not active(verts, y, K):
+                continue
+
+            # Initial minimality
+            if active(verts, y, O):
+                continue
+
+            new_p = p + [eid]
+
+            if y == target:
+                seq = tuple(new_p)
+                if seq not in seen_sequences:
+                    seen_sequences.add(seq)
+                    print("Enumeration Computation Complete")
+                    yield new_p
+            else:
+                new_K = set(K) | {y}
+                sk = state_key(new_p, new_K)
+                if sk not in seen_states:
+                    seen_states.add(sk)
+                    Q.append((new_p, new_K))
 
 def iter_chains_with_masked(mask: Set[str], target: str, edges: Dict[str, Tuple[Set[str], float]]):
     """
@@ -637,4 +943,123 @@ def leakage(
     if return_counts:
         return float(L), int(num_chains), int(active_chains), int(blocked_chains)
     return float(L)
+
+def leakage_paper(
+    mask: Set[str],
+    target_cell: str,
+    hypergraph: "Hypergraph",
+    *,
+    tau: Optional[float] = None,
+    return_counts: bool = False,
+):
+    """
+    Paper-accurate ComputeLeakageUpper(M, c*, H)
+    Iterative conservative probabilistic closure (no chain enumeration).
+
+    Implements synchronous updates exactly as in pseudocode.
+    """
+
+    edge_dict = hypergraph_to_edge_dict(hypergraph, tau=tau)
+    if not edge_dict:
+        return (0.0, 0, 0, 0) if return_counts else 0.0
+
+    # ------------------------------------------------------------
+    # Precompute edge structure
+    # ------------------------------------------------------------
+    edge_verts = {eid: verts for eid, (verts, _w) in edge_dict.items()}
+    edge_weight = {eid: float(w) for eid, (_v, w) in edge_dict.items()}
+
+    # Build vertex set V
+    V = set().union(*(edge_verts[eid] for eid in edge_verts))
+
+    # Observable set O
+    O = V - set(mask) - {target_cell}
+
+    # ------------------------------------------------------------
+    # Build incident index: vertex -> edges
+    # ------------------------------------------------------------
+    incident: Dict[str, List[str]] = {}
+    for eid, verts in edge_verts.items():
+        for v in verts:
+            incident.setdefault(v, []).append(eid)
+
+    # ------------------------------------------------------------
+    # Initialize probabilities
+    # ------------------------------------------------------------
+    p = {}
+
+    for x in V:
+        if x == target_cell:
+            p[x] = 0.0
+        elif x in O:
+            p[x] = 1.0
+        else:
+            p[x] = 1.0  # conservative initialization
+
+    T = len(V)
+
+    # ------------------------------------------------------------
+    # Iterative synchronous closure
+    # ------------------------------------------------------------
+    for _ in range(T):
+
+        p_new = p.copy()
+
+        for x in V:
+            if x in O or x == target_cell:
+                continue
+
+            q = 1.0
+
+            for eid in incident.get(x, []):
+                verts = edge_verts[eid]
+
+                # compute r = w_e * Π p_y over other vertices
+                r = edge_weight[eid]
+                for y in verts:
+                    if y != x:
+                        r *= p[y]
+
+                q *= (1.0 - r)
+
+            p_new[x] = 1.0 - q
+
+        # enforce invariants
+        for x in O:
+            p_new[x] = 1.0
+        p_new[target_cell] = 0.0
+
+        p = p_new
+
+    # ------------------------------------------------------------
+    # Final leakage computation for target
+    # ------------------------------------------------------------
+    q_star = 1.0
+
+    for eid in incident.get(target_cell, []):
+        verts = edge_verts[eid]
+
+        r = edge_weight[eid]
+        for y in verts:
+            if y != target_cell:
+                r *= p[y]
+
+        q_star *= (1.0 - r)
+
+    L = 1.0 - q_star
+
+    # Clamp to [0,1]
+    if L < 0.0:
+        L = 0.0
+    elif L > 1.0:
+        L = 1.0
+
+    if return_counts:
+        # This algorithm does not enumerate chains
+        return float(L), 0, 0, 0
+
+    return float(L)
+
+
+
 

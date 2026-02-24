@@ -47,7 +47,7 @@ except Exception:
 # Config (NO flights / tax)
 # ----------------------------
 
-DATASETS = ["airport", "hospital", "adult", "flight", "tax"]
+DATASETS = ["airport", "hospital","adult", "flight", "tax"]
 
 ORIGINAL_TABLE_NAMES = {
     "airport": "airports",
@@ -64,7 +64,7 @@ K_SIZE = {
     "tax": 3,
 }
 TARGET_ATTR = {
-    "airport": "home_link",
+    "airport": "continent",
     "hospital": "ProviderNumber",
     "tax": "city",
     "adult": "education",
@@ -118,76 +118,75 @@ def get_random_key(dataset: str) -> Optional[int]:
         conn.close()
 
 
-def setup_database_copies():
+def setup_database_copies(dataset):
     """
     Create:
       - <dataset>_copy_data LIKE <original_table>
       - <dataset>_copy_data_insertiontime LIKE <original_table>_insertiontime (if exists)
     """
     print("Setting up database copies...")
-    for dataset in DATASETS:
-        dataset = normalize_dataset_name(dataset)
-        try:
-            db_config = get_db_config_robust(dataset)
-            conn = mysql.connector.connect(**db_config)
-            cursor = conn.cursor()
+    dataset = normalize_dataset_name(dataset)
+    try:
+        db_config = get_db_config_robust(dataset)
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
 
-            original_table = ORIGINAL_TABLE_NAMES[dataset]
-            copied_table = f"{dataset}_copy_data"
+        original_table = ORIGINAL_TABLE_NAMES[dataset]
+        copied_table = f"{dataset}_copy_data"
 
-            print(f"  - Creating copy for '{dataset}': {copied_table}")
-            cursor.execute(f"DROP TABLE IF EXISTS {copied_table};")
-            cursor.execute(f"CREATE TABLE {copied_table} LIKE {original_table};")
-            cursor.execute(f"INSERT INTO {copied_table} SELECT * FROM {original_table};")
+        print(f"  - Creating copy for '{dataset}': {copied_table}")
+        cursor.execute(f"DROP TABLE IF EXISTS {copied_table};")
+        cursor.execute(f"CREATE TABLE {copied_table} LIKE {original_table};")
+        cursor.execute(f"INSERT INTO {copied_table} SELECT * FROM {original_table};")
 
-            # Copy insertiontime table only if it exists
-            original_time_table = f"{original_table}_insertiontime"
-            copied_time_table = f"{copied_table}_insertiontime"
+        # Copy insertiontime table only if it exists
+        original_time_table = f"{original_table}_insertiontime"
+        copied_time_table = f"{copied_table}_insertiontime"
 
-            cursor.execute(
-                """
-                SELECT COUNT(*)
-                FROM information_schema.tables
-                WHERE table_schema = DATABASE() AND table_name = %s
-                """,
-                (original_time_table,),
-            )
-            exists = int(cursor.fetchone()[0]) == 1
-            if exists:
-                cursor.execute(f"DROP TABLE IF EXISTS {copied_time_table};")
-                cursor.execute(f"CREATE TABLE {copied_time_table} LIKE {original_time_table};")
-                cursor.execute(f"INSERT INTO {copied_time_table} SELECT * FROM {original_time_table};")
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM information_schema.tables
+            WHERE table_schema = DATABASE() AND table_name = %s
+            """,
+            (original_time_table,),
+        )
+        exists = int(cursor.fetchone()[0]) == 1
+        if exists:
+            cursor.execute(f"DROP TABLE IF EXISTS {copied_time_table};")
+            cursor.execute(f"CREATE TABLE {copied_time_table} LIKE {original_time_table};")
+            cursor.execute(f"INSERT INTO {copied_time_table} SELECT * FROM {original_time_table};")
 
-            conn.commit()
-            cursor.close()
-            conn.close()
+        conn.commit()
+        cursor.close()
+        conn.close()
 
-        except mysql.connector.Error as err:
-            print(f"    ERROR for dataset {dataset}: {err}")
+    except mysql.connector.Error as err:
+        print(f"    ERROR for dataset {dataset}: {err}")
     print("Setup complete.\n")
 
 
-def cleanup_database_copies():
+def cleanup_database_copies(dataset):
     print("Cleaning up database copies...")
-    for dataset in DATASETS:
-        dataset = normalize_dataset_name(dataset)
-        try:
-            db_config = get_db_config_robust(dataset)
-            conn = mysql.connector.connect(**db_config)
-            cursor = conn.cursor()
 
-            copied_table = f"{dataset}_copy_data"
-            copied_time_table = f"{copied_table}_insertiontime"
+    dataset = normalize_dataset_name(dataset)
+    try:
+        db_config = get_db_config_robust(dataset)
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
 
-            print(f"  - Dropping copy for '{dataset}': {copied_table}")
-            cursor.execute(f"DROP TABLE IF EXISTS {copied_table};")
-            cursor.execute(f"DROP TABLE IF EXISTS {copied_time_table};")
+        copied_table = f"{dataset}_copy_data"
+        copied_time_table = f"{copied_table}_insertiontime"
 
-            conn.commit()
-            cursor.close()
-            conn.close()
-        except mysql.connector.Error as err:
-            print(f"    ERROR for dataset {dataset}: {err}")
+        print(f"  - Dropping copy for '{dataset}': {copied_table}")
+        cursor.execute(f"DROP TABLE IF EXISTS {copied_table};")
+        cursor.execute(f"DROP TABLE IF EXISTS {copied_time_table};")
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+    except mysql.connector.Error as err:
+        print(f"    ERROR for dataset {dataset}: {err}")
     print("Cleanup complete.\n")
 
 
@@ -440,7 +439,7 @@ def run_delmin(out_csv: str):
                     print(f"  [delmin] iter {i+1} error: {e}")
                     continue
 
-def run_marginal_em(out_csv, verbose=False, lam=0.75, epsilon=0.1, L0=0.25,
+def run_marginal_em(out_csv, ds, verbose=False, lam=0.75, epsilon=0.1, L0=0.25,
                     which_ablation=None, leakage_method="greedy_disjoint"):
     if which_ablation is None:
         to_write = None
@@ -462,46 +461,45 @@ def run_marginal_em(out_csv, verbose=False, lam=0.75, epsilon=0.1, L0=0.25,
             else:
                 f.write("dataset,epsilon,L0,leakage,utility,mask_size\n")
 
-        for ds in DATASETS:
-            ds = normalize_dataset_name(ds)
-            attr = TARGET_ATTR[ds]
-            print(f"[marginal_em] Dataset={ds}, attr={attr}")
+        ds = normalize_dataset_name(ds)
+        attr = TARGET_ATTR[ds]
+        print(f"[marginal_em] Dataset={ds}, attr={attr}")
 
-            for i in range(ITERS):
-                key = get_random_key(ds)
-                if key is None:
-                    continue
+        for i in range(ITERS):
+            key = get_random_key(ds)
+            if key is None:
+                continue
 
-                raw = marginal_em_main(
+            raw = marginal_em_main(
+                dataset=ds,
+                target_cell=attr,
+                epsilon=float(epsilon),
+                lam=float(lam),
+                L0=float(L0),
+                leakage_method=leakage_method,
+            )
+
+            if verbose:
+                # IMPORTANT: set.update(...) returns None; use union
+                upd_mask = set(raw["mask"]) | {attr}
+                upd_time, upd_cnt = update_mask_to_null(ds, key, upd_mask)
+                raw["del_time"] = upd_time
+
+                row = standardize_row(
+                    method="marginal_em",
                     dataset=ds,
-                    target_cell=attr,
-                    epsilon=float(epsilon),
-                    lam=float(lam),
-                    L0=float(L0),
-                    leakage_method=leakage_method,
+                    attr=attr,
+                    raw=raw,
+                    update_time=upd_time,
                 )
-
-                if verbose:
-                    # IMPORTANT: set.update(...) returns None; use union
-                    upd_mask = set(raw["mask"]) | {attr}
-                    upd_time, upd_cnt = update_mask_to_null(ds, key, upd_mask)
-                    raw["del_time"] = upd_time
-
-                    row = standardize_row(
-                        method="marginal_em",
-                        dataset=ds,
-                        attr=attr,
-                        raw=raw,
-                        update_time=upd_time,
-                    )
-                    write_csv_row(f, row)
+                write_csv_row(f, row)
+            else:
+                if to_write == "lambda":
+                    f.write(f"{ds},{lam},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+                elif to_write == "epsilon":
+                    f.write(f"{ds},{epsilon},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
                 else:
-                    if to_write == "lambda":
-                        f.write(f"{ds},{lam},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
-                    elif to_write == "epsilon":
-                        f.write(f"{ds},{epsilon},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
-                    else:
-                        f.write(f"{ds},{epsilon},{L0},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+                    f.write(f"{ds},{epsilon},{L0},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
 
 
 def run_surrogate_em(out_csv, verbose=False, lam=0.75, epsilon=0.1, L0=0.25,
@@ -866,13 +864,14 @@ def run_del2ph(
     out_csv: str,
     *,
     epsilon: float = .1,
-    lambda_penalty: float = .75,
+    lambda_penalty: float = 1000,
     L0: float = 0.25,
     mask_method: Optional[str] = None,
     leakage_method: str = "greedy_disjoint",
     template_dir: str = "templates",
     method_name: str = "del2ph",
     verbose: bool = False,
+    database: str = None,
     which_ablation: Optional[str] = None,
 ):
     """
@@ -907,53 +906,52 @@ def run_del2ph(
             else:
                 f.write(f"dataset,epsilon,L0,leakage,utility,mask_size\n")
 
-        for ds in DATASETS:
-            ds = normalize_dataset_name(ds)
-            attr = TARGET_ATTR[ds]
-            print(f"[del2ph] Dataset={ds}, attr={attr}")
+        ds = normalize_dataset_name(database)
+        attr = TARGET_ATTR[ds]
+        print(f"[del2ph] Dataset={ds}, attr={attr}")
 
-            for i in range(ITERS):
-                key = get_random_key(ds)
-                if key is None:
-                    continue
+        for i in range(ITERS):
+            key = get_random_key(ds)
+            if key is None:
+                continue
 
-                try:
-                    raw = two_phase_deletion.two_phase_deletion_main(
-                        dataset=ds,
-                        key=key,
-                        target_cell=attr,
-                        epsilon=float(epsilon),
-                        lambda_penalty=float(lambda_penalty),
-                        L0=L0,
-                        leakage_method=str(leakage_method),
-                        template_dir=TEMPLATE_DIR,
-                        mask_method=mask_method,
+            try:
+                raw = two_phase_deletion.two_phase_deletion_main(
+                    dataset=ds,
+                    key=key,
+                    target_cell=attr,
+                    epsilon=float(epsilon),
+                    lambda_penalty=float(lambda_penalty),
+                    L0=L0,
+                    leakage_method=str(leakage_method),
+                    template_dir=TEMPLATE_DIR,
+                    mask_method=mask_method,
+                )
+                if verbose:
+                    mask_obj = raw.get("mask", set())
+                    upd_t, upd_cnt = update_mask_to_null(ds, key, (mask_obj.update({attr})))
+                    raw["del_time"] = upd_t
+                    row = standardize_row(
+                    method=method_name,
+                    dataset=ds,
+                    attr=attr,
+                    raw=raw,
+                    update_time = upd_t
                     )
-                    if verbose:
-                        mask_obj = raw.get("mask", set())
-                        upd_t, upd_cnt = update_mask_to_null(ds, key, (mask_obj.update({attr})))
-                        raw["del_time"] = upd_t
-                        row = standardize_row(
-                        method=method_name,
-                        dataset=ds,
-                        attr=attr,
-                        raw=raw,
-                        update_time = upd_t
-                        )
-                        write_csv_row(f, row)
+                    write_csv_row(f, row)
+                else:
+                    if to_write == "lambda":
+                        f.write(f"{ds},{lambda_penalty},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+                    elif to_write == "epsilon":
+                        f.write(f"{ds},{epsilon},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
                     else:
-                        if to_write == "lambda":
-                            f.write(f"{ds},{lambda_penalty},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
-                        elif to_write == "epsilon":
-                            f.write(f"{ds},{epsilon},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
-                        else:
-                            f.write(f"{ds},{epsilon},{L0},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
+                        f.write(f"{ds},{epsilon},{L0},{raw['leakage']},{raw['utility']},{raw['mask_size']}\n")
 
 
-                except Exception as e:
-                    print(f"  [del2ph] iter {i+1} error: {e}")
-                    continue
-            delete_2ph_template(ds, attr, template_dir)
+            except Exception as e:
+                print(f"  [del2ph] iter {i+1} error: {e}")
+                continue
+        delete_2ph_template(ds, attr, template_dir)
 
 
 
@@ -994,13 +992,13 @@ from typing import Callable
 # from your_module import setup_database_copies, cleanup_database_copies, run_delgum, run_del2ph
 
 
-def with_db_copies(fn: Callable[[], None]) -> None:
+def with_db_copies(fn: Callable[[], None], dataset) -> None:
     """Run fn() with fresh DB copies, always cleaning up afterward."""
-    setup_database_copies()
+    setup_database_copies(dataset)
     try:
         fn()
     finally:
-        cleanup_database_copies()
+        cleanup_database_copies(dataset)
 
 
 def main() -> None:
@@ -1125,197 +1123,161 @@ def main() -> None:
 
     print(f"Done. Wrote ablations to: {ABL_DIR}")
 
-if __name__ == "__main__":
-    # -----------------------------------------
-    # Configuration
-    # -----------------------------------------
-    ITERS = 100
+import math
+import os
+from datetime import datetime
+
+
+PMIN_AIRPORT = 28 / 55100
+
+
+def er_to_l0(er: float, pmin: float) -> float:
+    A = math.exp(er) * (pmin / (1 - pmin))
+    return A / (1 + A)
+
+
+def generate_em_values(e_tot: float):
+    em_vals = [0.1]
+    v = 0.5
+    while v <= e_tot:
+        em_vals.append(round(v, 1))
+        v += 0.5
+    return em_vals
+
+
+def main():
+
+    E_TOTS = [2, 4, 6, 8, 10]
     LEAKAGE_METHOD = "greedy_disjoint"
 
-    EPSILONS = [0.01, 0.1, 0.2, 0.4, 0.8, 1, 2, 3, 4, 5, 10, 100]
-    L0S      = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
-    LAMBDAS = [1, 10, 100, 1000, 10000]
+    RUN_DATE = datetime.now().strftime("%Y-%m-%d")
+    RUN_TIMESTAMP = datetime.now().strftime("%H-%M-%S")
 
-    DEFAULT_EPS = 0.1
-    DEFAULT_L0  = 0.25
-    DEFAULT_LAM = 0.75
-    # setup_database_copies()
-    # run_delmarg("delmarg_data.csv", verbose = True, epsilon = 0.1, lam = 0.75, L0 = 0.25)
-    # cleanup_database_copies()
-    #print("=== Running DelMarg sweeps ===")
-    # setup_database_copies()
-    # run_marginal_em("/Users/adhariya/src/DiffDel/DifferentialDeletionAlgorithms/2-12-experiments/third_experiment_marginal.csv", verbose=True, epsilon = 0.1, lam = 100, L0 = 0.3)
-    # cleanup_database_copies()
-    # setup_database_copies()
-    # run_marginal_em("/Users/adhariya/src/DiffDel/DifferentialDeletionAlgorithms/2-12-experiments/fourth_experiment_marginal.csv", verbose = True, epsilon = 10, lam = 100,
-    #                 L0 = 0.1)
-    # cleanup_database_copies()
-    setup_database_copies()
-    run_marginal_em("/Users/adhariya/src/DiffDel/DifferentialDeletionAlgorithms/2-12-experiments/fifth_experiment_marginal.csv", verbose = True, epsilon = 10, lam = 100,
-                    L0 = 0.3)
-    cleanup_database_copies()
+    BASE_OUTPUT_DIR = "experiment_outputs"
+    RUN_DIR = os.path.join(BASE_OUTPUT_DIR, RUN_DATE, RUN_TIMESTAMP)
+    OUT_DIR = os.path.join(RUN_DIR, "del2ph_airport_eps_sweep")
 
-    #2b
-    for i in [0, 0.1, 0.5, 1.0, 5, 10, 100]:
-        setup_database_copies()
-        run_marginal_em(f"/Users/adhariya/src/DiffDel/DifferentialDeletionAlgorithms/2-12-experiments/2b_marginal_{i}.csv", verbose = True, epsilon = i, lam = 100,
-                        L0 = 0.3)
-        cleanup_database_copies()
-    #2c
-    for i in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]:
-        setup_database_copies()
-        run_marginal_em(f"/Users/adhariya/src/DiffDel/DifferentialDeletionAlgorithms/2-12-experiments/2c_marginal_{i}.csv", verbose = True, epsilon = 1, lam = 100,
-                        L0 = i)
-        cleanup_database_copies()
+    os.makedirs(OUT_DIR, exist_ok=True)
 
-    # for eps in EPSILONS:
-    #     out = f"delmarg_epsilon_{eps}.csv"
-    #     if os.path.exists(out):
-    #         os.remove(out)
-    #
-    #     run_delmarg(
-    #         out_csv = out,
-    #         verbose = True,
-    #         epsilon = eps,
-    #         lam = DEFAULT_LAM,
-    #         L0 = DEFAULT_L0,
-    #         which_ablation = "e",
-    #         leakage_method = LEAKAGE_METHOD,
-    #     )
-    #
-    # for L0 in L0S:
-    #     out = f"delmarg_L0_{L0}.csv"
-    #     if os.path.exists(out):
-    #         os.remove(out)
-    #
-    #     run_delmarg(
-    #         out_csv = out,
-    #         verbose = True,
-    #         epsilon = DEFAULT_EPS,
-    #         lam = DEFAULT_LAM,
-    #         L0 = L0,
-    #         which_ablation = "eo",
-    #         leakage_method = LEAKAGE_METHOD,
-    #     )
-    #
-    # for lam in LAMBDAS:
-    #     out = f"delmarg_lam_{lam}.csv"
-    #     if os.path.exists(out):
-    #         os.remove(out)
-    #
-    #     run_delmarg(
-    #         out_csv = out,
-    #         verbose = True,
-    #         epsilon = DEFAULT_EPS,
-    #         lam = lam,
-    #         L0 = DEFAULT_L0,
-    #         which_ablation = "l",
-    #         leakage_method = LEAKAGE_METHOD,
-    #     )
-    #
-    # print("=== DONE (DelMarg) ===")
-    # cleanup_database_copies()
-    # import os
-    #
-    # # -----------------------------------------
-    # # MarginalEM sweeps
-    # # -----------------------------------------
-    # print("=== Running MarginalEM sweeps ===")
-    # setup_database_copies()
-    # for eps in EPSILONS:
-    #     out = f"marginal_em_epsilon_{eps}.csv"
-    #     if os.path.exists(out):
-    #         os.remove(out)
-    #
-    #     run_marginal_em(
-    #         out_csv=out,
-    #         verbose=True,
-    #         epsilon=eps,
-    #         lam=DEFAULT_LAM,
-    #         L0=DEFAULT_L0,
-    #         which_ablation="e",
-    #         leakage_method=LEAKAGE_METHOD,
-    #     )
-    #
-    # for L0 in L0S:
-    #     out = f"marginal_em_L0_{L0}.csv"
-    #     if os.path.exists(out):
-    #         os.remove(out)
-    #
-    #     run_marginal_em(
-    #         out_csv=out,
-    #         verbose=True,
-    #         epsilon=DEFAULT_EPS,
-    #         lam=DEFAULT_LAM,
-    #         L0=L0,
-    #         which_ablation="eo",
-    #         leakage_method=LEAKAGE_METHOD,
-    #     )
-    #
-    # for lam in LAMBDAS:
-    #     out = f"marginal_em_lam_{lam}.csv"
-    #     if os.path.exists(out):
-    #         os.remove(out)
-    #
-    #     run_marginal_em(
-    #         out_csv=out,
-    #         verbose=True,
-    #         epsilon=DEFAULT_EPS,
-    #         lam=lam,
-    #         L0=DEFAULT_L0,
-    #         which_ablation="l",
-    #         leakage_method=LEAKAGE_METHOD,
-    #     )
-    #
-    # # -----------------------------------------
-    # # SurrogateEM sweeps
-    # # -----------------------------------------
-    # print("=== Running SurrogateEM sweeps ===")
-    #
-    # for eps in EPSILONS:
-    #     out = f"surrogate_em_epsilon_{eps}.csv"
-    #     if os.path.exists(out):
-    #         os.remove(out)
-    #
-    #     run_surrogate_em(
-    #         out_csv=out,
-    #         verbose=True,
-    #         epsilon=eps,
-    #         lam=DEFAULT_LAM,
-    #         L0=DEFAULT_L0,
-    #         which_ablation="e",
-    #         leakage_method=LEAKAGE_METHOD,
-    #     )
-    #
-    # for L0 in L0S:
-    #     out = f"surrogate_em_L0_{L0}.csv"
-    #     if os.path.exists(out):
-    #         os.remove(out)
-    #
-    #     run_surrogate_em(
-    #         out_csv=out,
-    #         verbose=True,
-    #         epsilon=DEFAULT_EPS,
-    #         lam=DEFAULT_LAM,
-    #         L0=L0,
-    #         which_ablation="eo",
-    #         leakage_method=LEAKAGE_METHOD,
-    #     )
-    #
-    # for lam in LAMBDAS:
-    #     out = f"surrogate_em_lam_{lam}.csv"
-    #     if os.path.exists(out):
-    #         os.remove(out)
-    #
-    #     run_surrogate_em(
-    #         out_csv=out,
-    #         verbose=True,
-    #         epsilon=DEFAULT_EPS,
-    #         lam=lam,
-    #         L0=DEFAULT_L0,
-    #         which_ablation="l",
-    #         leakage_method=LEAKAGE_METHOD,
-    #     )
-    #
-    # print("=== DONE ===")
-    # cleanup_database_copies()
+    print("\n=== Running del2ph Airport ε_tot Sweep ===\n")
+
+    for e_tot in E_TOTS:
+        em_vals = generate_em_values(e_tot)
+
+        for e_m in em_vals:
+
+            if e_m > e_tot:
+                continue
+
+            e_r = round(e_tot - e_m, 6)
+
+            # Convert ε_r → L0
+            L0 = er_to_l0(e_r, PMIN_AIRPORT)
+
+            # Numerical safety
+            if L0 <= 0 or L0 >= 1:
+                print(f"Skipping invalid L0 (e_m={e_m}, e_r={e_r})")
+                continue
+
+            filename = (
+                f"airport_etot_{e_tot}_"
+                f"em_{e_m}_"
+                f"er_{round(e_r,3)}.csv"
+            )
+
+            out_path = os.path.join(OUT_DIR, filename)
+
+            print(
+                f"Running: e_tot={e_tot}, "
+                f"e_m={e_m}, "
+                f"e_r={round(e_r,3)}, "
+                f"L0={round(L0,6)}"
+            )
+
+            def run_once():
+                run_del2ph(
+                    out_csv=out_path,
+                    epsilon=e_m,
+                    L0=L0,
+                    lambda_penalty=100,
+                    verbose=True,
+                    leakage_method=LEAKAGE_METHOD,
+                )
+
+            with_db_copies(run_once)
+
+    print(f"\nDone. Files written to: {OUT_DIR}")
+
+# ============================================================
+# FULL GRID RUNNER (All Datasets)
+# EM x L0 sweep
+# ============================================================
+
+def main_full_grid():
+    """So sorry, can you please add e_m = 0 and LO = .025 and .05 as well?"""
+    EM_VALUES = [0]#, 0.1, 0.5, 0.75, 1, 1.5, 2, 2.5, 5, 10]
+    L0_VALUES = [0.025, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    LEAKAGE_METHOD = "greedy_disjoint"
+
+    RUN_DATE = datetime.now().strftime("%Y-%m-%d")
+    RUN_TIMESTAMP = datetime.now().strftime("%H-%M-%S")
+
+    BASE_OUTPUT_DIR = "experiment_outputs"
+    RUN_DIR = os.path.join(BASE_OUTPUT_DIR, RUN_DATE, RUN_TIMESTAMP)
+
+    GRID_DIR = os.path.join(RUN_DIR, "marginal_em_full_grid")
+    os.makedirs(GRID_DIR, exist_ok=True)
+
+    print("\n=== Running Maginal Full EM × L0 Grid (All Datasets) ===\n")
+
+    for dataset in DATASETS:
+
+        dataset = normalize_dataset_name(dataset)
+        dataset_dir = os.path.join(GRID_DIR, dataset)
+        os.makedirs(dataset_dir, exist_ok=True)
+
+        print(f"\n--- Dataset: {dataset} ---")
+
+        for em in EM_VALUES:
+            for l0 in L0_VALUES:
+
+                filename = f"{dataset}_em_{em}_L0_{l0}.csv"
+                out_path = os.path.join(dataset_dir, filename)
+
+                print(
+                    f"Running: dataset={dataset}, "
+                    f"e_m={em}, "
+                    f"L0={l0}"
+                )
+
+                def run_once():
+                    run_marginal_em(
+                        out_csv = out_path.replace(".csv", "_marginal.csv"),
+                        ds = dataset,
+                        epsilon = em,
+                        L0 = l0,
+                        lam = 1000,
+                        verbose = True,
+                        leakage_method = LEAKAGE_METHOD,
+                    )
+
+                    # --------------------
+                    # 2-Phase
+                    # --------------------
+                    run_del2ph(
+                        out_csv = out_path.replace(".csv", "_2ph.csv"),
+                        database = dataset,
+                        epsilon = em,
+                        L0 = l0,
+                        lambda_penalty = 1000,
+                        verbose = True,
+                        leakage_method = LEAKAGE_METHOD,
+                    )
+
+                with_db_copies(run_once, dataset=dataset)
+
+    print(f"\nDone. Files written to: {GRID_DIR}")
+
+
+if __name__ == "__main__":
+    main_full_grid()

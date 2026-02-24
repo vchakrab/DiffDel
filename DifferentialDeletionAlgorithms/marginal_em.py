@@ -99,17 +99,24 @@ def marginal_em_main(
     L0: float,
     leakage_method: str = "greedy_disjoint",
 ) -> Dict[str, Any]:
+
     init_start = time.time()
 
-    H = _build_hypergraph(dataset, target_cell, mode="MAX")
-    Z = list(_inference_zone_union(target_cell, H))
+    # ------------------------------------------------------------
+    # Phase 0 — Build MAX hypergraph for ordering
+    # ------------------------------------------------------------
+    H_max = _build_hypergraph(dataset, target_cell, mode="MAX")
+
+    Z = list(_inference_zone_union(target_cell, H_max))
     n = len(Z)
 
-    # Phase 1 — Marginal ordering (n+1 calls including empty)
+    # ------------------------------------------------------------
+    # Phase 1 — Marginal leakage ordering using MAX hypergraph
+    # ------------------------------------------------------------
     L_empty, num_chains, active_chains, blocked_chains = chain_leakage(
         set(),
         target_cell,
-        H,
+        H_max,
         return_counts=True,
         leakage_method=leakage_method,
     )
@@ -119,7 +126,7 @@ def marginal_em_main(
         L_c = chain_leakage(
             {c},
             target_cell,
-            H,
+            H_max,
             return_counts=False,
             leakage_method=leakage_method,
         )
@@ -129,22 +136,29 @@ def marginal_em_main(
 
     init_time = time.time() - init_start
 
-    # Phase 2 + 3 — candidates + TRUE leakage calls for each candidate (n+1 calls)
+    # ------------------------------------------------------------
+    # Phase 2 — Build ACTUAL hypergraph for leakage evaluation
+    # ------------------------------------------------------------
     model_start = time.time()
+
+    H_actual = _build_hypergraph(dataset, target_cell, mode="ACTUAL")
 
     candidates: List[Set[str]] = []
     utilities: List[float] = []
     leakages: List[float] = []
 
     current_mask: Set[str] = set()
+
     for k in range(n + 1):
+
         if k > 0:
             current_mask = current_mask | {ordering[k - 1]}
 
+        # TRUE leakage under ACTUAL hypergraph
         L_k = chain_leakage(
             current_mask,
             target_cell,
-            H,
+            H_actual,
             return_counts=False,
             leakage_method=leakage_method,
         )
@@ -162,7 +176,11 @@ def marginal_em_main(
         leakages.append(float(L_k))
 
     utilities_arr = np.asarray(utilities, dtype=float)
-    idx = _em_sample_index(utilities_arr, float(epsilon), float(lam))
+
+    # Δu = 1/|Z| per paper sensitivity bound
+    delta_u = 1.0 / max(1, n)
+
+    idx = _em_sample_index(utilities_arr, float(epsilon), float(delta_u))
 
     chosen_mask = candidates[idx]
     chosen_leakage = leakages[idx]
@@ -170,22 +188,23 @@ def marginal_em_main(
 
     model_time = time.time() - model_start
 
-    # For compatibility with other outputs: include a PKL-based memory metric
+    # ------------------------------------------------------------
+    # Memory metric (compatibility)
+    # ------------------------------------------------------------
     out_dir = "hypergraphs_pkl_marginal_em"
     os.makedirs(out_dir, exist_ok=True)
     pkl_path = os.path.join(
         out_dir,
-        f"hg_{_safe_filename(dataset)}_{_safe_filename(target_cell)}_MAX.pkl",
+        f"hg_{_safe_filename(dataset)}_{_safe_filename(target_cell)}_ACTUAL.pkl",
     )
     with open(pkl_path, "wb") as f:
-        pickle.dump(H, f, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(H_actual, f, protocol=pickle.HIGHEST_PROTOCOL)
+
     memory_overhead_bytes = int(os.path.getsize(pkl_path) + sys.getsizeof(0.0))
 
     return {
         "init_time": float(init_time),
         "model_time": float(model_time),
-        # experiment_1.py overwrites del_time with update-to-null time when verbose=True,
-        # so we set it to 0.0 here (same pattern used by some baselines).
         "del_time": 0.0,
         "leakage": float(chosen_leakage),
         "utility": float(chosen_utility),
@@ -195,3 +214,4 @@ def marginal_em_main(
         "num_instantiated_cells": int(n),
         "memory_overhead_bytes": int(memory_overhead_bytes),
     }
+

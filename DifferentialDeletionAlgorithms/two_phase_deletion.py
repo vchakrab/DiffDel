@@ -51,7 +51,7 @@ from leakage import (
     # leakage (Algorithm 2/5)
     leakage as leakage_model,
     hypergraph_to_edge_dict,
-    iter_chains,
+    iter_chains as iter_chains,
 )
 
 
@@ -342,7 +342,7 @@ def build_template_two_phase(
             hypergraph=H,
             tau=tau,
             return_counts=True,
-            leakage_method=leakage_method,
+            #leakage_method=leakage_method,
         )
 
         U = compute_utility_em(
@@ -365,7 +365,7 @@ def build_template_two_phase(
     for m, p in zip(candidate_masks, probs_arr):
         Probability[m] = float(p)
 
-    L_empty = leakage_model(mask=set(), target_cell=target_attribute, hypergraph=H,leakage_method=leakage_method, tau=tau)
+    L_empty = leakage_model(mask=set(), target_cell=target_attribute, hypergraph=H,tau=tau)#leakage_method=leakage_methodtau=tau)
 
     T: Dict[str, Any] = {
         "dataset": str(dataset),
@@ -458,7 +458,6 @@ def two_phase_deletion_main(
         float(T.get("epsilon", -1.0)) != float(epsilon)
         or float(T.get("lam", -1.0)) != float(lam)
         or float(T.get("L0", -1.0)) != float(L0)
-        or (T.get("tau", None) != tau)
         or str(T.get("leakage_method", "")) != str(leakage_method)
         or str(T.get("hypergraph_mode", "")) != str(hypergraph_mode)
     ):
@@ -533,7 +532,7 @@ def two_phase_deletion_main(
             H_now,
             tau=tau,
             return_counts=True,
-            leakage_method=leakage_method,
+            #leakage_method=leakage_method,
         )
 
         # ✅ save H_now as pkl and get file size
