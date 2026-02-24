@@ -1,0 +1,3 @@
+dataset,target,epsilon,L0,lambda_penalty,hypergraph_mode,build_time_seconds
+adult,education,0.0,0.025,1000.0,MAX,11.582270
+adult,education,0.1,0.025,1000.0,MAX,11.365871

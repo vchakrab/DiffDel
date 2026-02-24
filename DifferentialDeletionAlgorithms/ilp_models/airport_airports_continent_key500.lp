@@ -11,23 +11,23 @@ Subject To
  visible_implies_known_5: a5 + r5 >= 1
  visible_implies_known_6: a6 + r6 >= 1
  target_not_inferable: r0 = 0
- closure_e0_h1: - r0 + r1 >= 0
  closure_e0_h0: r0 - r1 >= 0
+ closure_e0_h1: - r0 + r1 >= 0
  closure_e1_h3: - r0 - r2 + r3 >= -1
- closure_e1_h0: r0 - r2 - r3 >= -1
  closure_e1_h2: - r0 + r2 - r3 >= -1
- closure_e2_h1: r1 - r2 >= 0
- closure_e2_h2: - r1 + r2 >= 0
- closure_e3_h4: - r2 - r3 + r4 >= -1
- closure_e3_h3: - r2 + r3 - r4 >= -1
- closure_e3_h2: r2 - r3 - r4 >= -1
+ closure_e1_h0: r0 - r2 - r3 >= -1
+ closure_e2_h3: - r1 + r3 >= 0
+ closure_e2_h1: r1 - r3 >= 0
+ closure_e3_h3: r3 - r4 >= 0
+ closure_e3_h4: - r3 + r4 >= 0
  closure_e4_h3: - r2 + r3 - r5 >= -1
  closure_e4_h2: r2 - r3 - r5 >= -1
  closure_e4_h5: - r2 - r3 + r5 >= -1
- closure_e5_h3: r3 - r6 >= 0
- closure_e5_h6: - r3 + r6 >= 0
- closure_e6_h6: - r2 + r6 >= 0
- closure_e6_h2: r2 - r6 >= 0
+ closure_e5_h3: - r2 + r3 - r6 >= -1
+ closure_e5_h2: r2 - r3 - r6 >= -1
+ closure_e5_h6: - r2 - r3 + r6 >= -1
+ closure_e6_h4: - r2 + r4 >= 0
+ closure_e6_h2: r2 - r4 >= 0
 Bounds
  a0 = 1
 Binaries

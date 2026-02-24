@@ -14,20 +14,20 @@ Subject To
  closure_e0_h2: - r0 - r1 + r2 >= -1
  closure_e0_h0: r0 - r1 - r2 >= -1
  closure_e0_h1: - r0 + r1 - r2 >= -1
- closure_e1_h0: r0 - r1 - r3 >= -1
- closure_e1_h3: - r0 - r1 + r3 >= -1
- closure_e1_h1: - r0 + r1 - r3 >= -1
- closure_e2_h0: r0 - r1 - r4 >= -1
- closure_e2_h1: - r0 + r1 - r4 >= -1
- closure_e2_h4: - r0 - r1 + r4 >= -1
- closure_e3_h0: r0 - r5 >= 0
+ closure_e1_h2: - r0 + r2 - r3 >= -1
+ closure_e1_h0: r0 - r2 - r3 >= -1
+ closure_e1_h3: - r0 - r2 + r3 >= -1
+ closure_e2_h2: - r0 + r2 - r4 >= -1
+ closure_e2_h0: r0 - r2 - r4 >= -1
+ closure_e2_h4: - r0 - r2 + r4 >= -1
  closure_e3_h5: - r0 + r5 >= 0
- closure_e4_h6: - r1 + r6 >= 0
- closure_e4_h1: r1 - r6 >= 0
- closure_e5_h5: - r1 + r5 >= 0
- closure_e5_h1: r1 - r5 >= 0
- closure_e6_h6: - r3 + r6 >= 0
+ closure_e3_h0: r0 - r5 >= 0
+ closure_e4_h2: r2 - r6 >= 0
+ closure_e4_h6: - r2 + r6 >= 0
+ closure_e5_h2: r2 - r5 >= 0
+ closure_e5_h5: - r2 + r5 >= 0
  closure_e6_h3: r3 - r6 >= 0
+ closure_e6_h6: - r3 + r6 >= 0
 Bounds
  a0 = 1
 Binaries
