@@ -1,8 +1,0 @@
-dc_file,target_attr,num_dcs_total,num_dcs_with_target,num_attrs_total,mask_size_excl_target,total_deleted_including_target,mask_attrs_excl_target,ilp_time_sec,max_depth,zone_cells_instantiated,zone_edges,ilp_num_vars,ilp_num_constrs,ilp_file_bytes
-topAirportDCs_parsed.py,continent,7,2,7,4,5,iso_country;municipality;scheduled_service;type,0.000502,2,7,7,14,25,0
-topAirportDCs_parsed.py,home_link,7,1,7,5,6,continent;iso_country;municipality;scheduled_service;type,0.000457,2,7,7,14,25,0
-topAirportDCs_parsed.py,iso_country,7,2,7,4,5,continent;municipality;scheduled_service;type,0.000424,2,7,7,14,25,0
-topAirportDCs_parsed.py,keywords,7,1,7,5,6,continent;iso_country;municipality;scheduled_service;type,0.000428,2,7,7,14,25,0
-topAirportDCs_parsed.py,municipality,7,2,7,4,5,continent;iso_country;scheduled_service;type,0.000408,2,7,7,14,25,0
-topAirportDCs_parsed.py,scheduled_service,7,5,7,4,5,continent;iso_country;municipality;type,0.000408,1,7,7,14,25,0
-topAirportDCs_parsed.py,type,7,4,7,4,5,continent;iso_country;municipality;scheduled_service,0.000404,2,7,7,14,25,0

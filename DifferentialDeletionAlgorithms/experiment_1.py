@@ -13,6 +13,8 @@ import mysql.connector
 import config
 
 import two_phase_deletion,marginal_em,leakage
+from DifferentialDeletionAlgorithms import baseline_deletion_3
+
 
 # ============================
 # CONFIG
@@ -183,7 +185,44 @@ def standardize_row(
         "num_instantiated_cells": raw.get("num_instantiated_cells"),
     }
 
+def run_delmin(out_csv, ds):
 
+    file_exists = os.path.exists(out_csv) and os.path.getsize(out_csv) > 0
+
+    with open(out_csv, "a", newline="") as f:
+        if not file_exists:
+            write_csv_header(f)
+
+        attr = TARGET_ATTR[ds]
+
+        for _ in range(ITERS):
+            key = get_random_key(ds)
+            if key is None:
+                continue
+
+            raw = baseline_deletion_3.baseline_deletion_3(
+                dataset=ds,
+                key=key,
+                target=attr,
+                threshold=0.0,
+            )
+
+            # delmin mask is just attributes (like others)
+            upd_mask = set(raw.get("mask", set())) | {attr}
+            upd_t, _ = update_mask_to_null(ds, key, upd_mask)
+
+            row = standardize_row(
+                method="delmin",
+                dataset=ds,
+                attr=attr,
+                raw=raw,
+                update_time=upd_t,
+                epsilon_m = None,  # not used
+                lambda_val = None,  # not used
+                L0 = None,
+            )
+
+            write_csv_row(f, row)
 # ============================
 # EXPERIMENT RUNNERS
 # ============================
@@ -354,59 +393,78 @@ def with_db_copies(fn: Callable[[], None], dataset: str) -> None:
 # ============================
 
 def run_all_experiments():
-    EM_VALUES = [0, 0.1]#, 0.5, 0.75, 1, 1.5, 2, 2.5, 5, 10]
-    L0_VALUES = [0.025]#, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-    LAMBDA = 1000
-
+    # EM_VALUES = [0, 0.1, 0.5, 0.75, 1, 1.5, 2, 2.5, 5, 10]
+    # L0_VALUES = [0.025, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    # LAMBDA = 1000
+    #
     BASE_OUTPUT_DIR = "experiment_outputs"
     os.makedirs(BASE_OUTPUT_DIR, exist_ok=True)
+    #
+    # GUM_DIR = os.path.join(BASE_OUTPUT_DIR, "gumbel")
+    # os.makedirs(GUM_DIR, exist_ok=True)
+    #
+    # for epsilon_m in EM_VALUES:
+    #     for L0 in L0_VALUES:
+    #         for dataset in DATASETS:
+    #
+    #             dataset_dir = os.path.join(GUM_DIR, dataset)
+    #             os.makedirs(dataset_dir, exist_ok=True)
+    #
+    #             file_path = os.path.join(dataset_dir, "full_data.csv")
+    #
+    #             def run_once():
+    #                 run_marginal_em(
+    #                     out_csv=file_path,
+    #                     ds=dataset,
+    #                     epsilon=epsilon_m,
+    #                     L0=L0,
+    #                     lam=LAMBDA,
+    #                 )
+    #
+    #             with_db_copies(run_once, dataset=dataset)
+    #
+    # EXP_DIR = os.path.join(BASE_OUTPUT_DIR, "exp")
+    # os.makedirs(EXP_DIR, exist_ok=True)
+    #
+    # for epsilon_m in EM_VALUES:
+    #     for L0 in L0_VALUES:
+    #         for dataset in DATASETS:
+    #
+    #             dataset_dir = os.path.join(EXP_DIR, dataset)
+    #             os.makedirs(dataset_dir, exist_ok=True)
+    #
+    #             file_path = os.path.join(dataset_dir, "full_data.csv")
+    #
+    #             def run_once():
+    #                 run_del2ph(
+    #                     out_csv=file_path,
+    #                     ds=dataset,
+    #                     epsilon=epsilon_m,
+    #                     L0=L0,
+    #                     lam=LAMBDA,
+    #                 )
+    #
+    #             with_db_copies(run_once, dataset=dataset)
+    # --------------------------
+    # DELMIN (BASELINE)
+    # --------------------------
+    MIN_DIR = os.path.join(BASE_OUTPUT_DIR, "min")
+    os.makedirs(MIN_DIR, exist_ok=True)
 
-    GUM_DIR = os.path.join(BASE_OUTPUT_DIR, "gumbel")
-    os.makedirs(GUM_DIR, exist_ok=True)
+    for dataset in DATASETS:
 
-    for epsilon_m in EM_VALUES:
-        for L0 in L0_VALUES:
-            for dataset in DATASETS:
+        dataset_dir = os.path.join(MIN_DIR, dataset)
+        os.makedirs(dataset_dir, exist_ok=True)
 
-                dataset_dir = os.path.join(GUM_DIR, dataset)
-                os.makedirs(dataset_dir, exist_ok=True)
+        file_path = os.path.join(dataset_dir, "full_data.csv")
 
-                file_path = os.path.join(dataset_dir, "full_data.csv")
+        def run_once():
+            run_delmin(
+                out_csv=file_path,
+                ds=dataset,
+            )
 
-                def run_once():
-                    run_marginal_em(
-                        out_csv=file_path,
-                        ds=dataset,
-                        epsilon=epsilon_m,
-                        L0=L0,
-                        lam=LAMBDA,
-                    )
-
-                with_db_copies(run_once, dataset=dataset)
-
-    EXP_DIR = os.path.join(BASE_OUTPUT_DIR, "exp")
-    os.makedirs(EXP_DIR, exist_ok=True)
-
-    for epsilon_m in EM_VALUES:
-        for L0 in L0_VALUES:
-            for dataset in DATASETS:
-
-                dataset_dir = os.path.join(EXP_DIR, dataset)
-                os.makedirs(dataset_dir, exist_ok=True)
-
-                file_path = os.path.join(dataset_dir, "full_data.csv")
-
-                def run_once():
-                    run_del2ph(
-                        out_csv=file_path,
-                        ds=dataset,
-                        epsilon=epsilon_m,
-                        L0=L0,
-                        lam=LAMBDA,
-                    )
-
-                with_db_copies(run_once, dataset=dataset)
-
+        with_db_copies(run_once, dataset=dataset)
 
 if __name__ == "__main__":
     run_all_experiments()

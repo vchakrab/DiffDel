@@ -1,0 +1,11 @@
+Dataset,Mechanism,Total Budget (tau),Best ε_m,Best L0,Best Mask Improvement (%),Worst ε_m,Worst L0,Worst Mask Improvement (%)
+airport,Exp,0.22,1.5,0.05,59.4,0.1,0.2,27.6
+hospital,Exp,0.22,1.0,0.1,22.22,2.5,0.025,11.11
+adult,Exp,0.22,1.0,0.1,66.44,0.1,0.2,42.67
+flight,Exp,0.22,0.1,0.2,49.09,1.5,0.05,0.0
+tax,Exp,0.22,0.1,0.2,0.0,0.1,0.2,0.0
+airport,Gum,0.22,1.5,0.05,40.0,0.1,0.2,31.0
+hospital,Gum,0.22,0.1,0.2,5.22,0.75,0.1,-0.11
+adult,Gum,0.22,0.75,0.1,55.56,1.5,0.05,33.33
+flight,Gum,0.22,0.1,0.2,72.0,0.75,0.1,-18.18
+tax,Gum,0.22,0.1,0.2,0.0,0.1,0.2,0.0

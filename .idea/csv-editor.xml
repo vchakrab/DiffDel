@@ -10,6 +10,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/DCandDelset/dc_configs/airport_semantic_dcs_weights.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/DCandDelset/dc_configs/raw_constraints/adult_dc_weights_gamma0p25.csv">
           <value>
             <Attribute>
@@ -32,6 +39,13 @@
           </value>
         </entry>
         <entry key="/DifferentialDeletionAlgorithms/2ph_20260115-181356.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/airport_masks_airport_dataset_with_leakage.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -563,6 +577,132 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/DifferentialDeletionAlgorithms/experiment_outputs/budget_split_table.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/experiment_outputs/budget_split_table_tau_022.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/experiment_outputs/exp/adult/full_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/experiment_outputs/exp/airport/full_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/experiment_outputs/exp/tax/full_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/experiment_outputs/gumbel/adult/full_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/experiment_outputs/gumbel/airport/full_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/experiment_outputs/gumbel/hospital/full_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/experiment_outputs/gumbel/tax/full_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/experiment_outputs/main_data/exp/adult/full_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/experiment_outputs/main_data/exp/flight/full_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/experiment_outputs/main_data/gumbel/adult/full_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/experiment_outputs/main_data/gumbel/airport/full_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/experiment_outputs/main_data/gumbel/flight/full_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/experiment_outputs/main_data/gumbel/hospital/full_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/experiment_outputs/main_data/main_data_statistics.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/experiment_outputs/main_statistics.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/experiment_outputs/min/adult/full_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/DifferentialDeletionAlgorithms/gum_20260115-092135.csv">
           <value>
             <Attribute>
@@ -627,6 +767,20 @@
           </value>
         </entry>
         <entry key="/DifferentialDeletionAlgorithms/results_marginal_em_verbose.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/templates/adult_template_build_times.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/DifferentialDeletionAlgorithms/templates/tax_template_build_times.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

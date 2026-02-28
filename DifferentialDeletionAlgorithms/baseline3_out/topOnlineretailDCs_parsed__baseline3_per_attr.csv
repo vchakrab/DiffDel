@@ -1,9 +1,0 @@
-dc_file,target_attr,num_dcs_total,num_dcs_with_target,num_attrs_total,mask_size_excl_target,total_deleted_including_target,mask_attrs_excl_target,ilp_time_sec,max_depth,zone_cells_instantiated,zone_edges,ilp_num_vars,ilp_num_constrs,ilp_file_bytes
-topOnlineretailDCs_parsed.py,Country,27,11,8,4,5,CustomerID;Description;InvoiceNo;Quantity,0.005350,1,8,22,16,111,0
-topOnlineretailDCs_parsed.py,CustomerID,27,11,8,4,5,Country;Description;InvoiceNo;UnitPrice,0.002198,1,8,22,16,111,0
-topOnlineretailDCs_parsed.py,Description,27,21,8,3,4,InvoiceDate;StockCode;UnitPrice,0.002116,1,8,22,16,111,0
-topOnlineretailDCs_parsed.py,InvoiceDate,27,23,8,3,4,Description;StockCode;UnitPrice,0.002103,1,8,22,16,111,0
-topOnlineretailDCs_parsed.py,InvoiceNo,27,11,8,4,5,Country;CustomerID;Description;UnitPrice,0.002105,1,8,22,16,111,0
-topOnlineretailDCs_parsed.py,Quantity,27,13,8,3,4,Description;InvoiceDate;StockCode,0.002190,1,8,22,16,111,0
-topOnlineretailDCs_parsed.py,StockCode,27,21,8,3,4,Description;InvoiceDate;Quantity,0.002071,1,8,22,16,111,0
-topOnlineretailDCs_parsed.py,UnitPrice,27,14,8,3,4,Description;InvoiceDate;StockCode,0.004335,1,8,22,16,111,0
