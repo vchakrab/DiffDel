@@ -559,41 +559,61 @@ def graph_all_experiments():
     df_curves_5 = load_curves_data(DATASETS_5)
     df_main     = load_main_data()
 
-    with PdfPages("all_figures_combined.pdf") as pdf:
+    FIG_DIR = BASE_DIR / "fig"
+    FIG_DIR.mkdir(exist_ok=True)
 
-        if not df_heat.empty:
-            fig = plot_heatmap_3(df_heat)
-            pdf.savefig(fig, bbox_inches="tight"); plt.close(fig)
+    # -------------------------------
+    # 3-dataset figures
+    # -------------------------------
+    if not df_heat.empty:
+        fig = plot_heatmap_3(df_heat)
+        fig.savefig(FIG_DIR / "heatmap_3.pdf", bbox_inches="tight")
+        plt.close(fig)
 
-        if not df_curves_3.empty:
-            fig = plot_mask_curves_3(df_curves_3)
-            pdf.savefig(fig, bbox_inches="tight"); plt.close(fig)
+    if not df_curves_3.empty:
+        fig = plot_mask_curves_3(df_curves_3)
+        fig.savefig(FIG_DIR / "mask_curves_3.pdf", bbox_inches="tight")
+        plt.close(fig)
 
-            fig = plot_leakage_curves_3(df_curves_3)
-            pdf.savefig(fig, bbox_inches="tight"); plt.close(fig)
+        fig = plot_leakage_curves_3(df_curves_3)
+        fig.savefig(FIG_DIR / "leakage_curves_3.pdf", bbox_inches="tight")
+        plt.close(fig)
 
-        if not df_heat.empty:
-            fig = plot_pareto(df_heat)
-            pdf.savefig(fig, bbox_inches="tight"); plt.close(fig)
+    if not df_heat.empty:
+        fig = plot_pareto(df_heat)
+        fig.savefig(FIG_DIR / "pareto_frontier.pdf", bbox_inches="tight")
+        plt.close(fig)
 
-        if not df_main.empty:
-            fig = build_runtime(df_main)
-            pdf.savefig(fig, bbox_inches="tight"); plt.close(fig)
+    if not df_main.empty:
+        fig = build_runtime(df_main)
+        fig.savefig(FIG_DIR / "runtime_breakdown.pdf", bbox_inches="tight")
+        plt.close(fig)
 
-        if not df_heat.empty:
-            fig = plot_heatmap_5(df_heat)
-            pdf.savefig(fig, bbox_inches="tight"); plt.close(fig)
+    # -------------------------------
+    # 5-dataset heatmaps + budget
+    # -------------------------------
+    if not df_heat.empty:
+        fig = plot_heatmap_5(df_heat)
+        fig.savefig(FIG_DIR / "heatmap_5.pdf", bbox_inches="tight")
+        plt.close(fig)
 
-            fig = plot_budget_split_5(df_heat)
-            pdf.savefig(fig, bbox_inches="tight"); plt.close(fig)
+        fig = plot_budget_split_5(df_heat)
+        fig.savefig(FIG_DIR / "budget_split_5.pdf", bbox_inches="tight")
+        plt.close(fig)
 
-        if not df_curves_5.empty:
-            for mech in ["exp", "gum"]:
-                fig = plot_mask_split(df_curves_5, mech)
-                pdf.savefig(fig, bbox_inches="tight"); plt.close(fig)
+    # -------------------------------
+    # 5-dataset curves (split by mech)
+    # -------------------------------
+    if not df_curves_5.empty:
+        for mech in ["exp", "gum"]:
+            fig = plot_mask_split(df_curves_5, mech)
+            fig.savefig(FIG_DIR / f"mask_split_{mech}.pdf", bbox_inches="tight")
+            plt.close(fig)
 
-            for mech in ["exp", "gum"]:
-                fig = plot_leakage_split(df_curves_5, mech)
-                pdf.savefig(fig, bbox_inches="tight"); plt.close(fig)
+        for mech in ["exp", "gum"]:
+            fig = plot_leakage_split(df_curves_5, mech)
+            fig.savefig(FIG_DIR / f"leakage_split_{mech}.pdf", bbox_inches="tight")
+            plt.close(fig)
 
+    print(f"\nAll figures saved to: {FIG_DIR.resolve()}")
 
