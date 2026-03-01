@@ -12,7 +12,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR / "data"
+DATA_DIR = BASE_DIR / "data/release_data"
 print(DATA_DIR)
 
 FS = 11
@@ -617,3 +617,4 @@ def graph_all_experiments():
 
     print(f"\nAll figures saved to: {FIG_DIR.resolve()}")
 
+graph_all_experiments()
