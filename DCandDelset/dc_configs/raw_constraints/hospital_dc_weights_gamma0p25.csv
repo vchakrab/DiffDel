@@ -1,0 +1,55 @@
+dc_id,dc_str,m,nV,nE_best,best_head_idx,best_base,weight
+1,t0.ZIPCode str EQUAL t1.ZIPCode str AND t0.HospitalName String EQUAL t1.HospitalName String AND t0.EmergencyService String UNEQUAL t1.EmergencyService String,3,100000,25,2,0.5582520268456576,0.30825202684565756
+2,t0.ZIPCode str EQUAL t1.ZIPCode str AND t0.HospitalName String EQUAL t1.HospitalName String AND t0.CountyName String UNEQUAL t1.CountyName String,3,99915,25,2,0.902074661795759,0.652074661795759
+3,t0.MeasureName String UNEQUAL t1.MeasureName String AND t0.StateAvg String EQUAL t1.StateAvg String,2,100000,111,0,0.9751881301038323,0.7251881301038323
+4,t0.ZIPCode str EQUAL t1.ZIPCode str AND t0.HospitalName String EQUAL t1.HospitalName String AND t0.MeasureName String EQUAL t1.MeasureName String,3,100000,0,-1,0.0,0.0
+5,t0.StateAvg String UNEQUAL t1.StateAvg String AND t0.MeasureName String EQUAL t1.MeasureName String AND t0.PhoneNumber String EQUAL t1.PhoneNumber String,3,100000,0,-1,0.0,0.0
+6,t0.MeasureCode String UNEQUAL t1.MeasureCode String AND t0.StateAvg String EQUAL t1.StateAvg String,2,100000,111,0,0.9751881301038323,0.7251881301038323
+7,t0.ProviderNumber String EQUAL t1.ProviderNumber String AND t0.City String UNEQUAL t1.City String,2,100000,25,1,0.9022387000283053,0.6522387000283053
+8,t0.PhoneNumber String EQUAL t1.PhoneNumber String AND t0.State String UNEQUAL t1.State String,2,100000,26,1,0.9026463634915658,0.6526463634915658
+9,t0.HospitalName String EQUAL t1.HospitalName String AND t0.EmergencyService String UNEQUAL t1.EmergencyService String AND t0.City String EQUAL t1.City String,3,100000,25,1,0.5582520268456576,0.30825202684565756
+10,t0.ProviderNumber String EQUAL t1.ProviderNumber String AND t0.StateAvg String EQUAL t1.StateAvg String,2,100000,0,-1,0.0,0.0
+11,t0.StateAvg String UNEQUAL t1.StateAvg String AND t0.PhoneNumber String EQUAL t1.PhoneNumber String AND t0.MeasureCode String EQUAL t1.MeasureCode String,3,100000,0,-1,0.0,0.0
+12,t0.ZIPCode str EQUAL t1.ZIPCode str AND t0.HospitalName String EQUAL t1.HospitalName String AND t0.MeasureCode String EQUAL t1.MeasureCode String,3,100000,0,-1,0.0,0.0
+13,t0.ProviderNumber String UNEQUAL t1.ProviderNumber String AND t0.HospitalName String EQUAL t1.HospitalName String AND t0.PhoneNumber String EQUAL t1.PhoneNumber String,3,100000,25,0,0.9023126105367587,0.6523126105367587
+14,t0.MeasureCode String EQUAL t1.MeasureCode String AND t0.MeasureName String UNEQUAL t1.MeasureName String,2,100000,3998,1,0.9992948125974249,0.7492948125974249
+15,t0.MeasureName String EQUAL t1.MeasureName String AND t0.MeasureCode String UNEQUAL t1.MeasureCode String,2,100000,3998,1,0.9992948125974249,0.7492948125974249
+16,t0.ZIPCode str EQUAL t1.ZIPCode str AND t0.City String UNEQUAL t1.City String,2,100000,30,1,0.9171843773733261,0.6671843773733261
+17,t0.StateAvg String UNEQUAL t1.StateAvg String AND t0.State String EQUAL t1.State String AND t0.MeasureName String EQUAL t1.MeasureName String,3,100000,3887,1,0.9768621665608527,0.7268621665608527
+18,t0.EmergencyService String UNEQUAL t1.EmergencyService String AND t0.ProviderNumber String EQUAL t1.ProviderNumber String,2,100000,25,0,0.5582520268456576,0.30825202684565756
+19,t0.ProviderNumber String EQUAL t1.ProviderNumber String AND t0.HospitalType String UNEQUAL t1.HospitalType String,2,100000,25,1,0.7409784310289748,0.49097843102897476
+20,t0.Condition String UNEQUAL t1.Condition String AND t0.StateAvg String EQUAL t1.StateAvg String,2,100000,111,0,0.9676799161031393,0.7176799161031393
+21,t0.ZIPCode str UNEQUAL t1.ZIPCode str AND t0.ProviderNumber String EQUAL t1.ProviderNumber String,2,100000,25,0,0.9023069668351147,0.6523069668351147
+22,t0.ZIPCode str EQUAL t1.ZIPCode str AND t0.HospitalName String EQUAL t1.HospitalName String AND t0.HospitalOwner String UNEQUAL t1.HospitalOwner String,3,100000,25,2,0.8804449601712508,0.6304449601712508
+23,t0.EmergencyService String UNEQUAL t1.EmergencyService String AND t0.PhoneNumber String EQUAL t1.PhoneNumber String AND t0.HospitalType String UNEQUAL t1.HospitalType String,3,100000,0,-1,0.0,0.0
+24,t0.StateAvg String UNEQUAL t1.StateAvg String AND t0.State String EQUAL t1.State String AND t0.MeasureCode String EQUAL t1.MeasureCode String,3,100000,3887,1,0.9768621665608527,0.7268621665608527
+25,t0.ZIPCode str EQUAL t1.ZIPCode str AND t0.HospitalName String EQUAL t1.HospitalName String AND t0.HospitalType String UNEQUAL t1.HospitalType String,3,100000,25,2,0.7409784310289748,0.49097843102897476
+26,t0.Condition String UNEQUAL t1.Condition String AND t0.MeasureCode String EQUAL t1.MeasureCode String,2,100000,3998,0,0.9990814188487359,0.7490814188487359
+27,t0.HospitalName String EQUAL t1.HospitalName String AND t0.MeasureName String EQUAL t1.MeasureName String AND t0.PhoneNumber String EQUAL t1.PhoneNumber String,3,100000,0,-1,0.0,0.0
+28,t0.ZIPCode str UNEQUAL t1.ZIPCode str AND t0.PhoneNumber String EQUAL t1.PhoneNumber String,2,100000,26,0,0.9057102479233514,0.6557102479233514
+29,t0.PhoneNumber String UNEQUAL t1.PhoneNumber String AND t0.ProviderNumber String EQUAL t1.ProviderNumber String,2,100000,25,0,0.9023114763110036,0.6523114763110036
+30,t0.PhoneNumber String EQUAL t1.PhoneNumber String AND t0.HospitalOwner String UNEQUAL t1.HospitalOwner String AND t0.HospitalType String UNEQUAL t1.HospitalType String,3,100000,32103,0,0.5531299905192917,0.3031299905192917
+31,t0.State String UNEQUAL t1.State String AND t0.StateAvg String EQUAL t1.StateAvg String,2,100000,111,0,0.9754225787211922,0.7254225787211922
+32,t0.ZIPCode str EQUAL t1.ZIPCode str AND t0.HospitalName String EQUAL t1.HospitalName String AND t0.StateAvg String EQUAL t1.StateAvg String,3,100000,0,-1,0.0,0.0
+33,t0.HospitalName String EQUAL t1.HospitalName String AND t0.City String EQUAL t1.City String AND t0.StateAvg String EQUAL t1.StateAvg String,3,100000,0,-1,0.0,0.0
+34,t0.ProviderNumber String EQUAL t1.ProviderNumber String AND t0.CountyName String UNEQUAL t1.CountyName String,2,99915,25,1,0.902074661795759,0.652074661795759
+35,t0.HospitalName String EQUAL t1.HospitalName String AND t0.PhoneNumber String EQUAL t1.PhoneNumber String AND t0.MeasureCode String EQUAL t1.MeasureCode String,3,100000,0,-1,0.0,0.0
+36,t0.HospitalName String EQUAL t1.HospitalName String AND t0.City String EQUAL t1.City String AND t0.HospitalType String UNEQUAL t1.HospitalType String,3,100000,25,2,0.7409784310289748,0.49097843102897476
+37,t0.MeasureName String EQUAL t1.MeasureName String AND t0.ProviderNumber String EQUAL t1.ProviderNumber String,2,100000,0,-1,0.0,0.0
+38,t0.HospitalName String EQUAL t1.HospitalName String AND t0.PhoneNumber String EQUAL t1.PhoneNumber String AND t0.HospitalOwner String UNEQUAL t1.HospitalOwner String,3,100000,25,2,0.8804449601712508,0.6304449601712508
+39,t0.ProviderNumber String EQUAL t1.ProviderNumber String AND t0.HospitalOwner String UNEQUAL t1.HospitalOwner String,2,100000,25,1,0.8804449601712508,0.6304449601712508
+40,t0.ZIPCode str EQUAL t1.ZIPCode str AND t0.StateAvg String UNEQUAL t1.StateAvg String AND t0.MeasureName String EQUAL t1.MeasureName String,3,100000,0,-1,0.0,0.0
+41,t0.HospitalName String EQUAL t1.HospitalName String AND t0.CountyName String UNEQUAL t1.CountyName String AND t0.PhoneNumber String EQUAL t1.PhoneNumber String,3,99915,25,1,0.902074661795759,0.652074661795759
+42,t0.PhoneNumber String EQUAL t1.PhoneNumber String AND t0.City String UNEQUAL t1.City String,2,100000,26,1,0.9056443592915772,0.6556443592915772
+43,t0.ZIPCode str EQUAL t1.ZIPCode str AND t0.State String UNEQUAL t1.State String,2,100000,30,1,0.9145530467295405,0.6645530467295405
+44,t0.ProviderNumber String EQUAL t1.ProviderNumber String AND t0.State String UNEQUAL t1.State String,2,100000,25,1,0.899132494988328,0.649132494988328
+45,t0.ZIPCode str EQUAL t1.ZIPCode str AND t0.HospitalName String EQUAL t1.HospitalName String AND t0.PhoneNumber String UNEQUAL t1.PhoneNumber String,3,100000,25,2,0.9023114763110036,0.6523114763110036
+46,t0.ProviderNumber String EQUAL t1.ProviderNumber String AND t0.HospitalName String UNEQUAL t1.HospitalName String,2,100000,25,1,0.9023069668351147,0.6523069668351147
+47,t0.ProviderNumber String EQUAL t1.ProviderNumber String AND t0.MeasureCode String EQUAL t1.MeasureCode String,2,100000,0,-1,0.0,0.0
+48,t0.ZIPCode str EQUAL t1.ZIPCode str AND t0.StateAvg String UNEQUAL t1.StateAvg String AND t0.MeasureCode String EQUAL t1.MeasureCode String,3,100000,0,-1,0.0,0.0
+49,t0.CountyName String EQUAL t1.CountyName String AND t0.PhoneNumber String EQUAL t1.PhoneNumber String AND t0.HospitalType String UNEQUAL t1.HospitalType String,3,99915,26,2,0.7500426048185137,0.5000426048185137
+50,t0.ProviderNumber String UNEQUAL t1.ProviderNumber String AND t0.ZIPCode str EQUAL t1.ZIPCode str AND t0.HospitalName String EQUAL t1.HospitalName String,3,100000,25,0,0.9023126105367587,0.6523126105367587
+51,t0.HospitalName String EQUAL t1.HospitalName String AND t0.PhoneNumber String EQUAL t1.PhoneNumber String AND t0.HospitalType String UNEQUAL t1.HospitalType String,3,100000,25,2,0.7409784310289748,0.49097843102897476
+52,t0.Condition String UNEQUAL t1.Condition String AND t0.MeasureName String EQUAL t1.MeasureName String,2,100000,3998,0,0.9990814188487359,0.7490814188487359
+53,t0.HospitalName String EQUAL t1.HospitalName String AND t0.EmergencyService String UNEQUAL t1.EmergencyService String AND t0.PhoneNumber String EQUAL t1.PhoneNumber String,3,100000,25,1,0.5582520268456576,0.30825202684565756
+54,t0.HospitalName String EQUAL t1.HospitalName String AND t0.PhoneNumber String EQUAL t1.PhoneNumber String AND t0.StateAvg String EQUAL t1.StateAvg String,3,100000,0,-1,0.0,0.0

@@ -1,0 +1,70 @@
+dc_id,dc_str,m,nV,nE_best,best_head_idx,best_base,weight
+1,t0.iso_country str EQUAL t1.iso_country str AND t0.scheduled_service str UNEQUAL t1.scheduled_service str,2,99068,13786,0,0.635541125724052,0.38554112572405197
+2,t0.iata_code str UNEQUAL t1.iata_code str AND t0.wikipedia_link str EQUAL t1.wikipedia_link str AND t0.iso_country str EQUAL t1.iso_country str,3,1307,0,-1,0.0,0.0
+3,t0.iso_country str EQUAL t1.iso_country str AND t0.municipality str EQUAL t1.municipality str,2,79985,0,-1,0.0,0.0
+4,t0.ident str EQUAL t1.ident str,1,100000,0,-1,0.0,0.0
+5,t0.municipality str EQUAL t1.municipality str AND t0.id str LESS_EQUAL t1.id str,2,80471,0,-1,0.0,0.0
+6,t0.elevation_ft int EQUAL t1.elevation_ft int AND t0.longitude_deg float LESS_EQUAL t1.longitude_deg float,2,76356,0,-1,0.0,0.0
+7,t0.elevation_ft int EQUAL t1.elevation_ft int AND t0.id str LESS_EQUAL t1.id str,2,76356,0,-1,0.0,0.0
+8,t0.gps_code str EQUAL t1.gps_code str AND t0.home_link str UNEQUAL t1.home_link str,2,186,0,-1,0.0,0.0
+9,t0.municipality str EQUAL t1.municipality str AND t0.wikipedia_link str UNEQUAL t1.wikipedia_link str,2,2788,0,-1,0.0,0.0
+10,t0.elevation_ft int EQUAL t1.elevation_ft int AND t0.local_code str UNEQUAL t1.local_code str,2,26420,0,-1,0.0,0.0
+11,t0.longitude_deg float EQUAL t1.longitude_deg float,1,100000,0,-1,0.0,0.0
+12,t0.wikipedia_link str EQUAL t1.wikipedia_link str AND t0.iso_country str EQUAL t1.iso_country str AND t0.home_link str UNEQUAL t1.home_link str,3,144,0,-1,0.0,0.0
+13,t0.wikipedia_link str EQUAL t1.wikipedia_link str AND t0.continent str EQUAL t1.continent str AND t0.home_link str UNEQUAL t1.home_link str,3,40,0,-1,0.0,0.0
+14,t0.elevation_ft int EQUAL t1.elevation_ft int AND t0.scheduled_service str UNEQUAL t1.scheduled_service str,2,76356,0,-1,0.0,0.0
+15,t0.type str EQUAL t1.type str AND t0.scheduled_service str UNEQUAL t1.scheduled_service str AND t0.keywords str UNEQUAL t1.keywords str,3,2884,630,0,0.40365309304491614,0.15365309304491614
+16,t0.elevation_ft int EQUAL t1.elevation_ft int AND t0.wikipedia_link str UNEQUAL t1.wikipedia_link str,2,2863,0,-1,0.0,0.0
+17,t0.municipality str EQUAL t1.municipality str AND t0.local_code str UNEQUAL t1.local_code str,2,26027,0,-1,0.0,0.0
+18,t0.elevation_ft int EQUAL t1.elevation_ft int AND t0.municipality str EQUAL t1.municipality str,2,66998,0,-1,0.0,0.0
+19,t0.type str EQUAL t1.type str AND t0.continent str EQUAL t1.continent str AND t0.gps_code str EQUAL t1.gps_code str,3,9531,0,-1,0.0,0.0
+20,t0.keywords str UNEQUAL t1.keywords str AND t0.municipality str EQUAL t1.municipality str,2,2675,0,-1,0.0,0.0
+21,t0.scheduled_service str UNEQUAL t1.scheduled_service str AND t0.municipality str EQUAL t1.municipality str,2,80471,0,-1,0.0,0.0
+22,t0.continent str EQUAL t1.continent str AND t0.municipality str EQUAL t1.municipality str,2,16797,0,-1,0.0,0.0
+23,t0.municipality str EQUAL t1.municipality str AND t0.longitude_deg float LESS_EQUAL t1.longitude_deg float,2,80471,0,-1,0.0,0.0
+24,t0.municipality str EQUAL t1.municipality str AND t0.latitude_deg float LESS t1.latitude_deg float,2,80471,0,-1,0.0,0.0
+25,t0.id str EQUAL t1.id str,1,100000,0,-1,0.0,0.0
+26,t0.iso_country str EQUAL t1.iso_country str AND t0.longitude_deg float LESS t1.longitude_deg float AND t0.home_link str UNEQUAL t1.home_link str,3,297,0,-1,0.0,0.0
+27,t0.iso_country str EQUAL t1.iso_country str AND t0.continent str UNEQUAL t1.continent str,2,24117,1071,1,0.9752108685853029,0.7252108685853029
+28,t0.iso_country str EQUAL t1.iso_country str AND t0.keywords str UNEQUAL t1.keywords str AND t0.home_link str UNEQUAL t1.home_link str,3,51,0,-1,0.0,0.0
+29,t0.iata_code str UNEQUAL t1.iata_code str AND t0.municipality str EQUAL t1.municipality str,2,2292,0,-1,0.0,0.0
+30,t0.elevation_ft int EQUAL t1.elevation_ft int AND t0.gps_code str UNEQUAL t1.gps_code str,2,50450,0,-1,0.0,0.0
+31,t0.iso_region str EQUAL t1.iso_region str,1,100000,0,-1,0.0,0.0
+32,t0.iso_country str EQUAL t1.iso_country str AND t0.latitude_deg float LESS_EQUAL t1.latitude_deg float AND t0.home_link str UNEQUAL t1.home_link str,3,297,0,-1,0.0,0.0
+33,t0.type str EQUAL t1.type str AND t0.continent str EQUAL t1.continent str AND t0.scheduled_service str UNEQUAL t1.scheduled_service str,3,24575,2701,2,0.6272605703533284,0.3772605703533284
+34,t0.continent str EQUAL t1.continent str AND t0.gps_code str EQUAL t1.gps_code str AND t0.latitude_deg float LESS_EQUAL t1.latitude_deg float,3,9531,0,-1,0.0,0.0
+35,t0.local_code str EQUAL t1.local_code str AND t0.continent str EQUAL t1.continent str AND t0.scheduled_service str UNEQUAL t1.scheduled_service str,3,667,0,-1,0.0,0.0
+36,t0.iata_code str UNEQUAL t1.iata_code str AND t0.elevation_ft int EQUAL t1.elevation_ft int,2,2532,0,-1,0.0,0.0
+37,t0.wikipedia_link str EQUAL t1.wikipedia_link str AND t0.scheduled_service str UNEQUAL t1.scheduled_service str,2,3125,0,-1,0.0,0.0
+38,t0.elevation_ft int EQUAL t1.elevation_ft int AND t0.iso_country str EQUAL t1.iso_country str,2,75589,0,-1,0.0,0.0
+39,t0.elevation_ft int EQUAL t1.elevation_ft int AND t0.type str EQUAL t1.type str,2,76356,0,-1,0.0,0.0
+40,t0.local_code str EQUAL t1.local_code str AND t0.type str EQUAL t1.type str AND t0.scheduled_service str UNEQUAL t1.scheduled_service str,3,27332,0,-1,0.0,0.0
+41,t0.iata_code str UNEQUAL t1.iata_code str AND t0.wikipedia_link str EQUAL t1.wikipedia_link str AND t0.home_link str UNEQUAL t1.home_link str,3,90,0,-1,0.0,0.0
+42,t0.latitude_deg float EQUAL t1.latitude_deg float,1,100000,0,-1,0.0,0.0
+43,t0.name str EQUAL t1.name str,1,100000,0,-1,0.0,0.0
+44,t0.elevation_ft int EQUAL t1.elevation_ft int AND t0.keywords str UNEQUAL t1.keywords str,2,1726,0,-1,0.0,0.0
+45,t0.gps_code str EQUAL t1.gps_code str AND t0.wikipedia_link str UNEQUAL t1.wikipedia_link str,2,2464,0,-1,0.0,0.0
+46,t0.continent str EQUAL t1.continent str AND t0.scheduled_service str UNEQUAL t1.scheduled_service str AND t0.home_link str UNEQUAL t1.home_link str,3,108,0,-1,0.0,0.0
+47,t0.elevation_ft int EQUAL t1.elevation_ft int AND t0.latitude_deg float LESS t1.latitude_deg float,2,76356,0,-1,0.0,0.0
+48,t0.elevation_ft int EQUAL t1.elevation_ft int AND t0.continent str EQUAL t1.continent str,2,14781,0,-1,0.0,0.0
+49,t0.wikipedia_link str EQUAL t1.wikipedia_link str AND t0.local_code str EQUAL t1.local_code str AND t0.home_link str UNEQUAL t1.home_link str,3,27,0,-1,0.0,0.0
+50,t0.municipality str EQUAL t1.municipality str AND t0.type str UNEQUAL t1.type str,2,80471,0,-1,0.0,0.0
+51,t0.continent str EQUAL t1.continent str AND t0.gps_code str EQUAL t1.gps_code str AND t0.local_code str UNEQUAL t1.local_code str,3,186,0,-1,0.0,0.0
+52,t0.gps_code str EQUAL t1.gps_code str AND t0.municipality str EQUAL t1.municipality str,2,46777,0,-1,0.0,0.0
+53,t0.continent str EQUAL t1.continent str AND t0.gps_code str EQUAL t1.gps_code str AND t0.longitude_deg float LESS t1.longitude_deg float,3,9531,0,-1,0.0,0.0
+54,t0.scheduled_service str UNEQUAL t1.scheduled_service str AND t0.gps_code str EQUAL t1.gps_code str,2,55318,0,-1,0.0,0.0
+55,t0.continent str EQUAL t1.continent str AND t0.gps_code str EQUAL t1.gps_code str AND t0.id str LESS_EQUAL t1.id str,3,9531,0,-1,0.0,0.0
+56,t0.iso_country str EQUAL t1.iso_country str AND t0.type str EQUAL t1.type str AND t0.home_link str UNEQUAL t1.home_link str,3,297,0,-1,0.0,0.0
+57,t0.iso_country str EQUAL t1.iso_country str AND t0.id str LESS_EQUAL t1.id str AND t0.home_link str UNEQUAL t1.home_link str,3,297,0,-1,0.0,0.0
+58,t0.scheduled_service str UNEQUAL t1.scheduled_service str AND t0.iata_code str EQUAL t1.iata_code str,2,2739,0,-1,0.0,0.0
+59,t0.keywords str EQUAL t1.keywords str AND t0.continent str EQUAL t1.continent str AND t0.gps_code str EQUAL t1.gps_code str,3,189,0,-1,0.0,0.0
+60,t0.local_code str EQUAL t1.local_code str AND t0.continent str EQUAL t1.continent str AND t0.home_link str UNEQUAL t1.home_link str,3,1,0,-1,0.0,0.0
+61,t0.iata_code str UNEQUAL t1.iata_code str AND t0.iso_country str EQUAL t1.iso_country str AND t0.keywords str UNEQUAL t1.keywords str,3,138,0,-1,0.0,0.0
+62,t0.elevation_ft int EQUAL t1.elevation_ft int AND t0.home_link str UNEQUAL t1.home_link str,2,257,0,-1,0.0,0.0
+63,t0.iata_code str UNEQUAL t1.iata_code str AND t0.gps_code str EQUAL t1.gps_code str,2,2376,0,-1,0.0,0.0
+64,t0.iso_country str EQUAL t1.iso_country str AND t0.local_code str EQUAL t1.local_code str,2,27332,0,-1,0.0,0.0
+65,t0.iso_country str EQUAL t1.iso_country str AND t0.gps_code str EQUAL t1.gps_code str,2,55120,0,-1,0.0,0.0
+66,t0.iso_country str EQUAL t1.iso_country str AND t0.iata_code str EQUAL t1.iata_code str AND t0.home_link str UNEQUAL t1.home_link str,3,102,0,-1,0.0,0.0
+67,t0.type str EQUAL t1.type str AND t0.scheduled_service str UNEQUAL t1.scheduled_service str AND t0.home_link str UNEQUAL t1.home_link str,3,297,113,1,0.4180587879749603,0.16805878797496032
+68,t0.continent str EQUAL t1.continent str AND t0.iata_code str EQUAL t1.iata_code str AND t0.home_link str UNEQUAL t1.home_link str,3,19,0,-1,0.0,0.0
+69,t0.municipality str EQUAL t1.municipality str AND t0.home_link str UNEQUAL t1.home_link str,2,261,0,-1,0.0,0.0
