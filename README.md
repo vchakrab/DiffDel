@@ -1,3 +1,6 @@
+**The full paper is available at:**
+**`DiffDel/DiffDel-Final.pdf`**
+
 # Requirements
 
 - **Python** (e.g., Python 3.10+)
