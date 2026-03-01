@@ -258,6 +258,7 @@ def exp(
                 L0 = L0,
                 lambda_penalty = lambda_penalty,
                 tau = tau,
+
                 leakage_method = leakage_method,
                 hypergraph_mode = hypergraph_mode,
                 mask_space = mask_method,

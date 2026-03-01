@@ -380,8 +380,8 @@ def with_db_copies(fn: Callable[[], None], dataset: str) -> None:
 # ============================
 
 def run_all_experiments():
-    EM_VALUES = [0]#, 0.1, 0.5, 0.75, 1, 1.5, 2, 2.5, 5, 10]
-    L0_VALUES = [0.025]#, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    EM_VALUES = [0, 0.1, 0.5, 0.75, 1, 1.5, 2, 2.5, 5, 10]
+    L0_VALUES = [0.025, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     LAMBDA = 1000
 
     BASE_OUTPUT_DIR = "data"

@@ -48,4 +48,4 @@ python insert_data_into_dataset.py
     Stores all generated plots and final figures used in evaluation (e.g., heatmaps, Pareto frontiers, runtime plots).
 
 ## Reproducibility Artifacts
-  - Data used to graph figures is contained withing `data/release_data` and `fig/release_figures`
+  - Data used to graph figures is contained within `data/release_data` and `fig/release_figures`
