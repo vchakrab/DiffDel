@@ -130,12 +130,12 @@ def plot_heatmap(df):
         ['dataset', 'mechanism', 'epsilon_m', 'L0']
     )['improvement'].mean().reset_index()
 
-    fig = plt.figure(figsize=(26, 3))
+    fig = plt.figure(figsize=(19.3, 3))
 
+    # ---- Removed extra column for right-side colorbar ----
     gs = GridSpec(
-        1, 7,
-        width_ratios=[1,1,1,1,1,1,0.06],
-        wspace=0.22
+        1, 6,
+        wspace=0.25
     )
 
     axes = [fig.add_subplot(gs[0, i]) for i in range(6)]
@@ -150,15 +150,9 @@ def plot_heatmap(df):
 
         ax = axes[i]
 
-        # ---- Updated Title ----
-        if mech == 'Exp':
-            ax.set_title(f"{ds.capitalize()} ({mech})",
+        ax.set_title(rf"$\mathbf{{{ds.capitalize()}}}$ ({mech})",
                      pad=8,
-                     fontweight='bold')
-        else:
-            ax.set_title(f"{ds.capitalize()} ({mech})",
-                         pad = 8,
-                         fontweight = 'bold')
+                     fontweight='bold', fontsize=FS)
 
         sub = agg[(agg.dataset==ds)&(agg.mechanism==mech)]
 
@@ -182,9 +176,9 @@ def plot_heatmap(df):
         ax.set_yticklabels(L0_plot)
 
         if i == 0:
-            ax.set_ylabel(r"Re-inference Leakage Threshold $L_0$")
+            ax.set_ylabel(r"Re-inference Leakage Threshold $L_0$", fontsize=FS + 2)
 
-        ax.set_xlabel(r"Masking-Privacy Budget $\epsilon_m$")
+        #ax.set_xlabel(r"Masking-Privacy Budget $\epsilon_m$", fontsize=FS + 2)
 
         # ---- τ Contours ----
         for tau in TAU_CONTOURS:
@@ -215,34 +209,90 @@ def plot_heatmap(df):
                     clip_on=False
                 )
 
-    # ---- Colorbar ----
-    cbar_ax = fig.add_subplot(gs[0,6])
-    cbar = fig.colorbar(im, cax=cbar_ax)
-    cbar.set_label("Mask Improvement (%)")
+    # ---- Horizontal Colorbar at TOP ----
+    # ---- Horizontal Colorbar at TOP ----
+    # ---- τ Legend FIRST (very top, inside figure box) ----
+    # ============================================================
+    # Unified Legend (Color scale + τ contours)
+    # ============================================================
 
-    # ---- Standard Matplotlib Legend on Top ----
-    handles = [
-        Line2D([0], [0],
-               color=TAU_COLORS[t],
-               linestyle='--',
-               linewidth=2.5,
-               label=rf"$\tau={t}$")
+    # ============================================================
+    # Top Unified Legend Area (Gradient + τ contours)
+    # ============================================================
+
+    # ============================================================
+    # Side-by-Side Unified Legend Row
+    # ============================================================
+
+    # ============================================================
+    # Side-by-Side Unified Legend Row
+    # ============================================================
+
+    # ============================================================
+    # Compact Side-by-Side Legend Row
+    # ============================================================
+
+    from matplotlib.cm import ScalarMappable
+
+    sm = ScalarMappable(norm = norm, cmap = PASTEL_CMAP)
+    sm.set_array([])
+
+    # --- Smaller Gradient Colorbar (left) ---
+    # --- Smaller Gradient Colorbar (left) ---
+    # --- Smaller Gradient Colorbar (left) ---
+    cax = fig.add_axes([0.26, 0.915, 0.28, 0.028])
+
+    cb = plt.colorbar(
+        sm,
+        cax = cax,
+        orientation = 'horizontal'
+    )
+
+    cb.ax.tick_params(labelsize = FS - 1)
+
+    # Move label to the LEFT side of the gradient
+    cb.set_label("")  # remove default label
+    cax.text(
+        -0.025, 0.5,
+        "Mask Improvement (%)",
+        transform = cax.transAxes,
+        va = 'center',
+        ha = 'right',
+        fontsize = FS
+    )
+
+    # --- More Compact τ Legend (right) ---
+    tau_handles = [
+        Line2D(
+            [0], [0],
+            color = TAU_COLORS[t],
+            linestyle = '--',
+            linewidth = 2.0,
+            label = rf"$\tau={t}$"
+        )
         for t in TAU_CONTOURS
     ]
 
     fig.legend(
-        handles=handles,
-        loc="upper center",
-        bbox_to_anchor=(0.5, 1.0),
-        ncol=len(TAU_CONTOURS),
-        frameon=True
+        handles = tau_handles,
+        loc = "upper center",
+        bbox_to_anchor = (0.7, 0.985),  # <-- higher than colorbar
+        ncol = len(TAU_CONTOURS),
+        frameon = True,
+        columnspacing = 0.8,
+        handlelength = 1.8,
+        handletextpad = 0.4,
+        borderpad = 0.3
     )
 
-    plt.subplots_adjust(top=0.78)
+    # Give just enough top margin
+    plt.subplots_adjust(top = 0.75)
+    # Universal x-axis label
+    fig.supxlabel(r"Masking-Privacy Budget $\epsilon_m$", y = -0.04, fontsize = FS + 2)
 
+    plt.subplots_adjust(top = 0.75, bottom = 0.18)
     plt.savefig("heatmap_improvement.pdf")
     plt.close()
-
 def plot_budget(df):
 
     df["improvement"] = (
@@ -330,5 +380,5 @@ def plot_budget(df):
 if __name__ == "__main__":
     df = load_data()
     plot_heatmap(df)
-    plot_budget(df)
+    #plot_budget(df)
     print("Heatmap and Budget generated.")

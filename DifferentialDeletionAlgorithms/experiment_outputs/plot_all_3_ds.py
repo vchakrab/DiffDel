@@ -9,7 +9,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 # =============================================================================
 # STYLE
 # =============================================================================
-FS = 12
+FS = 13
 
 plt.rcParams.update({
     "font.family": "STIXGeneral",
@@ -102,7 +102,7 @@ def plot_mask():
 
     df = load_all_methods()
 
-    fig, axes = plt.subplots(1, 6, figsize=(26, 3), sharey=False)
+    fig, axes = plt.subplots(1, 6, figsize=(19.8, 3), sharey=False)
 
     ordered = (
         [(ds, "exp") for ds in DATASETS] +
@@ -135,10 +135,15 @@ def plot_mask():
                 alpha=0.18
             )
 
-        ax.set_title(f"{dataset.capitalize()} ({mech.capitalize()})", pad=2)
+        # Bold dataset name only
         if mech == "gumbel":
-            ax.set_title(f"{dataset.capitalize()} (Gum)", pad = 2)
-        ax.set_xlabel(r"Re-inference Leakage Threshold$L_0$")
+            title_str = rf"$\mathbf{{{dataset.capitalize()}}}$ (Gum)"
+        else:
+            title_str = rf"$\mathbf{{{dataset.capitalize()}}}$ ({mech.capitalize()})"
+
+        ax.set_title(title_str, pad = 2, fontsize = FS + 2)
+        ax.set_xticks([0, 0.2, 0.4, 0.6, 0.8, 1])
+        #ax.set_xlabel(r"Re-inference Leakage Threshold $L_0$")
         ax.set_xlim(0.0, 0.9)
         ax.set_ylim(0, 100)
 
@@ -153,9 +158,9 @@ def plot_mask():
         loc="upper center",
         ncol=len(handles),
         frameon=True,
-        bbox_to_anchor=(0.5, 1.02)
+        bbox_to_anchor=(0.5, 1.05)
     )
-
+    fig.supxlabel(r"Re-inference Leakage Threshold $L_0$", y = -0.06)
     plt.subplots_adjust(top=0.82, wspace=0.25)
 
     with PdfPages("mask_improvement.pdf") as pdf:
@@ -170,7 +175,7 @@ def plot_leakage():
 
     df = load_all_methods()
 
-    fig, axes = plt.subplots(1, 6, figsize=(26, 3.0), sharey=False)
+    fig, axes = plt.subplots(1, 6, figsize=(19.8, 3), sharey=False)
 
     ordered = (
         [(ds, "exp") for ds in DATASETS] +
@@ -199,12 +204,25 @@ def plot_leakage():
 
         ax.plot([0, 1], [0, 100], linestyle="--", linewidth=1)
 
-        ax.set_title(f"{dataset.capitalize()} ({mech.capitalize()})", pad=2)
+        # Bold dataset name only
         if mech == "gumbel":
-            ax.set_title(f"{dataset.capitalize()} (Gum)", pad=2)
-        ax.set_xlabel(r"Re-inference Leakage Threshold $L_0$")
+            title_str = rf"$\mathbf{{{dataset.capitalize()}}}$ (Gum)"
+        else:
+            title_str = rf"$\mathbf{{{dataset.capitalize()}}}$ ({mech.capitalize()})"
+
+        ax.set_title(title_str, pad = 2, fontsize = FS + 2)
+        ax.set_xticks([0, 0.2, 0.4, 0.6, 0.8, 1])
+        #ax.set_xlabel(r"Re-inference Leakage Threshold $L_0$")
+
         ax.set_xlim(0.0, 0.9)
-        ax.set_ylim(0, 100)
+        ax.set_ylim(0, 80)
+        # Universal x-axis label
+        fig.supxlabel(r"Re-inference Leakage Threshold $L_0$", y = 0.02)
+
+        plt.subplots_adjust(top = 0.85, bottom = 0.18, wspace = 0.25)
+
+        with PdfPages("leakage.pdf") as pdf:
+            pdf.savefig(fig)
 
         if i == 0:
             ax.set_ylabel("Achieved Re-inference Leakage (%)")

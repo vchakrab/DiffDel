@@ -8,6 +8,7 @@ without circular imports.
 import os
 from pathlib import Path
 
+
 # ============================================================================
 # PROJECT STRUCTURE AND PATHS
 # ============================================================================
@@ -21,7 +22,7 @@ PATHS = {
     'dc_configs': PROJECT_ROOT / 'DCandDelset' / 'dc_configs',
     'dc_raw': PROJECT_ROOT / 'DCandDelset' / 'dc_configs' / 'raw_constraints',
     'data_generation': PROJECT_ROOT / 'DataGeneration',
-    'inference_graphs': PROJECT_ROOT / 'InferenceGraph', 
+    'inference_graphs': PROJECT_ROOT / 'InferenceGraph',
     'id_computation': PROJECT_ROOT / 'IDcomputation',
     'output': PROJECT_ROOT / 'output',
     'logs': PROJECT_ROOT / 'logs',
@@ -30,7 +31,7 @@ PATHS = {
 # Create output directories if they don't exist
 for path in [PATHS['output'], PATHS['logs']]:
     if not path.exists():
-        path.mkdir(exist_ok=True)
+        path.mkdir(exist_ok = True)
 
 # ============================================================================
 # DATABASE CONFIGURATION
@@ -39,7 +40,7 @@ for path in [PATHS['output'], PATHS['logs']]:
 # Base database configuration
 DB_CONFIG = {
     'host': 'localhost',
-    'user': 'root', 
+    'user': 'root',
     'password': 'my_password',
     'use_pure': True,
     'charset': 'utf8mb4',
@@ -148,7 +149,8 @@ DATASETS = {
         'database_name': 'tpchdb',
         'primary_table': 'customer',
         'key_column': 'custkey',
-        'tables': ['customer', 'supplier', 'nation', 'region', 'part', 'partsupp', 'orders', 'lineitem'],
+        'tables': ['customer', 'supplier', 'nation', 'region', 'part', 'partsupp', 'orders',
+                   'lineitem'],
         'domain_file': 'tpchdb_domain_map.json',
         'dc_file': 'tpch_dcs.py',
         'dc_raw_file': 'tpch_dcs',
@@ -175,6 +177,7 @@ ALGORITHM_DEFAULTS = {
     'timeout_seconds': 300,
 }
 
+
 # ============================================================================
 # CORE HELPER FUNCTIONS
 # ============================================================================
@@ -184,35 +187,41 @@ def get_database_config(dataset_name):
     if dataset_name not in DATASETS:
         available = list(DATASETS.keys())
         raise ValueError(f"Unknown dataset: {dataset_name}. Available: {available}")
-    
+
     dataset = DATASETS[dataset_name]
     config = DB_CONFIG.copy()
     config['database'] = dataset['database_name']
     return config
+
 
 def get_dataset_info(dataset_name):
     """Get complete dataset information (database, tables, keys, DCs, domains)."""
     if dataset_name not in DATASETS:
         available = list(DATASETS.keys())
         raise ValueError(f"Unknown dataset: {dataset_name}. Available: {available}")
-    
+
     return DATASETS[dataset_name].copy()
+
 
 def get_primary_table(dataset_name):
     """Get primary table name for a dataset."""
     return get_dataset_info(dataset_name)['primary_table']
 
+
 def get_key_column(dataset_name):
     """Get primary key column for a dataset."""
     return get_dataset_info(dataset_name)['key_column']
+
 
 def get_all_tables(dataset_name):
     """Get all tables for a dataset."""
     return get_dataset_info(dataset_name)['tables']
 
+
 def list_available_datasets():
     """Get list of available dataset names."""
     return list(DATASETS.keys())
+
 
 # ============================================================================
 # FILE PATH FUNCTIONS (Domains, DCs, etc.)
@@ -223,23 +232,28 @@ def get_domain_file_path(dataset_name):
     dataset = get_dataset_info(dataset_name)
     return PATHS['id_computation'] / dataset['domain_file']
 
+
 def get_dc_config_path(dataset_name):
     """Get path to parsed denial constraint Python file."""
     dataset = get_dataset_info(dataset_name)
     return PATHS['dc_configs'] / dataset['dc_file']
+
 
 def get_dc_raw_path(dataset_name):
     """Get path to raw denial constraint file."""
     dataset = get_dataset_info(dataset_name)
     return PATHS['dc_raw'] / dataset['dc_raw_file']
 
+
 def get_output_file(filename):
     """Get path for output files."""
     return PATHS['output'] / filename
 
+
 def get_log_file(filename):
     """Get path for log files."""
     return PATHS['logs'] / filename
+
 
 def get_data_generation_path(dataset_name):
     """Get path to data generation directory for a dataset."""
@@ -247,6 +261,7 @@ def get_data_generation_path(dataset_name):
     if 'data_generation_dir' in dataset:
         return PATHS['data_generation'] / dataset['data_generation_dir']
     return PATHS['data_generation']
+
 
 # ============================================================================
 # BACKWARD COMPATIBILITY (Your existing variables)
@@ -256,12 +271,13 @@ def get_data_generation_path(dataset_name):
 DATABASES = {dataset['name']: dataset['database_name'] for dataset in DATASETS.values()}
 
 DC_CONFIGS = {
-    name: dataset['dc_config_module'] 
-    for name, dataset in DATASETS.items() 
+    name: dataset['dc_config_module']
+    for name, dataset in DATASETS.items()
     if dataset['dc_config_module']
 }
 
 OUTPUT_DIR = str(PATHS['output'])  # Your existing OUTPUT_DIR as string
+
 
 # ============================================================================
 # UTILITY FUNCTIONS
@@ -271,16 +287,17 @@ def validate_dataset(dataset_name):
     """Validate that a dataset configuration is complete and files exist."""
     if dataset_name not in DATASETS:
         return False, f"Dataset {dataset_name} not found"
-    
+
     dataset = DATASETS[dataset_name]
-    
+
     # Check required fields
     required_fields = ['name', 'database_name', 'primary_table', 'key_column']
     for field in required_fields:
         if field not in dataset:
             return False, f"Dataset {dataset_name} missing required field: {field}"
-    
+
     return True, "Dataset configuration valid"
+
 
 # ============================================================================
 # EXPORT ALL FUNCTIONS
@@ -289,18 +306,18 @@ def validate_dataset(dataset_name):
 __all__ = [
     # Core configuration
     'DATASETS', 'DB_CONFIG', 'PATHS', 'ALGORITHM_DEFAULTS',
-    
+
     # Main functions
     'get_database_config', 'get_dataset_info', 'list_available_datasets',
     'get_primary_table', 'get_key_column', 'get_all_tables',
-    
+
     # File path functions
     'get_domain_file_path', 'get_dc_config_path', 'get_dc_raw_path',
     'get_output_file', 'get_log_file', 'get_data_generation_path',
-    
+
     # Backward compatibility
     'DATABASES', 'DC_CONFIGS', 'OUTPUT_DIR',
-    
+
     # Utilities
     'validate_dataset', 'DEFAULT_TARGET_EID'
 ]

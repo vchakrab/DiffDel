@@ -10,7 +10,7 @@ from matplotlib.patches import Patch
 # =============================================================================
 # STYLE (UNCHANGED)
 # =============================================================================
-FS = 12
+FS = 14
 
 plt.rcParams.update({
     "font.family": "STIXGeneral",
@@ -344,7 +344,7 @@ def runtime_legend_handles():
 # =============================================================================
 def build_runtime(df):
 
-    fig = plt.figure(figsize=(16.5, 3.0))
+    fig = plt.figure(figsize=(16.5, 2.8))
 
     gs = fig.add_gridspec(1, 1)
 
@@ -359,8 +359,9 @@ def build_runtime(df):
     fig.legend(
         handles=runtime_legend_handles(),
         loc="upper center",
-        bbox_to_anchor=(0.5, 0.95),
+        bbox_to_anchor=(0.5, 0.99),
         ncol=5,
+        fontsize=FS,
         frameon=True
     )
 
