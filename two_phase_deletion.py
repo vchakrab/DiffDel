@@ -327,7 +327,7 @@ def two_phase_deletion_main(
         "mask_size": len(chosen),
         "mask": set(chosen),
         "baseline_leakage": leakage_empty,
-        "num_paths": -1,
+        "num_paths": num_chains,
         "memory_overhead_bytes": memory_overhead_bytes,
         "num_instantiated_cells": int(T["num_instantiated_cells"]),
     }
