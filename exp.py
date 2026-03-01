@@ -221,7 +221,7 @@ def exp(
     tau: Optional[float] = None,
     leakage_method: str = "greedy_disjoint",
     hypergraph_mode: str = "MAX",
-    template_dir: str = "templates",
+    template_dir: str = "data/templates",
     mask_method: str = "None",
     rng: Optional[np.random.Generator] = None,
 ) -> Dict[str, Any]:

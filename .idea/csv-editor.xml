@@ -353,6 +353,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/data/release_data/main_data/main_data_statistics.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
       </map>
     </option>
   </component>

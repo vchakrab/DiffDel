@@ -251,6 +251,9 @@ def run_gum(out_csv, ds, epsilon, lam, L0):
 
 
 def run_exp(out_csv, ds, epsilon, lam, L0):
+    BASE_OUTPUT_DIR = "data"
+    TEMPLATE_DIR = os.path.join(BASE_OUTPUT_DIR, "templates")
+    os.makedirs(TEMPLATE_DIR, exist_ok = True)
 
     file_exists = os.path.exists(out_csv) and os.path.getsize(out_csv) > 0
 
@@ -272,6 +275,7 @@ def run_exp(out_csv, ds, epsilon, lam, L0):
                 epsilon=float(epsilon),
                 lambda_penalty=float(lam),
                 L0=float(L0),
+                template_dir = TEMPLATE_DIR,
             )
 
             upd_mask = set(raw.get("mask", set())) | {attr}
@@ -376,14 +380,14 @@ def with_db_copies(fn: Callable[[], None], dataset: str) -> None:
 # ============================
 
 def run_all_experiments():
-    EM_VALUES = [0, 0.1, 0.5, 0.75, 1, 1.5, 2, 2.5, 5, 10]
-    L0_VALUES = [0.025, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    EM_VALUES = [0]#, 0.1, 0.5, 0.75, 1, 1.5, 2, 2.5, 5, 10]
+    L0_VALUES = [0.025]#, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     LAMBDA = 1000
 
-    BASE_OUTPUT_DIR = "experiment_outputs"
+    BASE_OUTPUT_DIR = "data"
     os.makedirs(BASE_OUTPUT_DIR, exist_ok=True)
 
-    GUM_DIR = os.path.join(BASE_OUTPUT_DIR, "gumbel")
+    GUM_DIR = os.path.join(BASE_OUTPUT_DIR, "gum")
     os.makedirs(GUM_DIR, exist_ok=True)
 
     for epsilon_m in EM_VALUES:

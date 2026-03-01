@@ -23,9 +23,9 @@ PATHS = {
     'data_generation': PROJECT_ROOT / 'DataGeneration',
 }
 
-for path in [PATHS['output'], PATHS['logs']]:
-    if not path.exists():
-        path.mkdir(exist_ok = True)
+# for path in [PATHS['output'], PATHS['logs']]:
+#     if not path.exists():
+#         path.mkdir(exist_ok = True)
 
 DB_CONFIG = {
     'host': 'localhost',
@@ -216,7 +216,7 @@ DC_CONFIGS = {
     if dataset['dc_config_module']
 }
 
-OUTPUT_DIR = str(PATHS['output'])  # Your existing OUTPUT_DIR as string
+#OUTPUT_DIR = str(PATHS['output'])  # Your existing OUTPUT_DIR as string
 
 
 # ============================================================================

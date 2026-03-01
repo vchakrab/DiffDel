@@ -4,5 +4,4 @@ if __name__ == '__main__':
     print('Collecting data...')
     collect_data.run_all_experiments()
     print('Constructing graphs...')
-    graph().graph_all_experiments()
-    
+    graph.graph_all_experiments()

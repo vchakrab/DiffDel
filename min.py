@@ -437,7 +437,7 @@ def min(target: str, key: int, dataset: str, threshold: float):
 
         target_time = get_insertion_time(cursor, table, key, target)
 
-        ilp_dir = "DifferentialDeletionAlgorithms/ilp_models"
+        ilp_dir = "data/ilp_models"
         ilp_path = os.path.join(ilp_dir, f"{dataset}_{table}_{target}_key{key}.lp")
 
         (
@@ -496,13 +496,11 @@ def min(target: str, key: int, dataset: str, threshold: float):
             leakage=leakage_val,
             mask_size=len(mask_for_leakage),
             lambda_penalty=float(LAM),
+            L0 = threshold,
             zone_size=zone_size,
         )
 
         memory_bytes = int(ilp_file_bytes)
-
-        if ilp_file_bytes > 0:
-            print(f"[ILP] wrote {ilp_path} ({ilp_file_bytes} bytes)")
 
     except Exception as e:
         print(f"Error in Baseline 3: {e}")
