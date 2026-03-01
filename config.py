@@ -16,28 +16,17 @@ from pathlib import Path
 # Project root directory (where this config.py file is located)
 PROJECT_ROOT = Path(__file__).parent
 
-# Key directories in your RTF project
 PATHS = {
     'project_root': PROJECT_ROOT,
     'dc_configs': PROJECT_ROOT / 'DCandDelset' / 'dc_configs',
     'dc_raw': PROJECT_ROOT / 'DCandDelset' / 'dc_configs' / 'raw_constraints',
     'data_generation': PROJECT_ROOT / 'DataGeneration',
-    'inference_graphs': PROJECT_ROOT / 'InferenceGraph',
-    'id_computation': PROJECT_ROOT / 'IDcomputation',
-    'output': PROJECT_ROOT / 'output',
-    'logs': PROJECT_ROOT / 'logs',
 }
 
-# Create output directories if they don't exist
 for path in [PATHS['output'], PATHS['logs']]:
     if not path.exists():
         path.mkdir(exist_ok = True)
 
-# ============================================================================
-# DATABASE CONFIGURATION
-# ============================================================================
-
-# Base database configuration
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
@@ -50,23 +39,8 @@ DB_CONFIG = {
     # This works for the C-Extension used in version 9.5.0
 }
 
-# ============================================================================
-# COMPREHENSIVE DATASET CONFIGURATIONS
-# ============================================================================
 
-# Complete dataset configurations
 DATASETS = {
-    'Onlineretail': {
-        'name': 'OnlineRetail',
-        'database_name': 'OnlineRetail',
-        'primary_table': 'OnlineRetail_data',
-        'key_column': 'id',  # unique identifier per transaction
-        'tables': ['OnlineRetail_data'],
-        'domain_file': 'onlineretail_domain_map.json',
-        'dc_file': 'topOnlineretailDCs_parsed.py',
-        'dc_raw_file': 'topOnlineretailDCs.txt',
-        'dc_config_module': 'DCandDelset.dc_configs.topOnlineretailDCs_parsed'
-    },
     'flight': {
         'name': 'flight',
         'database_name': 'flight',
@@ -111,17 +85,6 @@ DATASETS = {
         'dc_raw_file': 'hospital_dcs',
         'dc_config_module': 'DCandDelset.dc_configs.topHospitalDCs_parsed'
     },
-    'ncvoter': {
-        'name': 'ncvoter',
-        'database_name': 'ncvoter',
-        'primary_table': 'ncvoter_data',
-        'key_column': 'id',
-        'tables': ['ncvoter_data'],
-        'domain_file': 'ncvoter_domain_map.json',
-        'dc_file': 'topNCVoterDCs_parsed',
-        'dc_raw_file': 'ncvoter_dcs',
-        'dc_config_module': 'DCandDelset.dc_configs.topNCVoterDCs_parsed'
-    },
     'airport': {
         'name': 'airport',
         'database_name': 'airport',
@@ -132,29 +95,6 @@ DATASETS = {
         'dc_file': 'airport_dcs.py',
         'dc_raw_file': 'airport_dcs',
         'dc_config_module': 'DCandDelset.dc_configs.topAirportDCs_parsed'
-    },
-    'rtf25': {
-        'name': 'rtf25',
-        'database_name': 'RTF25',
-        'primary_table': 'rtf25_data',
-        'key_column': 'id',
-        'tables': ['rtf25_data'],
-        'domain_file': 'rtf25_domain_map.json',
-        'dc_file': 'rtf25_dcs.py',
-        'dc_raw_file': 'rtf25_dcs',
-        'dc_config_module': None
-    },
-    'tpchdb': {
-        'name': 'tpchdb',
-        'database_name': 'tpchdb',
-        'primary_table': 'customer',
-        'key_column': 'custkey',
-        'tables': ['customer', 'supplier', 'nation', 'region', 'part', 'partsupp', 'orders',
-                   'lineitem'],
-        'domain_file': 'tpchdb_domain_map.json',
-        'dc_file': 'tpch_dcs.py',
-        'dc_raw_file': 'tpch_dcs',
-        'dc_config_module': None
     },
 }
 

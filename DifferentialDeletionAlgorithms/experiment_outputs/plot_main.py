@@ -36,9 +36,9 @@ DATASET_ORDER = ["Airport", "Hospital", "Adult", "Flight", "Tax"]
 METHOD_ORDER = ["DelMin", "DelExp", "DelMarg"]
 
 METHOD_LABEL = {
-    "DelMin": "MIN",
-    "DelExp": "EXP",
-    "DelMarg": "GUM",
+    "DelMin": "Min",
+    "DelExp": "Exp",
+    "DelMarg": "Gum",
 }
 
 LINESTYLES = {
@@ -344,7 +344,7 @@ def runtime_legend_handles():
 # =============================================================================
 def build_runtime(df):
 
-    fig = plt.figure(figsize=(16.5, 2.8))
+    fig = plt.figure(figsize=(16.5, 3.5))
 
     gs = fig.add_gridspec(1, 1)
 

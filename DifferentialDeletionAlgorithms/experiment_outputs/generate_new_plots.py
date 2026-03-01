@@ -300,18 +300,18 @@ def tau_fn(eps_m, L0):
 #     plt.savefig("budget_split_bars.pdf")
 #     plt.close()
 
-# =============================================================================
-# PARETO
-# =============================================================================
-# =============================================================================
-# PARETO (Baseline-normalized % version)
-# =============================================================================
-# =============================================================================
-# PARETO (Baseline-normalized % version — fixed scaling + green diamond)
-# =============================================================================
 def plot_pareto(df):
 
     EM_VALS = [0.1, 1.0]
+
+    # Explicit fixed colors
+    EPS_COLOR = {
+        1.0: '#d62728',   # red
+        0.1: '#1f77b4'    # blue
+    }
+
+    STAR_COLOR = 'black'
+    DIAMOND_COLOR = 'black'  # green
 
     K_SIZE = {
         "airport": 5,
@@ -342,7 +342,13 @@ def plot_pareto(df):
 
         ax = axes[col]
         ax.tick_params(axis='y', left=True, labelleft=True)
-        ax.set_title(rf"$\mathbf{{{ds.capitalize()}}}$", pad=2, fontweight='bold', fontsize=FS + 2)
+
+        ax.set_title(
+            rf"$\mathbf{{{ds.capitalize()}}}$",
+            pad=2,
+            fontweight='bold',
+            fontsize=FS + 2
+        )
 
         baseline = K_SIZE[ds]
 
@@ -363,68 +369,101 @@ def plot_pareto(df):
 
                 mask_pct = 100 * sub['mean_mask'] / baseline
 
+                # Marker logic
+                if em == 1.0:
+                    marker_style = 'o'
+                    marker_face = 'none'
+                else:
+                    marker_style = 'x'
+                    marker_face = None
+
+                # Mechanism line style
+                line_style = '-' if mech == 'Exp' else ':'
+
                 ax.plot(
                     sub['mean_leak'],
                     mask_pct,
-                    marker='o',
-                    linestyle='--' if em == 0.1 else '-',
-                    color=MECH_COLOR[mech],
+                    marker=marker_style,
+                    linestyle=line_style,
+                    color=EPS_COLOR[em],
+                    markerfacecolor=marker_face,
+                    markeredgewidth=1.8,
+                    markersize=6,
+                    linewidth=1.8,
                     label=f"{mech}, ε={em}"
                 )
 
         # -------------------------------------------------
-        # 🔴 Baseline  M_MIN (M_det)
+        # ⭐ Baseline M_MIN (Black Star)
         # -------------------------------------------------
         ax.scatter(
             0,
             100,
             marker='*',
-            s=240,
-            color='red',
+            s=260,
+            facecolor=STAR_COLOR,
             edgecolor='black',
-            zorder=6,
+            linewidth=1.2,
+            zorder=7,
             label=r"$M_{\mathrm{MIN}}\,(M_{\mathrm{det}})$" if col == 0 else None
         )
 
         # -------------------------------------------------
-        # 🟢 Target-only  M = empty set
+        # ♦ Target-only M = ∅ (Green Diamond)
         # -------------------------------------------------
         ax.scatter(
             TARGET_ONLY_LEAK[ds],
             0,
             marker='D',
-            s=110,
-            color='#2ca02c',
+            s=120,
+            facecolor=DIAMOND_COLOR,
             edgecolor='black',
             zorder=6,
             label=r"$M = \emptyset$" if col == 0 else None
         )
-        ax.set_xticks([0, 0.2, 0.4, 0.6, 0.8, 1])
-        #ax.set_xlabel(r"Expected Leakage ($\mathbb{E}[\mathcal{L}]$)", fontsize=FS + 2)
+
+        # -------------------------------------------------
+        # Auto X-axis ticks (0.2 increments)
+        # -------------------------------------------------
+        max_leak = max(
+            agg[agg.dataset == ds]['mean_leak'].max(),
+            TARGET_ONLY_LEAK[ds]
+        )
+
+        rounded_max = np.ceil(max_leak / 0.2) * 0.2
+        xticks = np.arange(0, rounded_max + 0.001, 0.2)
+
+        ax.set_xlim(-0.03, rounded_max + 0.04)
+        ax.set_xticks(xticks)
 
         if col == 0:
             ax.set_ylabel("Mask Size (% of Baseline)", fontsize=FS + 3)
 
         ax.set_ylim(-8, 124)
 
-
+    # -------------------------------------------------
+    # Legend
+    # -------------------------------------------------
     handles, labels = axes[0].get_legend_handles_labels()
 
     fig.legend(
-        handles=handles,
-        labels=labels,
+        handles,
+        labels,
         loc='upper center',
         frameon=True,
-        bbox_to_anchor=(0.5, 1.1),
+        bbox_to_anchor=(0.5, 1.12),
         ncol=6
     )
-    # Universal x-axis label
-    fig.supxlabel(r"Expected Leakage ($\mathbb{E}[\mathcal{L}]$)", y = -0.06, fontsize = FS + 2)
 
-    #plt.subplots_adjust(top = 0.75, bottom = 0.18)
+    fig.supxlabel(
+        r"Expected Leakage ($\mathbb{E}[\mathcal{L}]$)",
+        y=-0.06,
+        fontsize=FS + 2
+    )
+
     plt.savefig("pareto_frontier.pdf")
     plt.close()
-# =============================================================================
+# ==================================
 # BUDGET TABLE (Numerical version of bar plot)
 # =============================================================================
 def generate_budget_table(df):

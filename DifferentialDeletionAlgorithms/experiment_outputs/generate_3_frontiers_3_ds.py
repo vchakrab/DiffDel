@@ -13,7 +13,7 @@ from pathlib import Path
 # =============================================================================
 # STYLE
 # =============================================================================
-FS = 12
+FS = 13
 
 plt.rcParams.update({
     "font.family": "STIXGeneral",
@@ -130,7 +130,7 @@ def plot_heatmap(df):
         ['dataset', 'mechanism', 'epsilon_m', 'L0']
     )['improvement'].mean().reset_index()
 
-    fig = plt.figure(figsize=(19.3, 3))
+    fig = plt.figure(figsize=(19.3, 3.5))
 
     # ---- Removed extra column for right-side colorbar ----
     gs = GridSpec(
@@ -151,8 +151,7 @@ def plot_heatmap(df):
         ax = axes[i]
 
         ax.set_title(rf"$\mathbf{{{ds.capitalize()}}}$ ({mech})",
-                     pad=8,
-                     fontweight='bold', fontsize=FS)
+                     pad=8, fontsize=FS )
 
         sub = agg[(agg.dataset==ds)&(agg.mechanism==mech)]
 
@@ -176,7 +175,7 @@ def plot_heatmap(df):
         ax.set_yticklabels(L0_plot)
 
         if i == 0:
-            ax.set_ylabel(r"Re-inference Leakage Threshold $L_0$", fontsize=FS + 2)
+            ax.set_ylabel(r"Re-inference Leakage Threshold $L_0$", fontsize=FS + 3)
 
         #ax.set_xlabel(r"Masking-Privacy Budget $\epsilon_m$", fontsize=FS + 2)
 
@@ -258,7 +257,7 @@ def plot_heatmap(df):
         transform = cax.transAxes,
         va = 'center',
         ha = 'right',
-        fontsize = FS
+        fontsize = FS + 3
     )
 
     # --- More Compact τ Legend (right) ---
@@ -279,6 +278,7 @@ def plot_heatmap(df):
         bbox_to_anchor = (0.7, 0.985),  # <-- higher than colorbar
         ncol = len(TAU_CONTOURS),
         frameon = True,
+        fontsize = FS + 3,
         columnspacing = 0.8,
         handlelength = 1.8,
         handletextpad = 0.4,
@@ -288,7 +288,7 @@ def plot_heatmap(df):
     # Give just enough top margin
     plt.subplots_adjust(top = 0.75)
     # Universal x-axis label
-    fig.supxlabel(r"Masking-Privacy Budget $\epsilon_m$", y = -0.04, fontsize = FS + 2)
+    fig.supxlabel(r"Masking-Privacy Budget $\epsilon_m$", y = -0.04, fontsize = FS + 3)
 
     plt.subplots_adjust(top = 0.75, bottom = 0.18)
     plt.savefig("heatmap_improvement.pdf")
