@@ -36,7 +36,10 @@ python insert_data_into_dataset.py
   - `EM_VALUES = [0, 0.1, 0.5, 0.75, 1, 1.5, 2, 2.5, 5, 10]`
   - `L0_VALUES = [0.025, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]`
   - `LAMBDA = 1000`
-4. To run the experiments and graph the collected data, run ```bash python main.py```
+4. To run the experiments and graph the collected data, run
+   ```bash
+      python main.py
+   ```
   - **`data/min/`**  
     Contains results produced by the baseline minimization mechanism (e.g., mask sizes, leakage values, runtime logs).
   - **`data/exp/`**  
