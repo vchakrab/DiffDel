@@ -44,7 +44,8 @@ python insert_data_into_dataset.py
     Contains experiment outputs for the Exponential Mechanism variant.
   - **`data/gum/`**  
     Contains experiment outputs for the Gumbel-based mechanism.
-  - **`data/fig/`**  
+  - **`fig`**  
     Stores all generated plots and final figures used in evaluation (e.g., heatmaps, Pareto frontiers, runtime plots).
 
-    
+## Reproducibility Artifacts
+  - Data used to graph figures is contained withing `data/release_data` and `fig/release_figures`
