@@ -11,8 +11,6 @@
 
 To simplify testing, we provide all required CSV files in the `csv_files/` directory.
 
-##Populate MySQL Databases
-
 Use the scripts in the `DataGeneration/` directory to populate the MySQL databases.
 
 For each dataset:
