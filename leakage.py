@@ -33,9 +33,9 @@ def map_dc_to_weight(init_manager, dc, weights_obj) -> float:
     try:
         idx = init_manager.denial_constraints.index(dc)
         attr_sets = []
-        for dc in init_manager.denial_constraints:
+        for _dc in init_manager.denial_constraints:
             attrs = set()
-            for a, _, b in dc:
+            for a, _, b in _dc:
                 attrs.add(a.split(".", 1)[1])
                 attrs.add(b.split(".", 1)[1])
             attr_sets.append(frozenset(attrs))
@@ -567,7 +567,12 @@ def leakage(
             for _ch, cw, _mc in chosen:
                 prod_not *= (1.0 - float(cw))
             L = 1.0 - prod_not
-
+    elif leakage_method == "max_leakage":
+        return max_leakage(
+            mask, target_cell, hypergraph,
+            tau = tau,
+            return_counts = return_counts,
+        )
     else:
         raise ValueError(
             f"Unknown leakage_method={leakage_method!r}. "
@@ -583,3 +588,56 @@ def leakage(
 
 
 
+def max_leakage(
+    mask: Set[str],
+    target_cell: str,
+    hypergraph: "Hypergraph",
+    *,
+    tau: Optional[float] = None,
+    return_counts: bool = False,
+) -> float:
+    """
+    Max-leakage: the adversary picks the single highest-weight chain available.
+
+    Rather than combining chains via noisy-OR (greedy_disjoint), this models
+    an adversary with max availability — they can always use the best chain,
+    so leakage = max_{p} w(p) over all valid chains.
+
+      L = max( Π_{e in p} w(e) )  for p in chains(mask, target, H)
+
+    This is an upper bound on greedy_disjoint leakage and is simpler to reason
+    about when chains are mutually exclusive by adversary choice.
+    """
+    edge_dict = hypergraph_to_edge_dict(hypergraph, tau=tau)
+    if not edge_dict:
+        return (0.0, 0, 0, 0) if return_counts else 0.0
+
+    w = {eid: float(edge_dict[eid][1]) for eid in edge_dict}
+    edge_active = {
+        eid: is_edge_active_by_mask_rule(edge_dict[eid][0], mask, target_cell)
+        for eid in edge_dict
+    }
+
+    num_chains = 0
+    active_chains = 0
+    blocked_chains = 0
+    max_chain_w = 0.0
+
+    for ch in iter_chains(mask, target_cell, edge_dict):
+        num_chains += 1
+
+        blocked = any(not edge_active.get(eid, True) for eid in ch)
+        if blocked:
+            blocked_chains += 1
+            continue
+
+        active_chains += 1
+        cw = prod(w[eid] for eid in ch)
+        if cw > max_chain_w:
+            max_chain_w = cw
+
+    L = float(max_chain_w)
+
+    if return_counts:
+        return float(L), int(num_chains), int(active_chains), int(blocked_chains)
+    return L

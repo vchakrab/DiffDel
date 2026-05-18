@@ -382,8 +382,8 @@ def load_parsed_dcs_for_dataset(dataset: str):
     except Exception:
         return []
 def min(target: str, key: int, dataset: str, threshold: float):
-    if not GUROBI_AVAILABLE:
-        return 0, set(), 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0
+    # if not GUROBI_AVAILABLE:
+    #     return 0, set(), 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0
 
     if config is None or mysql is None:
         print("[WARN] Missing deps for baseline_deletion_3 (config/mysql).")
@@ -532,4 +532,9 @@ def min(target: str, key: int, dataset: str, threshold: float):
         "memory_overhead_bytes": memory_bytes,
         "num_instantiated_cells": int(zone_size),
     }
+
+if __name__ == "__main__":
+    print(min("continent", 0, "airport", 0))
+    print(min("ProviderNumber", 0, "hospital", 0))
+    print(min("education", 0, "adult", 0))
 

@@ -83,6 +83,7 @@ def gum(
     lam: float,
     L0: float,
     leakage_method: str = "greedy_disjoint",
+    ordering_method: str = "greedy",
 ) -> Dict[str, Any]:
 
     init_start = time.time()
@@ -105,19 +106,24 @@ def gum(
         return_counts=True,
         leakage_method=leakage_method,
     )
+    if ordering_method == "greedy":
+        delta_L: Dict[str, float] = {}
+        for c in Z:
+            L_c = chain_leakage(
+                {c},
+                target_cell,
+                H_max,
+                return_counts=False,
+                leakage_method=leakage_method,
+            )
+            delta_L[c] = float(L_empty) - float(L_c)
+        ordering = sorted(Z, key=lambda c: delta_L[c], reverse=True)
 
-    delta_L: Dict[str, float] = {}
-    for c in Z:
-        L_c = chain_leakage(
-            {c},
-            target_cell,
-            H_max,
-            return_counts=False,
-            leakage_method=leakage_method,
-        )
-        delta_L[c] = float(L_empty) - float(L_c)
-
-    ordering = sorted(Z, key=lambda c: delta_L[c], reverse=True)
+    if ordering_method == "random":
+        import random
+        ordering = sorted(Z, key = lambda c: random.random(), reverse = True)
+    elif ordering_method == "zero":
+        ordering = list(Z)
 
     init_time = time.time() - init_start
 

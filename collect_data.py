@@ -294,7 +294,45 @@ def run_exp(out_csv, ds, epsilon, lam, L0):
 
             write_csv_row(f, row)
 
+def run_gum_ordering(out_csv, ds, epsilon, lam, L0, ordering_method):
 
+    file_exists = os.path.exists(out_csv) and os.path.getsize(out_csv) > 0
+
+    with open(out_csv, "a", newline="") as f:
+        if not file_exists:
+            write_csv_header(f)
+
+        attr = TARGET_ATTR[ds]
+
+        for _ in range(ITERS):
+            key = get_random_key(ds)
+            if key is None:
+                continue
+
+            raw = gum.gum(
+                dataset=ds,
+                target_cell=attr,
+                epsilon=float(epsilon),
+                lam=float(lam),
+                L0=float(L0),
+                ordering_method=ordering_method,
+            )
+
+            upd_mask = set(raw["mask"]) | {attr}
+            upd_t, _ = update_mask_to_null(ds, key, upd_mask)
+
+            row = standardize_row(
+                method=f"marginal_em_{ordering_method}",
+                dataset=ds,
+                attr=attr,
+                raw=raw,
+                update_time=upd_t,
+                epsilon_m=epsilon,
+                lambda_val=lam,
+                L0=L0,
+            )
+
+            write_csv_row(f, row)
 # ============================
 # DB COPY WRAPPER (SAFE)
 # ============================
@@ -376,8 +414,37 @@ def with_db_copies(fn: Callable[[], None], dataset: str) -> None:
 
 
 # ============================
-# MAIN LOOP (UNCHANGED)
+# MAIN LOOP
 # ============================
+def run_gum_score_ablation():
+    EM_VALUES = [0, 0.1, 0.5, 0.75, 1, 1.5, 2, 2.5, 5, 10]
+    L0_VALUES = [0.025, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    LAMBDA = 1000
+
+    for ordering_method in ("random", "zero"):
+        ORD_DIR = os.path.join("data", "release_data", "gum_score_ablation", ordering_method)
+        os.makedirs(ORD_DIR, exist_ok=True)
+
+        for epsilon_m in EM_VALUES:
+            for L0 in L0_VALUES:
+                for dataset in DATASETS:
+
+                    dataset_dir = os.path.join(ORD_DIR, dataset)
+                    os.makedirs(dataset_dir, exist_ok=True)
+
+                    file_path = os.path.join(dataset_dir, "full_data.csv")
+
+                    def run_once(om=ordering_method, fp=file_path, ds=dataset):
+                        run_gum_ordering(
+                            out_csv=fp,
+                            ds=ds,
+                            epsilon=epsilon_m,
+                            L0=L0,
+                            lam=LAMBDA,
+                            ordering_method=om,
+                        )
+
+                    with_db_copies(run_once, dataset=dataset)
 
 def run_all_experiments():
     EM_VALUES = [0, 0.1, 0.5, 0.75, 1, 1.5, 2, 2.5, 5, 10]
@@ -451,4 +518,5 @@ def run_all_experiments():
         with_db_copies(run_once, dataset=dataset)
 
 if __name__ == "__main__":
-    run_all_experiments()
+    #run_all_experiments()
+    run_gum_score_ablation()
