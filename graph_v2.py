@@ -36,6 +36,10 @@ SPLIT_ADJUST = dict(wspace=0.30, left=0.07, right=0.97, top=0.82, bottom=0.15)
 # text.usetex passes every string to your local LaTeX installation, enabling
 # \textsc{}, \textbf{}, \emph{}, \mathbb{}, etc.
 # Requires: latex, dvipng (or dvisvgm), ghostscript on PATH.
+PANEL_COLOR = "#E8E8E8"   # grey shade
+PANEL_ALPHA = 0.55        # 0 = invisible, 1 = fully opaque
+PANEL_PAD   = 0.012       # breathing room around each axis pair
+
 plt.rcParams.update({
     "text.usetex":           True,
     "font.family":           "serif",
@@ -43,6 +47,7 @@ plt.rcParams.update({
         r"\usepackage{amsmath}"
         r"\usepackage{amssymb}"
         r"\usepackage{bm}"
+        r"\usepackage{graphicx}"
     ),
     "font.size":             FS,
     "axes.labelsize":        FS,
@@ -57,6 +62,7 @@ plt.rcParams.update({
     "axes.grid":             True,
     "grid.alpha":            0.3,
 })
+
 
 # ── Dataset / method constants ────────────────────────────────────────────────
 DATASETS_5 = ["airport", "hospital", "adult", "flight", "tax"]
@@ -210,7 +216,7 @@ def plot_heatmap_3(df: pd.DataFrame):
     ordered = [(ds, "Exp") for ds in datasets] + [(ds, "Gum") for ds in datasets]
     for i, (ds, mech) in enumerate(ordered):
         ax = axes[i]
-        ax.set_title(rf"$\mathbf{{{ds.capitalize()}}}$ ({mech})", pad=8, fontsize=FS)
+        ax.set_title(rf"{ds.capitalize()} ($\mathbf{{{mech}}}$)", pad=8, fontsize=FS)
         sub   = agg[(agg.dataset == ds) & (agg.mechanism == mech)]
         pivot = sub.pivot_table(index="L0", columns="epsilon_m",
                                 values="improvement").reindex(index=L0_plot, columns=eps_vals)
@@ -220,7 +226,7 @@ def plot_heatmap_3(df: pd.DataFrame):
         ax.set_yticks(range(len(L0_plot)))
         ax.set_yticklabels(L0_plot)
         if i == 0:
-            ax.set_ylabel(r"Re-inference Leakage Threshold $L_0$", fontsize=FS + 3)
+            ax.set_ylabel(r"Re-inference Leakage Threshold $L_0$", fontsize=FS + 5)
         for tau in TAU_CONTOURS:
             x_coords, y_coords = [], []
             for ei, em in enumerate(eps_vals):
@@ -247,11 +253,278 @@ def plot_heatmap_3(df: pd.DataFrame):
                bbox_to_anchor=(0.7, 0.985), ncol=len(TAU_CONTOURS),
                frameon=True, fontsize=FS + 3, columnspacing=0.8,
                handlelength=1.8, handletextpad=0.4, borderpad=0.3)
-    fig.supxlabel(r"Masking-Privacy Budget $\varepsilon_m$", y=-0.04, fontsize=FS + 3)
+    fig.supxlabel(r"Masking-Privacy Budget $\varepsilon_m$", y=-0.04, fontsize=FS + 5)
     plt.subplots_adjust(top=0.75, bottom=0.18)
     return fig
 
+def plot_heatmap_3_with_panels(df):
+    """Heatmap 3 with per-dataset coloured cabinet panels.
 
+    Identical content to plot_heatmap_3. Changes:
+      - Y-axis tick labels suppressed on cols 1-5 (ticks kept so imshow
+        cell lines are preserved); only col 0 shows labels and ylabel.
+      - A FancyBboxPatch panel in each dataset's colour sits behind every
+        column (Exp col and Gum col share the same dataset colour).
+      - Panel drawn after fig.canvas.draw() so positions are finalised.
+    """
+    PANEL_COLORS = [
+        "#E1EBF8",  # col 0 — Airport  (rowA: 225,235,248)
+        "#E4F3E4",  # col 1 — Hospital (rowB: 228,243,228)
+        "#EBE1F5",  # col 2 — Flight   (rowD: 235,225,245)
+        "#E1EBF8",  # col 3 — Airport
+        "#E4F3E4",  # col 4 — Hospital
+        "#EBE1F5",  # col 5 — Flight
+    ]
+    PANEL_ALPHA       = 0.75
+    PANEL_PAD_X       = 0.0025   # thin horizontal gap between panels
+    PANEL_PAD_Y       = 0.11   # extra room above title / below x-ticks
+    PANEL_PAD_X_LEFT0 = 0.022   # col 0 extra left margin to cover y-tick numbers
+
+    datasets = DATASETS_3
+    eps_vals = sorted(df["epsilon_m"].unique())
+    L0_vals  = sorted(df["L0"].unique())
+    L0_plot  = L0_vals[:-1]
+    df = df.copy()
+    df["improvement"] = 100 * (df["min_mask"] - df["mask_size"]) / df["min_mask"]
+    agg = (df.groupby(["dataset", "mechanism", "epsilon_m", "L0"])["improvement"]
+             .mean().reset_index())
+
+    fig = plt.figure(figsize=(19.3, 3.5))
+    gs  = GridSpec(1, 6, wspace=0.25)
+    axes = [fig.add_subplot(gs[0, i]) for i in range(6)]
+    norm    = Normalize(vmin=0, vmax=75)
+    ordered = [(ds, "Exp") for ds in datasets] + [(ds, "Gum") for ds in datasets]
+
+    for i, (ds, mech) in enumerate(ordered):
+        ax = axes[i]
+        ax.set_title(
+            rf"{ds.capitalize()} ($\textsc{{{mech}}}$)",
+            pad = 6, fontsize = FS+4
+        )
+
+        sub   = agg[(agg.dataset == ds) & (agg.mechanism == mech)]
+        pivot = sub.pivot_table(index="L0", columns="epsilon_m",
+                                values="improvement").reindex(
+                                    index=L0_plot, columns=eps_vals)
+        ax.imshow(pivot.values, cmap=PASTEL_CMAP, norm=norm,
+                  origin="lower", aspect="auto")
+
+        ax.set_xticks(range(len(eps_vals)))
+        ax.set_xticklabels(eps_vals, rotation=45)
+
+        # Keep yticks on every axis so imshow cell lines are preserved;
+        # only suppress the tick *labels* and ylabel on cols 1-5.
+        ax.set_yticks(range(len(L0_plot)))
+        if i == 0:
+            ax.set_yticklabels(L0_plot)
+            ax.set_ylabel(r"Re-inference Leakage Threshold" + "\n" + r"$L_0$",
+                          fontsize = FS + 4)
+        else:
+            ax.set_yticklabels([])   # no numbers, but ticks/lines stay
+            ax.set_ylabel(None)
+
+        for tau in TAU_CONTOURS:
+            x_coords, y_coords = [], []
+            for ei, em in enumerate(eps_vals):
+                l0 = tau / (np.exp(em) * (1 - tau) + tau)
+                if L0_plot[0] <= l0 <= L0_plot[-1]:
+                    yp = np.interp(l0, L0_plot, np.arange(len(L0_plot)))
+                    x_coords.append(ei); y_coords.append(yp)
+            if len(x_coords) >= 2:
+                ax.plot(x_coords, y_coords, linestyle="--", linewidth=2.5,
+                        color=TAU_COLORS[tau], zorder=5, clip_on=False)
+
+    sm = ScalarMappable(norm=norm, cmap=PASTEL_CMAP); sm.set_array([])
+    cax = fig.add_axes([0.26, 0.915, 0.28, 0.028])
+    cb  = plt.colorbar(sm, cax=cax, orientation="horizontal")
+    cb.ax.tick_params(labelsize=FS - 1)
+    cb.set_label("")
+    cax.text(-0.025, 0.5, r"Mask-Size Reduction M.R. (\%)",
+             transform=cax.transAxes, va="center", ha="right", fontsize=FS + 3)
+
+    tau_handles = [
+        Line2D([0], [0], color=TAU_COLORS[t], linestyle="--",
+               linewidth=2.0, label=rf"$\tau$={t}")
+        for t in TAU_CONTOURS
+    ]
+    fig.legend(handles=tau_handles, loc="upper center",
+               bbox_to_anchor=(0.7, 0.985), ncol=len(TAU_CONTOURS),
+               frameon=True, fontsize=FS + 3, columnspacing=0.8,
+               handlelength=1.8, handletextpad=0.4, borderpad=0.3)
+
+    fig.supxlabel(r"Mask-Patten Privacy Budget $\varepsilon_m$", y=-0.04, fontsize=FS + 4)
+    plt.subplots_adjust(top=0.75, bottom=0.18)
+
+    # ── Cabinet panels ────────────────────────────────────────────────────────
+    fig.canvas.draw()
+
+    for col, ax in enumerate(axes):
+        bb = ax.get_position()
+        pad_left = PANEL_PAD_X_LEFT0 if col == 0 else PANEL_PAD_X
+
+        x0 = bb.x0 - pad_left
+        y0 = bb.y0 - PANEL_PAD_Y - 0.03
+        x1 = bb.x1 + PANEL_PAD_X
+        y1 = bb.y1 + PANEL_PAD_Y -0.03
+
+        rect = matplotlib.patches.FancyBboxPatch(
+            (x0, y0), x1 - x0, y1 - y0,
+            boxstyle="round,pad=0.005",
+            linewidth=0.8,
+            edgecolor="#BBBBBB",
+            facecolor=PANEL_COLORS[col],
+            alpha=PANEL_ALPHA,
+            transform=fig.transFigure,
+            zorder=0,
+            clip_on=False,
+        )
+        fig.add_artist(rect)
+
+    return fig
+
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#  MOCK DATA for the demo render
+# ════════════════════════════════════════════════════════════════════════════
+
+rng = np.random.default_rng(42)
+eps_vals_demo = [0.1, 0.5, 1.0, 2.0, 5.0]
+L0_vals_demo  = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+
+rows = []
+for ds in DATASETS_3:
+    for mech in ["Exp", "Gum"]:
+        for em in eps_vals_demo:
+            for l0 in L0_vals_demo:
+                imp = rng.uniform(0, 75)
+                rows.append({"dataset": ds, "mechanism": mech,
+                             "epsilon_m": em, "L0": l0,
+                             "mask_size": MIN_MASK[ds] * (1 - imp / 100),
+                             "min_mask": MIN_MASK[ds],
+                             "improvement": imp})
+
+def plot_pareto_3_datasets(df: pd.DataFrame) -> plt.Figure:
+    """Pareto frontier for airport / hospital / flight only.
+    Identical to plot_pareto in every way except:
+      - Tax and Adult are removed.
+      - Figure width is scaled from 16.5 (5 datasets) → 9.9 (3 datasets).
+      - Subplots stretched to match legend width.
+      - Y-ticks at 0, 20, 40, 60, 80, 100 with headroom above.
+      - Per-dataset cabinet panels matching the other figures.
+      - Y-axis tick labels only on leftmost panel.
+      - Nothing else is modified.
+    """
+    DATASETS_3_PARETO = ["airport", "hospital", "flight"]
+    EM_VALS   = [0.1, 1.0]
+    EPS_COLOR = {1.0: "#d62728", 0.1: "#1f77b4"}
+    TARGET_ONLY_LEAK = {
+        "airport":  0.49830908053361767,
+        "hospital": 0.6623992294064142,
+        "adult":    0.49122554744404323,
+        "flight":   0.9826408586840785,
+        "tax":      0.5548418449270073,
+    }
+    PANEL_COLORS = {
+        "airport":  "#E1EBF8",
+        "hospital": "#E4F3E4",
+        "flight":   "#EBE1F5",
+    }
+    PANEL_ALPHA       = 0.75
+    PANEL_PAD_X       = 0.015
+    PANEL_PAD_Y       = 0.09
+    PANEL_PAD_X_LEFT0 = 0.036   # wider — covers y-tick numbers & ylabel
+    PANEL_PAD_X_REST  = 0.015   # same as other panels
+
+    agg = (
+        df[df["epsilon_m"].isin(EM_VALS)]
+        .groupby(["dataset", "mechanism", "epsilon_m", "L0"])
+        .agg(mean_mask=("mask_size", "mean"), mean_leak=("leakage", "mean"))
+        .reset_index()
+    )
+    fig, axes = plt.subplots(1, 3, figsize=(9.9, 3))
+
+    for col, ds in enumerate(DATASETS_3_PARETO):
+        ax       = axes[col]
+        baseline = MIN_MASK[ds]
+        ax.tick_params(axis="y", left=True, labelleft=(col == 0))
+        ax.set_title(rf"{ds.capitalize()}",
+                     pad=5, fontsize=FS + 8)
+        for mech in ["Exp", "Gum"]:
+            for em in EM_VALS:
+                sub = agg[(agg.dataset == ds) & (agg.mechanism == mech) &
+                          (agg.epsilon_m == em)].sort_values("L0")
+                if sub.empty:
+                    continue
+                mask_pct     = 100 * sub["mean_mask"] / baseline
+                marker_style = "o" if em == 1.0 else "x"
+                marker_face  = "none" if em == 1.0 else None
+                line_style   = "-" if mech == "Exp" else ":"
+                ax.plot(sub["mean_leak"], mask_pct,
+                        marker=marker_style, linestyle=line_style,
+                        color=EPS_COLOR[em], markerfacecolor=marker_face,
+                        markeredgewidth=1.8, markersize=6, linewidth=1.8,
+                        label=rf"$\textsc{{{mech}}}$, $\varepsilon={em}$")
+        ax.scatter(0, 100, marker="*", s=260, facecolor="black", edgecolor="black",
+                   linewidth=1.2, zorder=7,
+                   label=r"$M_{\mathrm{MIN}}\,(M_{\mathrm{det}})$" if col == 0 else None)
+        ax.scatter(TARGET_ONLY_LEAK[ds], 0, marker="D", s=120,
+                   facecolor="black", edgecolor="black", zorder=6,
+                   label=r"$M = \emptyset$" if col == 0 else None)
+        max_leak    = max(agg[agg.dataset == ds]["mean_leak"].max(), TARGET_ONLY_LEAK[ds])
+        rounded_max = np.ceil(max_leak / 0.2) * 0.2
+        ax.set_xlim(-0.03, rounded_max + 0.04)
+        ax.set_xticks(np.arange(0, rounded_max + 0.001, 0.2))
+        ax.tick_params(axis="x", labelsize=FS + 2)
+        ax.tick_params(axis="y", labelsize=FS + 2)
+        ax.set_ylim(-8, 124)
+        ax.set_yticks([0, 20, 40, 60, 80, 100])
+        if col == 0:
+            ax.set_ylabel(r"Relative Mask Size" + "\n" + r"(\% of $|M_{\text{det}}|$)", fontsize=FS + 10)
+        else:
+            ax.set_ylabel(None)
+
+    handles, labels = axes[0].get_legend_handles_labels()
+    leg = fig.legend(handles, labels, loc="upper center", frameon=True,
+                     bbox_to_anchor=(0.5, 1.12), ncol=6, fontsize=FS + 2)
+
+    # ── Stretch subplots to match legend width ────────────────────────────────
+    fig.canvas.draw()
+    renderer  = fig.canvas.get_renderer()
+    fig_width = fig.get_window_extent(renderer).width
+    leg_bb    = leg.get_window_extent(renderer)
+    left_frac  = leg_bb.x0 / fig_width
+    right_frac = leg_bb.x1 / fig_width
+    fig.subplots_adjust(left=left_frac, right=right_frac, top=0.85, bottom=0.2)
+
+    fig.supxlabel(r"Expected Re-inference Leakage $\mathbb{E}[\mathcal{L}(M)]$",
+                  y=-0.06, fontsize=FS + 10)
+
+    # ── Cabinet panels ────────────────────────────────────────────────────────
+    fig.canvas.draw()
+    for col, (ax, ds) in enumerate(zip(axes, DATASETS_3_PARETO)):
+        bb       = ax.get_position()
+        pad_left = PANEL_PAD_X_LEFT0 if col == 0 else PANEL_PAD_X_REST
+
+        x0 = bb.x0 - pad_left
+        y0 = bb.y0 - PANEL_PAD_Y
+        x1 = bb.x1 + PANEL_PAD_X
+        y1 = bb.y1 + PANEL_PAD_Y
+
+        rect = matplotlib.patches.FancyBboxPatch(
+            (x0, y0), x1 - x0, y1 - y0,
+            boxstyle="round,pad=0.005",
+            linewidth=0.8,
+            edgecolor="#BBBBBB",
+            facecolor=PANEL_COLORS[ds],
+            alpha=PANEL_ALPHA,
+            transform=fig.transFigure,
+            zorder=0,
+            clip_on=False,
+        )
+        fig.add_artist(rect)
+
+    return fig
 def plot_heatmap_5(df: pd.DataFrame):
     df = df.copy()
     df["improvement"] = 100 * (df["min_mask"] - df["mask_size"]) / df["min_mask"]
@@ -343,6 +616,203 @@ def plot_mask_curves_3(df: pd.DataFrame):
     fig.supxlabel(r"Re-inference Leakage Threshold $L_0$", y=-0.04,
                   fontsize=SPLIT_SUP_FS)
     plt.subplots_adjust(top=0.78, bottom=0.18, wspace=0.28)
+    return fig
+
+
+"""
+Drop-in addition to the existing plotting script.
+Paste this function anywhere after the existing imports and constants.
+Call it the same way you call plot_mask_curves_3 / plot_leakage_curves_3.
+
+Produces a 2-row × 6-col figure:
+  Row 0  — mask-size improvement   (identical to plot_mask_curves_3 rows)
+  Row 1  — achieved leakage        (identical to plot_leakage_curves_3 rows)
+
+A light-grey shaded rectangle is drawn behind every vertical pair
+(one rectangle per column, spanning both rows) to give the
+"inner-cabinet" grouped appearance.
+
+No existing function or constant is touched.
+"""
+
+
+"""
+Drop-in addition to the existing plotting script.
+Paste this function anywhere after the existing imports and constants.
+Call it the same way you call plot_mask_curves_3 / plot_leakage_curves_3.
+
+Produces a 2-row × 6-col figure:
+  Row 0  — mask-size improvement   (identical to plot_mask_curves_3 rows)
+  Row 1  — achieved leakage        (identical to plot_leakage_curves_3 rows)
+
+A light-grey shaded rectangle is drawn behind every vertical pair
+(one rectangle per column, spanning both rows) to give the
+"inner-cabinet" grouped appearance.
+
+No existing function or constant is touched.
+"""
+
+
+def plot_combined_3_with_panels(df: pd.DataFrame) -> plt.Figure:
+    """Combined 2-row × 6-col figure for the 3-dataset results.
+
+    Row 0: Mask-size improvement (replicates plot_mask_curves_3 content).
+    Row 1: Achieved re-inference leakage (replicates plot_leakage_curves_3 content).
+
+    A single light-grey rectangle spans both rows for each of the six
+    column pairs, creating the "cabinet panel" grouping effect.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Output of load_curves_data(DATASETS_3).  Must contain the columns
+        produced by that loader: dataset, method, epsilon_m, L0,
+        improvement, ci_improvement, mean_leakage, ci_leakage.
+    """
+    # Per-dataset panel colours (RGB from LaTeX definitions)
+    # Order matches `ordered`: [airport, hospital, flight, airport, hospital, flight]
+    PANEL_COLORS = [
+        "#E1EBF8",  # col 0 — Airport  (rowA: 225,235,248)
+        "#E4F3E4",  # col 1 — Hospital (rowB: 228,243,228)
+        "#EBE1F5",  # col 2 — Flight   (rowD: 235,225,245)
+        "#E1EBF8",  # col 3 — Airport
+        "#E4F3E4",  # col 4 — Hospital
+        "#EBE1F5",  # col 5 — Flight
+    ]
+    PANEL_ALPHA = 0.75        # translucency — adjust freely without touching other code
+    PANEL_PAD_X = 0.006       # horizontal margin — thin so columns have clear air between them
+    PANEL_PAD_Y = 0.035       # vertical margin — extra room above title and below x-ticks
+
+    ordered = [(ds, "exp") for ds in DATASETS_3] + [(ds, "gum") for ds in DATASETS_3]
+
+    fig, axes = plt.subplots(
+        2, 6,
+        figsize=(19.8, 7.0),   # same natural size as the two single-row originals stacked
+        sharey="row",
+        sharex=False,
+    )
+
+    # ── Shared subplots_adjust ───────────────────────────────────────────────
+    plt.subplots_adjust(
+        top=0.87, bottom=0.10,
+        left=0.06, right=0.98,
+        wspace=0.30, hspace=0.48,
+    )
+
+    # ── Row 0: mask-size improvement ─────────────────────────────────────────
+    for i, (dataset, mech) in enumerate(ordered):
+        ax     = axes[0, i]
+        subset = df[(df["dataset"] == dataset) & (df["method"] == mech)]
+
+        for eps in sorted(subset["epsilon_m"].unique()):
+            curve = subset[subset["epsilon_m"] == eps].sort_values("L0")
+            ax.plot(curve["L0"], curve["improvement"],
+                    marker="o", label=rf"$\varepsilon_m = {eps}$")
+            ax.fill_between(
+                curve["L0"],
+                curve["improvement"] - curve["ci_improvement"],
+                curve["improvement"] + curve["ci_improvement"],
+                alpha=0.18,
+            )
+
+        mech_label = "Gum" if mech == "gum" else mech.capitalize()
+        ax.set_title(
+            rf"{dataset.capitalize()} ($\textsc{{{mech_label}}}$)",
+            pad = 5, fontsize = FS + 4
+        )
+
+        ax.tick_params(axis="both", labelsize=SPLIT_TICK_FS)
+        ax.set_xticks([0, 0.2, 0.4, 0.6, 0.8, 1])
+        ax.set_xlim(0.0, 0.9)
+        ax.set_ylim(0, 100)
+        ax.set_yticks([0, 25, 50, 75, 100])
+        if i == 0:
+            ax.set_ylabel(r"Mask-Size Reduction" + "\n" + r"M.R. (\%)", fontsize=18)
+
+    # ── Row 1: achieved leakage ───────────────────────────────────────────────
+    for i, (dataset, mech) in enumerate(ordered):
+        ax     = axes[1, i]
+        subset = df[(df["dataset"] == dataset) & (df["method"] == mech)]
+
+        for eps in sorted(subset["epsilon_m"].unique()):
+            curve     = subset[subset["epsilon_m"] == eps].sort_values("L0")
+            mean_leak = 100 * curve["mean_leakage"]
+            lower     = 100 * (curve["mean_leakage"] - curve["ci_leakage"])
+            upper     = 100 * (curve["mean_leakage"] + curve["ci_leakage"])
+            ax.plot(curve["L0"], mean_leak, marker="o",
+                    label=rf"$\varepsilon_m = {eps}$")
+            ax.fill_between(curve["L0"], lower, upper, alpha=0.18)
+
+        ax.plot([0, 1], [0, 100], linestyle="--", linewidth=1)
+        mech_label = "Gum" if mech == "gum" else mech.capitalize()
+        ax.tick_params(axis="both", labelsize=SPLIT_TICK_FS)
+        ax.set_xticks([0, 0.2, 0.4, 0.6, 0.8, 1])
+        ax.set_xlim(0.0, 0.9)
+        ax.set_ylim(0, 80)
+        ax.set_yticks([0, 20, 40, 60, 80])
+        if i == 0:
+            ax.set_ylabel(r"Achieved Re-inference Leakage" + "\n" + r" $\mathcal{L}(M)$ (\%)", fontsize = 18, labelpad = 10)
+
+    # ── Shared legend (above the figure, mirrors the single-row versions) ────
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+    fig.legend(
+        handles, labels,
+        loc="upper center",
+        ncol=len(handles),
+        frameon=True,
+        bbox_to_anchor=(0.5, 1.01),
+        fontsize=SPLIT_LEG_FS,
+        columnspacing=0.8,
+        handlelength=1.8,
+        handletextpad=0.4,
+    )
+
+    # ── Shared x-axis label ───────────────────────────────────────────────────
+    fig.supxlabel(
+        r"Re-inference Leakage Threshold $L_0$",
+        y=0.01,
+        fontsize=SPLIT_SUP_FS + 4,
+    )
+
+    # ── Draw the cabinet-panel shading behind every column pair ──────────────
+    # We must call this AFTER subplots_adjust so that axis positions are final.
+    fig.canvas.draw()   # force layout computation
+
+    # Extra left-side pad for col 0 only — covers y-tick numbers & ylabel
+    PANEL_PAD_X_LEFT_COL0 = 0.016
+
+    for col in range(6):
+        ax_top = axes[0, col]
+        ax_bot = axes[1, col]
+
+        # Bounding boxes in figure-fraction coordinates
+        bb_top = ax_top.get_position()   # Bbox(x0, y0, x1, y1)
+        bb_bot = ax_bot.get_position()
+
+        # Left edge: col 0 gets extra room to cover y-tick numbers & ylabel
+        pad_left = PANEL_PAD_X_LEFT_COL0 if col == 0 else PANEL_PAD_X
+
+        # Rectangle that encloses both axes in the same column
+        x0 = bb_top.x0 - pad_left
+        y0 = bb_bot.y0 - PANEL_PAD_Y
+        x1 = bb_top.x1 + PANEL_PAD_X
+        y1 = bb_top.y1 + PANEL_PAD_Y
+
+        rect = plt.matplotlib.patches.FancyBboxPatch(
+            (x0, y0),
+            x1 - x0,
+            y1 - y0,
+            boxstyle="round,pad=0.005",
+            linewidth=0.8,
+            edgecolor="#BBBBBB",
+            facecolor=PANEL_COLORS[col],
+            alpha=PANEL_ALPHA,
+            transform=fig.transFigure,
+            zorder=0,           # behind everything
+            clip_on=False,
+        )
+        fig.add_artist(rect)
+
     return fig
 
 
@@ -478,7 +948,7 @@ def plot_pareto_3(df: pd.DataFrame):
                         marker=marker_style, linestyle=line_style,
                         color=EPS_COLOR[em], markerfacecolor=marker_face,
                         markeredgewidth=1.8, markersize=6, linewidth=1.8,
-                        label=rf"{mech}, $\varepsilon={em}$")
+                        label=rf"$\textbf{{{mech[0]}{{\footnotesize {mech[1:].upper()}}}}}$, $\varepsilon={em}$")
         ax.scatter(0, 100, marker="*", s=260, facecolor="black", edgecolor="black",
                    linewidth=1.2, zorder=7,
                    label=r"$M_{\mathrm{MIN}}\,(M_{\mathrm{det}})$" if col == 0 else None)
@@ -491,12 +961,12 @@ def plot_pareto_3(df: pd.DataFrame):
         ax.set_xticks(np.arange(0, rounded_max + 0.001, 0.2))
         ax.set_ylim(-8, 124)
         if col == 0:
-            ax.set_ylabel(r"Mask Size (\% of Baseline)", fontsize=FS + 3)
+            ax.set_ylabel(r"Mask Size (\% of Baseline)", fontsize=FS + 10)
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="upper center", frameon=True,
                bbox_to_anchor=(0.5, 1.12), ncol=6)
     fig.supxlabel(r"Expected Leakage ($\mathbb{E}[\mathcal{L}]$)",
-                  y=-0.06, fontsize=FS + 2)
+                  y=-0.06, fontsize=FS + 10)
     plt.subplots_adjust(wspace=0.25)
     return fig
 
@@ -628,7 +1098,7 @@ def build_runtime(df: pd.DataFrame):
         else:
             ax2.set_ylabel(None)
             ax2.spines["right"].set_visible(False)
-        ax.set_title(dataset, pad=10, fontweight="bold")
+        ax.set_title(dataset, pad=10)
     phase_handles = [
         Patch(facecolor=PHASE_COLORS[p], hatch=PHASE_HATCH[p],
               edgecolor="black", linewidth=0.3, label=p)
@@ -1181,36 +1651,51 @@ df_curves_3 = load_curves_data(DATASETS_3)
 df_curves_5 = load_curves_data(DATASETS_5)
 df_main     = load_main_data()
 
-fig = plot_pareto_3(df_heat)
-fig.savefig(FIG_DIR / "pareto_frontier_3.pdf", bbox_inches="tight")
+fig = plot_combined_3_with_panels(df_curves_3)
+fig.savefig(FIG_DIR / "combined_3_with_panels.pdf", bbox_inches="tight")
 plt.close(fig)
-
-df_abl = load_ablation_data()
-
-for variant in ["random", "zero"]:
-    fig = plot_mask_split_ablation_single(df_abl, variant)
-    fig.savefig(FIG_DIR / f"mask_split_ablation_{variant}.pdf", bbox_inches="tight")
-    plt.close(fig)
-
-    fig = plot_leakage_split_ablation_single(df_abl, variant)
-    fig.savefig(FIG_DIR / f"leakage_split_ablation_{variant}.pdf", bbox_inches="tight")
-    plt.close(fig)
-
-fig = plot_leakage_split_gum(df_curves_5, "gum")
-fig.savefig(FIG_DIR / "leakage_split_gum_appendix.pdf", bbox_inches="tight")
-plt.close(fig)
-
-# ── Combined 3-row figures (Gum / Random / Zero in one figure) ───────────────
-fig = plot_mask_combined(df_curves_5, df_abl)
-fig.savefig(FIG_DIR / "mask_combined.pdf", bbox_inches="tight")
-plt.close(fig)
-
-fig = plot_leakage_combined(df_curves_5, df_abl)
-fig.savefig(FIG_DIR / "leakage_combined.pdf", bbox_inches="tight")
-plt.close(fig)
-
-fig = plot_mask_vs_leakage_all_methods("all_masks_all_methods.csv")
-fig.savefig(FIG_DIR / "mask_vs_leakage_all_methods.pdf", bbox_inches="tight")
-plt.close(fig)
-
+# fig = plot_pareto_3(df_heat)
+# fig.savefig(FIG_DIR / "pareto_frontier_3.pdf", bbox_inches="tight")
+# plt.close(fig)
+#
+# df_abl = load_ablation_data()
+#
+# for variant in ["random", "zero"]:
+#     fig = plot_mask_split_ablation_single(df_abl, variant)
+#     fig.savefig(FIG_DIR / f"mask_split_ablation_{variant}.pdf", bbox_inches="tight")
+#     plt.close(fig)
+#
+#     fig = plot_leakage_split_ablation_single(df_abl, variant)
+#     fig.savefig(FIG_DIR / f"leakage_split_ablation_{variant}.pdf", bbox_inches="tight")
+#     plt.close(fig)
+#
+# fig = plot_leakage_split_gum(df_curves_5, "gum")
+# fig.savefig(FIG_DIR / "leakage_split_gum_appendix.pdf", bbox_inches="tight")
+# plt.close(fig)
+#
+# # ── Combined 3-row figures (Gum / Random / Zero in one figure) ───────────────
+# fig = plot_mask_combined(df_curves_5, df_abl)
+# fig.savefig(FIG_DIR / "mask_combined.pdf", bbox_inches="tight")
+# plt.close(fig)
+#
+# fig = plot_leakage_combined(df_curves_5, df_abl)
+# fig.savefig(FIG_DIR / "leakage_combined.pdf", bbox_inches="tight")
+# plt.close(fig)
+#
+# fig = plot_mask_vs_leakage_all_methods("all_masks_all_methods.csv")
+# fig.savefig(FIG_DIR / "mask_vs_leakage_all_methods.pdf", bbox_inches="tight")
+# plt.close(fig)
+#
+# fig = plot_combined_3_with_panels(df_curves_3)
+# fig.savefig(FIG_DIR / "combined_3_with_panels.pdf", bbox_inches="tight")
+# plt.close(fig)
+#
 graph_all_experiments()
+
+fig = plot_heatmap_3_with_panels(df_heat)
+fig.savefig(FIG_DIR / "heatmap_3_with_panels.pdf", bbox_inches="tight")
+plt.close(fig)
+
+fig = plot_pareto_3_datasets(df_heat)
+fig.savefig(FIG_DIR / "pareto_frontier_3_datasets.pdf", bbox_inches="tight")
+plt.close(fig)
