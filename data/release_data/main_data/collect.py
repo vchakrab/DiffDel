@@ -40,30 +40,42 @@ DATASETS = ["airport", "hospital", "adult", "flight", "tax"]
 # 3) Inferential Leakage:
 #       E[L] = mean(leakage)
 #
-# 4) Deletion Ratio:
+# 4) Leakage 95% CI:
+#       E[L] ± 1.96 * (std(leakage) / sqrt(n))
+#
+# 5) Deletion Ratio:
 #       E[ |M| / |I(c*) \ {c*}| ]
 #       = mean(mask_size / num_instantiated_cells)
 #
-# 5) Efficiency:
+# 6) Efficiency:
 #       η = E[ (1 - leakage) / (|M| + 1) ]
 #
-# 6) Time (ms):
+# 7) Time (ms):
 #       E[T] = mean(total_time) * 1000
 #
-# 7) Memory (bytes):
+# 8) Memory (bytes):
 #       E[mem] = mean(memory_overhead_bytes)
 # ------------------------------------------------------------
 
 
 def compute_metrics(df):
     mask_mean = df["mask_size"].mean()
+
     leakage_mean = df["leakage"].mean()
+    leakage_std = df["leakage"].std(ddof=1)
+    n = len(df)
+    leakage_ci_margin = 1.96 * (leakage_std / np.sqrt(n))
+
     deletion_ratio = (df["mask_size"] / df["num_instantiated_cells"]).mean()
     efficiency = ((1 - df["leakage"]) / (df["mask_size"] + 1)).mean()
     time_ms = df["total_time"].mean() * 1000
     memory = df["memory_overhead_bytes"].mean()
 
-    return mask_mean, leakage_mean, deletion_ratio, efficiency, time_ms, memory
+    return (
+        mask_mean,
+        leakage_mean, leakage_ci_margin,
+        deletion_ratio, efficiency, time_ms, memory
+    )
 
 
 def main():
@@ -76,7 +88,7 @@ def main():
         path = os.path.join(MAIN_DIR, "min", d, "full_data.csv")
         df = pd.read_csv(path)
 
-        m, l, dr, eta, t, mem = compute_metrics(df)
+        m, l, l_margin, dr, eta, t, mem = compute_metrics(df)
 
         min_masks[d] = m
 
@@ -86,6 +98,7 @@ def main():
             "avg_mask_size": m,
             "mask_improvement_percent": 0.0,
             "avg_leakage": l,
+            "leakage_ci_margin_95": l_margin,
             "avg_deletion_ratio": dr,
             "avg_efficiency": eta,
             "avg_time_ms": t,
@@ -98,7 +111,7 @@ def main():
             path = os.path.join(MAIN_DIR, method, d, "full_data.csv")
             df = pd.read_csv(path)
 
-            m, l, dr, eta, t, mem = compute_metrics(df)
+            m, l, l_margin, dr, eta, t, mem = compute_metrics(df)
 
             m_min = min_masks[d]
             improvement = 100.0 * (m_min - m) / m_min
@@ -109,6 +122,7 @@ def main():
                 "avg_mask_size": m,
                 "mask_improvement_percent": improvement,
                 "avg_leakage": l,
+                "leakage_ci_margin_95": l_margin,
                 "avg_deletion_ratio": dr,
                 "avg_efficiency": eta,
                 "avg_time_ms": t,
