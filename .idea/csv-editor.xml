@@ -45,6 +45,34 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/data/release_data 2/main_data/main_data_statistics.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/data/release_data 3/main_data/gumbel/adult/full_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/data/release_data 3/main_data/main_data_statistics.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/data/release_data 3/main_data/min/adult/full_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/data/release_data/exp/adult/full_data.csv">
           <value>
             <Attribute>
@@ -235,6 +263,83 @@
           </value>
         </entry>
         <entry key="/data/release_data/main_data/main_data_statistics.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/outputs_dc_weighting/outputs_dc_weighting/csv/adult_dc_weights_wpos_gamma0p25.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/outputs_dc_weighting/outputs_dc_weighting/csv/adult_dc_weights_wpos_gamma0p50.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/outputs_dc_weighting/outputs_dc_weighting/csv/airport_dc_weights_wpos_gamma0p25.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/outputs_dc_weighting/outputs_dc_weighting/csv/airport_dc_weights_wpos_gamma0p50.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/outputs_dc_weighting/outputs_dc_weighting/csv/flights_dc_weights_wpos_gamma0p25.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/outputs_dc_weighting/outputs_dc_weighting/csv/flights_dc_weights_wpos_gamma0p50.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/outputs_dc_weighting/outputs_dc_weighting/csv/hospital_dc_weights_wpos_gamma0p25.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/outputs_dc_weighting/outputs_dc_weighting/csv/hospital_dc_weights_wpos_gamma0p50.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/outputs_dc_weighting/outputs_dc_weighting/csv/tax_dc_weights_wpos_gamma0p25.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/outputs_dc_weighting/outputs_dc_weighting/csv/tax_dc_weights_wpos_gamma0p50.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/outputs_dc_weighting/tax.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

@@ -41,14 +41,17 @@ python insert_data_into_dataset.py
    ```bash
       python main.py
    ```
-  - **`data/min/`**  
+  - **`data/release_data/min/`**  
     Contains results produced by the baseline minimization mechanism (e.g., mask sizes, leakage values, runtime logs).
-  - **`data/exp/`**  
+  - **`data/release_data/exp/`**  
     Contains experiment outputs for the Exponential Mechanism variant.
-  - **`data/gum/`**  
+  - **`data/release_data/gum/`**  
     Contains experiment outputs for the Gumbel-based mechanism.
   - **`fig`**  
     Stores all generated plots and final figures used in evaluation (e.g., heatmaps, Pareto frontiers, runtime plots).
 
 ## Reproducibility Artifacts
-  - Data used to graph figures is contained within `data/release_data` and `fig/release_figures`
+  - Data used to graph figures is contained within `data/release_data` and the figures are available in `fig` 
+  - Figure 7 (Assigning weights to dependencies using confidence-bounded gain beyond a base rate) is provided in **`csv_files/compute_dc_weights.py`**
+  - The 
+  - 

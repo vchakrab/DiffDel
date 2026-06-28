@@ -77,7 +77,7 @@ def compute_metrics(df):
         deletion_ratio, efficiency, time_ms, memory
     )
 
-
+MIN_MASK = {"airport": 5, "hospital": 9, "adult": 9, "flight": 11, "tax": 3}
 def main():
     rows = []
 
@@ -113,7 +113,7 @@ def main():
 
             m, l, l_margin, dr, eta, t, mem = compute_metrics(df)
 
-            m_min = min_masks[d]
+            m_min = MIN_MASK[d]
             improvement = 100.0 * (m_min - m) / m_min
 
             rows.append({
