@@ -1,47 +1,33 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 import mysql.connector
 import csv
+from config import DB_CONFIG, PROJECT_ROOT
 
-#ALTER TABLE flight_data
-#ADD COLUMN id INT NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST
-
-# =====================
-# CONFIG
-# =====================
-DB_NAME = "flight"
+DB_NAME    = "flight"
 TABLE_NAME = "flight_data"
-CSV_PATH = "/csv_files/flights.csv"  # <-- replace with your CSV path
-USER = "root"
-PASSWORD = "my_password"  # <-- replace with your MySQL password
-HOST = "localhost"
-BATCH_SIZE = 1000  # number of rows per batch insert
+CSV_PATH   = PROJECT_ROOT / 'csv_files' / 'flights.csv'
+BATCH_SIZE = 1000
 
-# =====================
-# CONNECT TO MYSQL
-# =====================
-conn = mysql.connector.connect(
-    host=HOST,
-    user=USER,
-    password=PASSWORD
-)
-cursor = conn.cursor()
 
-# =====================
-# CREATE DATABASE
-# =====================
-cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
-cursor.execute(f"USE {DB_NAME}")
-print(f"✅ Database '{DB_NAME}' ready.")
+def main():
+    conn = mysql.connector.connect(
+        host=DB_CONFIG['host'],
+        user=DB_CONFIG['user'],
+        password=DB_CONFIG['password'],
+    )
+    cursor = conn.cursor()
 
-# =====================
-# DROP TABLE IF EXISTS
-# =====================
-cursor.execute(f"DROP TABLE IF EXISTS {TABLE_NAME}")
-print(f"✅ Table '{TABLE_NAME}' dropped (if it existed).")
+    cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
+    cursor.execute(f"USE {DB_NAME}")
+    print(f"✅ Database '{DB_NAME}' ready.")
 
-# =====================
-# CREATE TABLE
-# =====================
-create_table_query = f"""
+    cursor.execute(f"DROP TABLE IF EXISTS {TABLE_NAME}")
+    print(f"✅ Table '{TABLE_NAME}' dropped (if it existed).")
+
+    create_table_query = f"""
 CREATE TABLE {TABLE_NAME} (
     Year INT,
     Quarter INT,
@@ -65,14 +51,11 @@ CREATE TABLE {TABLE_NAME} (
     OriginWac INT
 );
 """
-cursor.execute(create_table_query)
-conn.commit()
-print(f"✅ Table '{TABLE_NAME}' created.")
+    cursor.execute(create_table_query)
+    conn.commit()
+    print(f"✅ Table '{TABLE_NAME}' created.")
 
-# =====================
-# INSERT QUERY
-# =====================
-insert_query = f"""
+    insert_query = f"""
 INSERT INTO {TABLE_NAME} (
     Year, Quarter, Month, DayofMonth, DayOfWeek, FlightDate, UniqueCarrier,
     AirlineID, Carrier, TailNum, FlightNum, OriginAirportID, OriginAirportSeqID,
@@ -81,46 +64,36 @@ INSERT INTO {TABLE_NAME} (
 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
 """
 
-# =====================
-# READ CSV AND INSERT
-# =====================
-rows = []
+    rows = []
+    with open(CSV_PATH, newline='', encoding='utf-8-sig') as csvfile:
+        reader = csv.reader(csvfile)
+        header = next(reader)
+        clean_header = [h.split()[0].strip() for h in header]
 
-with open(CSV_PATH, newline='', encoding='utf-8-sig') as csvfile:
-    reader = csv.reader(csvfile)
-    # Read header and clean it
-    header = next(reader)
-    clean_header = [h.split()[0].strip() for h in header]  # remove types and spaces
+        for row in reader:
+            if not row:
+                continue
+            row = [v.strip() if isinstance(v, str) else v for v in row]
+            values = []
+            for i, val in enumerate(row):
+                col_name = clean_header[i]
+                if col_name in ["Year", "Quarter", "Month", "DayofMonth", "DayOfWeek", "AirlineID", "FlightNum",
+                                "OriginAirportID", "OriginAirportSeqID", "OriginCityMarketID", "OriginStateFips", "OriginWac"]:
+                    values.append(int(val))
+                else:
+                    values.append(val)
+            rows.append(tuple(values))
 
-    for row in reader:
-        if not row:
-            continue
-        # Strip spaces from all values
-        row = [v.strip() if isinstance(v, str) else v for v in row]
-        values = []
-        for i, val in enumerate(row):
-            col_name = clean_header[i]
-            if col_name in ["Year","Quarter","Month","DayofMonth","DayOfWeek","AirlineID","FlightNum",
-                            "OriginAirportID","OriginAirportSeqID","OriginCityMarketID","OriginStateFips","OriginWac"]:
-                values.append(int(val))
-            elif col_name == "FlightDate":
-                values.append(val)  # MySQL DATE can take 'YYYY-MM-DD' string
-            else:
-                values.append(val)
-        rows.append(tuple(values))
+    for i in range(0, len(rows), BATCH_SIZE):
+        batch = rows[i:i + BATCH_SIZE]
+        cursor.executemany(insert_query, batch)
+        conn.commit()
+        print(f"✅ Inserted batch {i + 1} to {i + len(batch)}")
 
-# =====================
-# BATCH INSERT
-# =====================
-for i in range(0, len(rows), BATCH_SIZE):
-    batch = rows[i:i+BATCH_SIZE]
-    cursor.executemany(insert_query, batch)
-    conn.commit()
-    print(f"✅ Inserted batch {i+1} to {i+len(batch)}")
+    cursor.close()
+    conn.close()
+    print("✅ Done.")
 
-# =====================
-# CLEANUP
-# =====================
-cursor.close()
-conn.close()
-print("✅ Database initialization complete.")
+
+if __name__ == '__main__':
+    main()
