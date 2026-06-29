@@ -547,7 +547,6 @@ def build_main_data(
             os.makedirs(dst_dir, exist_ok=True)
 
             if not os.path.exists(src_csv):
-                print(f"[WARN] Missing source: {src_csv}")
                 continue
 
             with open(src_csv, "r", newline="") as src_f, \
@@ -569,8 +568,6 @@ def build_main_data(
                         writer.writerow(row)
                         written += 1
 
-                print(f"[{out_name}/{dataset}] wrote {written} rows "
-                      f"(ε={target_epsilon}, L0={target_L0})")
 
     # --- min (copy everything) ---
     for dataset in DATASETS:
@@ -581,14 +578,12 @@ def build_main_data(
         os.makedirs(dst_dir, exist_ok=True)
 
         if not os.path.exists(src_csv):
-            print(f"[WARN] Missing source: {src_csv}")
             continue
 
         shutil.copy2(src_csv, dst_csv)
 
         with open(src_csv) as f:
             row_count = sum(1 for _ in f) - 1  # subtract header
-        print(f"[min/{dataset}] copied {row_count} rows")
 
 if __name__ == "__main__":
     #run_all_experiments()

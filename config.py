@@ -263,4 +263,3 @@ __all__ = [
 ]
 
 # Debug print
-print("[OK] Standalone config.py loaded successfully")

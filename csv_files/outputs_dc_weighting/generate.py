@@ -100,10 +100,8 @@ def process_dataset(dataset, base_dir):
     output_path = base_dir / output_name
 
     if not csv_path.exists():
-        print(f"⚠ Skipping {dataset}: CSV not found.")
         return
 
-    print(f"\nProcessing {dataset}...")
 
     df = pd.read_csv(csv_path)
     dc_col, weight_col = detect_columns(df)
@@ -111,7 +109,6 @@ def process_dataset(dataset, base_dir):
     df[weight_col] = pd.to_numeric(df[weight_col], errors="coerce")
     df = df[df[weight_col] > 0].reset_index(drop=True)
 
-    print(f"  Keeping {len(df)} DCs with weight > 0")
 
     denial_constraints = []
     weights = []
@@ -135,17 +132,14 @@ def process_dataset(dataset, base_dir):
             f.write(f"    {w},\n")
         f.write("]\n")
 
-    print(f"  ✔ Wrote {output_name}")
 
 
 def main():
     base_dir = Path(__file__).resolve().parent
-    print("Generating DC weight Python files...")
 
     for dataset in DATASETS:
         process_dataset(dataset, base_dir)
 
-    print("\nDone.")
 
 
 if __name__ == "__main__":

@@ -188,9 +188,6 @@ def compute_utility(leakage: float, mask_size: int, zone_size: int) -> float:
 
 def main() -> None:
     out_path = os.path.abspath(OUTPUT_CSV)
-    print(f"[INFO] Output CSV: {out_path}")
-    print(f"[INFO] HYPERGRAPH_MODE={HYPERGRAPH_MODE}  TAU={TAU}")
-    print(f"[INFO] Methods: {LEAKAGE_METHODS}")
 
     fieldnames = [
         "dataset",
@@ -224,15 +221,12 @@ def main() -> None:
                 raise RuntimeError(f"Missing TARGET_ATTR for dataset '{ds}'.")
 
             target = TARGET_ATTR[ds]
-            print(f"\n[INFO] Dataset={ds}  Target={target}")
 
             hg = build_hypergraph(ds, target)
             zone = inference_zone(hg, target)
             zone_size = len(zone)
 
-            print(f"[INFO] |I(c*)| = {zone_size}")
             if zone_size < 63:
-                print(f"[INFO] total masks = {1 << zone_size:,}")
 
             ds_rows = 0
             t0 = time.time()
@@ -277,14 +271,10 @@ def main() -> None:
                 if PROGRESS_EVERY and (ds_rows % PROGRESS_EVERY == 0):
                     dt = time.time() - t0
                     rate = ds_rows / max(1e-9, dt)
-                    print(f"[PROGRESS] {ds}: {ds_rows:,} rows  ({rate:,.1f} rows/s)")
                     f.flush()
 
             dt = time.time() - t0
-            print(f"[DONE] {ds}: {ds_rows:,} rows in {dt:,.1f}s")
 
-    print(f"\n[ALL DONE] Total rows: {total_rows:,}")
-    print(f"[ALL DONE] CSV: {out_path}")
 
 
 if __name__ == "__main__":

@@ -294,7 +294,6 @@ def main():
         csv_full = os.path.join(SRC_DIR, csv_path)
         dc_full  = os.path.join(SRC_DIR, dc_path)
         if not os.path.exists(csv_full) or not os.path.exists(dc_full):
-            print(f"[skip] {name}: file(s) not found, skipping.")
             continue
 
         df = pd.read_csv(csv_full)
@@ -328,7 +327,6 @@ def main():
         active_datasets.append((name, csv_path, dc_path, fmt))
 
     if not active_datasets:
-        print("No datasets loaded — nothing to plot.")
         return
 
     summary_df = pd.DataFrame(summary_rows)

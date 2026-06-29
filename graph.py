@@ -12,7 +12,6 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
-print(DATA_DIR)
 
 # ── Base font size ────────────────────────────────────────────────────────────
 FS = 13
@@ -135,12 +134,6 @@ def load_curves_data(datasets) -> pd.DataFrame:
 
                 # ── debug print ──────────────────────────────────────────
                 if abs(L0 - 0.2) < 1e-9 and abs(eps - 0.1) < 1e-9:
-                    print(
-                        f"[{method:>3}] {dataset:<10} "
-                        f"eps={eps}  L0={L0}  "
-                        f"delmin={delmin}  mean_mask={mean_mask:.4f}  "
-                        f"improvement={100 * abs(delmin - mean_mask) / delmin:.2f}%"
-                    )
                 # ─────────────────────────────────────────────────────────
 
                 records.append({
@@ -2093,7 +2086,6 @@ def graph_all_experiments():
         fig.savefig(FIG_DIR / "fig20_budget_split_appendix.pdf", bbox_inches="tight")
         plt.close(fig)
 
-    print(f"\nAll figures saved to: {FIG_DIR.resolve()}")
 
 
 if __name__ == '__main__':

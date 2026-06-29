@@ -327,7 +327,6 @@ def ilp_approach(
             if os.path.exists(ilp_write_path):
                 ilp_file_bytes = int(os.path.getsize(ilp_write_path))
         except Exception as e:
-            print(f"[WARN] Failed to write ILP model to {ilp_write_path}: {e}")
             ilp_file_bytes = 0
 
     model.optimize()
@@ -386,7 +385,6 @@ def min(target: str, key: int, dataset: str, threshold: float):
     #     return 0, set(), 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0
 
     if config is None or mysql is None:
-        print("[WARN] Missing deps for baseline_deletion_3 (config/mysql).")
         return 0, set(), 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0
 
     # ============================================================
@@ -503,7 +501,6 @@ def min(target: str, key: int, dataset: str, threshold: float):
         memory_bytes = int(ilp_file_bytes)
 
     except Exception as e:
-        print(f"Error in Baseline 3: {e}")
         import traceback
         traceback.print_exc()
         return 0, set(), 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0
@@ -534,7 +531,4 @@ def min(target: str, key: int, dataset: str, threshold: float):
     }
 
 if __name__ == "__main__":
-    print(min("continent", 0, "airport", 0))
-    print(min("ProviderNumber", 0, "hospital", 0))
-    print(min("education", 0, "adult", 0))
 
