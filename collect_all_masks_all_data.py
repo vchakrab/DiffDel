@@ -41,9 +41,9 @@ LEAKAGE_METHODS = ["noisy_or", "greedy_disjoint", "max_leakage"]
 
 # Utility params
 LAM = 1000
-L0 = 0.1
+L0 = 0.2
 
-OUTPUT_CSV = "all_masks_all_methods.csv"
+OUTPUT_CSV = "data/all_masks_all_methods.csv"
 PROGRESS_EVERY = 10000
 
 # =============================================================================

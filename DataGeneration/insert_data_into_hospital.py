@@ -22,29 +22,32 @@ def main():
     cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
     cursor.execute(f"USE {DB_NAME}")
 
+    # Drop and recreate so the new nullable schema takes effect
+    cursor.execute(f"DROP TABLE IF EXISTS `{TABLE_NAME}`")
+
     create_table_query = f"""
-CREATE TABLE IF NOT EXISTS `{TABLE_NAME}` (
+CREATE TABLE `{TABLE_NAME}` (
   `id`               INT AUTO_INCREMENT PRIMARY KEY,
-  `ProviderNumber`   VARCHAR(20)  NOT NULL,
-  `HospitalName`     VARCHAR(255) NOT NULL,
-  `City`             VARCHAR(100) NOT NULL,
-  `State`            CHAR(2)      NOT NULL,
-  `ZIPCode`          VARCHAR(10)  NOT NULL,
-  `CountyName`       VARCHAR(100) NOT NULL,
-  `PhoneNumber`      VARCHAR(20)  NOT NULL,
-  `HospitalType`     VARCHAR(255) NOT NULL,
-  `HospitalOwner`    VARCHAR(255) NOT NULL,
-  `EmergencyService` VARCHAR(3)   NOT NULL,
-  `Condition`        VARCHAR(255) NOT NULL,
-  `MeasureCode`      VARCHAR(50)  NOT NULL,
-  `MeasureName`      TEXT         NOT NULL,
+  `ProviderNumber`   VARCHAR(20)  NULL,
+  `HospitalName`     VARCHAR(255) NULL,
+  `City`             VARCHAR(100) NULL,
+  `State`            CHAR(2)      NULL,
+  `ZIPCode`          VARCHAR(10)  NULL,
+  `CountyName`       VARCHAR(100) NULL,
+  `PhoneNumber`      VARCHAR(20)  NULL,
+  `HospitalType`     VARCHAR(255) NULL,
+  `HospitalOwner`    VARCHAR(255) NULL,
+  `EmergencyService` VARCHAR(3)   NULL,
+  `Condition`        VARCHAR(255) NULL,
+  `MeasureCode`      VARCHAR(50)  NULL,
+  `MeasureName`      TEXT         NULL,
   `Sample`           TEXT         NULL,
   `StateAvg`         VARCHAR(50)  NULL
 );
 """
     cursor.execute(create_table_query)
     conn.commit()
-    print(f"✅ Table '{TABLE_NAME}' created (if not already).")
+    print(f"✅ Table '{TABLE_NAME}' created fresh.")
 
     insert_query = f"""
 INSERT INTO {TABLE_NAME} (
@@ -57,20 +60,27 @@ INSERT INTO {TABLE_NAME} (
 
     with open(CSV_PATH, newline='', encoding='utf-8') as csvfile:
         reader = csv.reader(csvfile)
-        next(reader, None)
+        next(reader, None)  # skip header
         rows = []
+        skipped = 0
         for row in reader:
             if not row or len(row) < 15:
+                skipped += 1
+                continue
+            # Skip rows with no ProviderNumber (the only NOT NULL column)
+            if not row[0].strip():
+                skipped += 1
                 continue
             values = tuple(
                 cell.strip() if cell.strip() != '' else None
                 for cell in row[:15]
             )
             rows.append(values)
+
         cursor.executemany(insert_query, rows)
         conn.commit()
 
-    print(f"✅ Inserted {cursor.rowcount} rows from {CSV_PATH} into '{TABLE_NAME}'.")
+    print(f"✅ Inserted {cursor.rowcount} rows into '{TABLE_NAME}' (skipped {skipped}).")
     cursor.close()
     conn.close()
     print("✅ Done.")

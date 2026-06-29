@@ -1,0 +1,7 @@
+# Python package dependencies
+mysql-connector-python
+numpy
+pandas
+matplotlib
+scipy
+gurobipy

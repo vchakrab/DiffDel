@@ -28,6 +28,7 @@ def main():
 
     create_table_query = f"""
 CREATE TABLE {TABLE_NAME} (
+    id INT AUTO_INCREMENT PRIMARY KEY,
     age INT,
     workclass VARCHAR(50),
     fnlwgt INT,
@@ -49,6 +50,58 @@ CREATE TABLE {TABLE_NAME} (
     conn.commit()
     print(f"✅ Table '{TABLE_NAME}' created.")
 
+    rows = []
+    required_numeric_fields = [
+        "age", "fnlwgt", "education_num",
+        "capital_gain", "capital_loss", "hours_per_week",
+    ]
+
+    with open(CSV_PATH, newline='', encoding='utf-8-sig') as csvfile:
+        reader = csv.DictReader(csvfile)
+
+        # Strip type annotations and normalize: "Education-num int" → "education_num"
+        clean_header = [h.split()[0].strip().lower().replace('-', '_') for h in reader.fieldnames]
+        reader.fieldnames = clean_header
+        print(f"Headers: {reader.fieldnames}")
+
+        for i, raw_row in enumerate(reader):
+            row = {k.strip(): v.strip() for k, v in raw_row.items() if v is not None}
+
+            missing = [f for f in required_numeric_fields if not row.get(f)]
+            if missing:
+                continue
+
+            try:
+                values = (
+                    int(row["age"]),
+                    row.get("workclass"),
+                    int(row["fnlwgt"]),
+                    row.get("education"),
+                    int(row["education_num"]),
+                    row.get("marital_status"),
+                    row.get("occupation"),
+                    row.get("relationship"),
+                    row.get("race"),
+                    row.get("sex"),
+                    int(row["capital_gain"]),
+                    int(row["capital_loss"]),
+                    int(row["hours_per_week"]),
+                    row.get("native_country"),
+                    row.get("class"),
+                )
+                rows.append(values)
+            except (ValueError, KeyError) as e:
+                print(f"Row {i} skipped – parse error: {e}")
+                continue
+
+    print(f"Total rows collected: {len(rows)}")
+
+    if not rows:
+        print("❌ No rows to insert – check CSV path and headers above.")
+        cursor.close()
+        conn.close()
+        return
+
     insert_query = f"""
 INSERT INTO {TABLE_NAME} (
     age, workclass, fnlwgt, education, education_num,
@@ -57,39 +110,14 @@ INSERT INTO {TABLE_NAME} (
 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
 """
 
-    rows = []
-    required_numeric_fields = ["age", "fnlwgt", "Education-num", "capital-gain", "capital-loss", "Hours-per-week"]
-
-    with open(CSV_PATH, newline='', encoding='utf-8-sig') as csvfile:
-        reader = csv.DictReader(csvfile)
-        reader.fieldnames = [h.strip() for h in reader.fieldnames]
-        for row in reader:
-            row = {k.strip(): v.strip() for k, v in row.items() if v is not None}
-            if any(not row.get(f) for f in required_numeric_fields):
-                continue
-            values = (
-                int(row["age"]),
-                row.get("workclass"),
-                int(row["fnlwgt"]),
-                row.get("education"),
-                int(row["Education-num"]),
-                row.get("Marital-status"),
-                row.get("occupation"),
-                row.get("relationship"),
-                row.get("race"),
-                row.get("sex"),
-                int(row["capital-gain"]),
-                int(row["capital-loss"]),
-                int(row["Hours-per-week"]),
-                row.get("Native-country"),
-                row.get("class")
-            )
-            rows.append(values)
-
-    if rows:
+    try:
         cursor.executemany(insert_query, rows)
         conn.commit()
-        print(f"✅ Inserted {cursor.rowcount} rows from {CSV_PATH} into '{TABLE_NAME}'.")
+        print(f"✅ Inserted {cursor.rowcount} rows into '{TABLE_NAME}'.")
+    except mysql.connector.Error as e:
+        conn.rollback()
+        print(f"❌ Insert failed: {e}")
+        raise
 
     cursor.close()
     conn.close()

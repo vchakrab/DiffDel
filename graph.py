@@ -11,7 +11,7 @@ from matplotlib.cm import ScalarMappable
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR / "data/release_data"
+DATA_DIR = BASE_DIR / "data"
 print(DATA_DIR)
 
 # ── Base font size ────────────────────────────────────────────────────────────
@@ -2005,20 +2005,27 @@ def budget_split_appendix(df: pd.DataFrame) -> plt.Figure:
 
 
 # ════════════════════════════════════════════════════════════════════════════
-#  graph_all_experiments — generates figs 10, 14, 18a, 19, 20
+#  graph_all_experiments
 # ════════════════════════════════════════════════════════════════════════════
 
 def graph_all_experiments():
-    df_heat     = load_heatmap_data()
-    df_curves_5 = load_curves_data(DATASETS_5)
-
     FIG_DIR = BASE_DIR / "fig"
     FIG_DIR.mkdir(exist_ok=True)
 
+    df_heat     = load_heatmap_data()
+    df_curves_3 = load_curves_data(DATASETS_3)
+    df_curves_5 = load_curves_data(DATASETS_5)
+    df_abl      = load_ablation_data()
+
+    # FIGURE 8
+    fig = sensitivity_paper(df_curves_3)
+    fig.savefig(FIG_DIR / "fig8_sensitivity_paper.pdf", bbox_inches="tight")
+    plt.close(fig)
+
+    # FIGURE 9
     if not df_heat.empty:
-        # FIGURE 14
-        fig = pareto_frontier_appendix(df_heat)
-        fig.savefig(FIG_DIR / "fig14_pareto_frontier_appendix.pdf", bbox_inches="tight")
+        fig = pareto_frontier_paper(df_heat)
+        fig.savefig(FIG_DIR / "fig9_pareto_frontier_paper.pdf", bbox_inches="tight")
         plt.close(fig)
 
     # FIGURE 10
@@ -2026,15 +2033,40 @@ def graph_all_experiments():
     fig.savefig(FIG_DIR / "fig10_runtime_paper.pdf", bbox_inches="tight")
     plt.close(fig)
 
+    # FIGURE 11
     if not df_heat.empty:
-        # FIGURE 19
-        fig = heatmap_appendix(df_heat)
-        fig.savefig(FIG_DIR / "fig19_heatmap_appendix.pdf", bbox_inches="tight")
+        fig = heatmap_paper(df_heat)
+        fig.savefig(FIG_DIR / "fig11_heatmap_paper.pdf", bbox_inches="tight")
         plt.close(fig)
 
-        # FIGURE 20
-        fig = budget_split_appendix(df_heat)
-        fig.savefig(FIG_DIR / "fig20_budget_split_appendix.pdf", bbox_inches="tight")
+    # FIGURE 12 (Exp) and FIGURE 13 (Gum)
+    for mech in ["exp", "gum"]:
+        fig = sensitivity_appendix(df_curves_5, mech)
+        fig_num = 12 if mech == "exp" else 13
+        fig.savefig(FIG_DIR / f"fig{fig_num}_sensitivity_{mech}_appendix.pdf", bbox_inches="tight")
+        plt.close(fig)
+
+    # FIGURE 14
+    if not df_heat.empty:
+        fig = pareto_frontier_appendix(df_heat)
+        fig.savefig(FIG_DIR / "fig14_pareto_frontier_appendix.pdf", bbox_inches="tight")
+        plt.close(fig)
+
+    # FIGURE 16
+    fig = leakage_models_appendix("data/all_masks_all_methods.csv")
+    fig.savefig(FIG_DIR / "fig16_leakage_models_appendix.pdf", bbox_inches="tight")
+    plt.close(fig)
+
+    # FIGURE 17 (a)
+    fig = leakage_gum_appendix(df_curves_5, "gum")
+    fig.savefig(FIG_DIR / "fig17a_leakage_gum_appendix.pdf", bbox_inches="tight")
+    plt.close(fig)
+
+    # FIGURE 17 (b), (c)
+    for variant in ["random", "zero"]:
+        fig = leakage_ablation_appendix(df_abl, variant)
+        fig.savefig(FIG_DIR / f"fig17{'b' if variant == 'random' else 'c'}_leakage_{variant}_appendix.pdf",
+                    bbox_inches="tight")
         plt.close(fig)
 
     # FIGURE 18 (a)
@@ -2042,67 +2074,27 @@ def graph_all_experiments():
     fig.savefig(FIG_DIR / "fig18a_mask_reduction_appendix.pdf", bbox_inches="tight")
     plt.close(fig)
 
+    # FIGURE 18 (b), (c)
+    for variant in ["random", "zero"]:
+        fig = mask_ablation_appendix(df_abl, variant)
+        fig.savefig(FIG_DIR / f"fig18{'b' if variant == 'random' else 'c'}_mask_{variant}_appendix.pdf",
+                    bbox_inches="tight")
+        plt.close(fig)
+
+    # FIGURE 19
+    if not df_heat.empty:
+        fig = heatmap_appendix(df_heat)
+        fig.savefig(FIG_DIR / "fig19_heatmap_appendix.pdf", bbox_inches="tight")
+        plt.close(fig)
+
+    # FIGURE 20
+    if not df_heat.empty:
+        fig = budget_split_appendix(df_heat)
+        fig.savefig(FIG_DIR / "fig20_budget_split_appendix.pdf", bbox_inches="tight")
+        plt.close(fig)
+
     print(f"\nAll figures saved to: {FIG_DIR.resolve()}")
 
 
-# ════════════════════════════════════════════════════════════════════════════
-#  Entry point — generates all figures 8-20 (fig 15 skipped: repeat of fig 10)
-# ════════════════════════════════════════════════════════════════════════════
-
-FIG_DIR = BASE_DIR / "fig"
-FIG_DIR.mkdir(exist_ok=True)
-
-df_heat     = load_heatmap_data()
-df_curves_3 = load_curves_data(DATASETS_3)
-df_curves_5 = load_curves_data(DATASETS_5)
-
-# FIGURE 8
-fig = sensitivity_paper(df_curves_3)
-fig.savefig(FIG_DIR / "fig8_sensitivity_paper.pdf", bbox_inches="tight")
-plt.close(fig)
-
-df_abl = load_ablation_data()
-
-# FIGURE 18 (b), (c)
-for variant in ["random", "zero"]:
-    fig = mask_ablation_appendix(df_abl, variant)
-    fig.savefig(FIG_DIR / f"fig18{'b' if variant == 'random' else 'c'}_mask_{variant}_appendix.pdf",
-                bbox_inches="tight")
-    plt.close(fig)
-
-# FIGURE 17 (b), (c)
-for variant in ["random", "zero"]:
-    fig = leakage_ablation_appendix(df_abl, variant)
-    fig.savefig(FIG_DIR / f"fig17{'b' if variant == 'random' else 'c'}_leakage_{variant}_appendix.pdf",
-                bbox_inches="tight")
-    plt.close(fig)
-
-# FIGURE 17 (a)
-fig = leakage_gum_appendix(df_curves_5, "gum")
-fig.savefig(FIG_DIR / "fig17a_leakage_gum_appendix.pdf", bbox_inches="tight")
-plt.close(fig)
-
-# FIGURE 16
-fig = leakage_models_appendix("data/release_data/all_masks_all_methods.csv")
-fig.savefig(FIG_DIR / "fig16_leakage_models_appendix.pdf", bbox_inches="tight")
-plt.close(fig)
-
-# FIGURES 10, 14, 18a, 19, 20
-graph_all_experiments()
-
-# FIGURE 11
-fig = heatmap_paper(df_heat)
-fig.savefig(FIG_DIR / "fig11_heatmap_paper.pdf", bbox_inches="tight")
-plt.close(fig)
-
-# FIGURE 9
-fig = pareto_frontier_paper(df_heat)
-fig.savefig(FIG_DIR / "fig9_pareto_frontier_paper.pdf", bbox_inches="tight")
-plt.close(fig)
-
-# FIGURE 12 (Exp) and FIGURE 13 (Gum)
-for mech in ["exp", "gum"]:
-    fig = sensitivity_appendix(df_curves_5, mech)
-    fig_num = 12 if mech == "exp" else 13
-    fig.savefig(FIG_DIR / f"fig{fig_num}_sensitivity_{mech}_appendix.pdf", bbox_inches="tight")
-    plt.close(fig)
+if __name__ == '__main__':
+    graph_all_experiments()

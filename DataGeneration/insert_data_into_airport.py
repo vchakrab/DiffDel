@@ -21,11 +21,14 @@ def main():
 
     cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
     cursor.execute(f"USE {DB_NAME}")
+    print(f"✅ Database '{DB_NAME}' ready.")
+
     cursor.execute(f"DROP TABLE IF EXISTS {TABLE_NAME}")
+    print(f"✅ Table '{TABLE_NAME}' dropped (if it existed).")
 
     create_table_query = f"""
 CREATE TABLE {TABLE_NAME} (
-    id INT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     ident VARCHAR(20),
     type VARCHAR(50),
     name VARCHAR(255),
@@ -34,60 +37,87 @@ CREATE TABLE {TABLE_NAME} (
     elevation_ft INT,
     continent VARCHAR(10),
     iso_country VARCHAR(10),
-    iso_region VARCHAR(10),
+    iso_region VARCHAR(20),
     municipality VARCHAR(100),
-    scheduled_service VARCHAR(50),
+    scheduled_service VARCHAR(100),
     gps_code VARCHAR(20),
     iata_code VARCHAR(10),
     local_code VARCHAR(20),
-    home_link TEXT,
-    wikipedia_link TEXT,
+    home_link VARCHAR(255),
+    wikipedia_link VARCHAR(255),
     keywords TEXT
 );
 """
     cursor.execute(create_table_query)
     conn.commit()
-    print(f"✅ Table '{TABLE_NAME}' created fresh.")
+    print(f"✅ Table '{TABLE_NAME}' created.")
+
+    rows = []
+
+    with open(CSV_PATH, newline='', encoding='utf-8-sig') as csvfile:
+        reader = csv.DictReader(csvfile)
+
+        # Strip type annotations: "latitude_deg float" → "latitude_deg"
+        clean_header = [h.split()[0].strip().lower().replace('-', '_') for h in reader.fieldnames]
+        reader.fieldnames = clean_header
+        print(f"Headers: {reader.fieldnames}")
+
+        for i, raw_row in enumerate(reader):
+            row = {k.strip(): v.strip() for k, v in raw_row.items() if v is not None}
+
+            if i == 0:
+                print(f"First row: {row}")
+
+            try:
+                values = (
+                    row.get("ident"),
+                    row.get("type"),
+                    row.get("name"),
+                    float(row["latitude_deg"]) if row.get("latitude_deg") else None,
+                    float(row["longitude_deg"]) if row.get("longitude_deg") else None,
+                    int(row["elevation_ft"]) if row.get("elevation_ft") else None,
+                    row.get("continent") or None,
+                    row.get("iso_country") or None,
+                    row.get("iso_region") or None,
+                    row.get("municipality") or None,
+                    row.get("scheduled_service") or None,
+                    row.get("gps_code") or None,
+                    row.get("iata_code") or None,
+                    row.get("local_code") or None,
+                    row.get("home_link") or None,
+                    row.get("wikipedia_link") or None,
+                    row.get("keywords") or None,
+                )
+                rows.append(values)
+            except (ValueError, KeyError) as e:
+                print(f"Row {i} skipped – parse error: {e}")
+                continue
+
+    print(f"Total rows collected: {len(rows)}")
+
+    if not rows:
+        print("❌ No rows to insert – check CSV path and headers above.")
+        cursor.close()
+        conn.close()
+        return
 
     insert_query = f"""
 INSERT INTO {TABLE_NAME} (
-    id, ident, type, name, latitude_deg, longitude_deg, elevation_ft,
-    continent, iso_country, iso_region, municipality,
-    scheduled_service, gps_code, iata_code, local_code,
-    home_link, wikipedia_link, keywords
-) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+    ident, type, name, latitude_deg, longitude_deg, elevation_ft,
+    continent, iso_country, iso_region, municipality, scheduled_service,
+    gps_code, iata_code, local_code, home_link, wikipedia_link, keywords
+) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
 """
 
-    with open(CSV_PATH, newline='', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        rows = []
-        for row in reader:
-            values = (
-                int(row['id']) if row.get('id') else None,
-                row.get('ident'),
-                row.get('type'),
-                row.get('name'),
-                float(row['latitude_deg']) if row.get('latitude_deg') else None,
-                float(row['longitude_deg']) if row.get('longitude_deg') else None,
-                int(float(row['elevation_ft'])) if row.get('elevation_ft') else None,
-                row.get('continent'),
-                row.get('iso_country'),
-                row.get('iso_region'),
-                row.get('municipality'),
-                row.get('scheduled_service'),
-                row.get('gps_code'),
-                row.get('iata_code'),
-                row.get('local_code'),
-                row.get('home_link'),
-                row.get('wikipedia_link'),
-                row.get('keywords')
-            )
-            rows.append(values)
-
+    try:
         cursor.executemany(insert_query, rows)
         conn.commit()
+        print(f"✅ Inserted {cursor.rowcount} rows into '{TABLE_NAME}'.")
+    except mysql.connector.Error as e:
+        conn.rollback()
+        print(f"❌ Insert failed: {e}")
+        raise
 
-    print(f"✅ Inserted {cursor.rowcount} rows from CSV into '{TABLE_NAME}'.")
     cursor.close()
     conn.close()
     print("✅ Done.")

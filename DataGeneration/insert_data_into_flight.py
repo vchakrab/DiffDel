@@ -29,6 +29,7 @@ def main():
 
     create_table_query = f"""
 CREATE TABLE {TABLE_NAME} (
+    id INT AUTO_INCREMENT PRIMARY KEY,
     Year INT,
     Quarter INT,
     Month INT,

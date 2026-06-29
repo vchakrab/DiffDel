@@ -8,6 +8,8 @@ import os, time
 from typing import Callable, Any, Dict, Optional, Tuple
 import mysql.connector
 import config, exp, gum, min
+import shutil
+import csv
 
 
 DATASETS = ["airport", "hospital", "adult", "flight", "tax"]
@@ -422,7 +424,7 @@ def run_gum_score_ablation():
     LAMBDA = 1000
 
     for ordering_method in ("random", "zero"):
-        ORD_DIR = os.path.join("data", "release_data", "gum_score_ablation", ordering_method)
+        ORD_DIR = os.path.join("data", "gum_score_ablation", ordering_method)
         os.makedirs(ORD_DIR, exist_ok=True)
 
         for epsilon_m in EM_VALUES:
@@ -449,7 +451,7 @@ def run_gum_score_ablation():
 def run_all_experiments():
     EM_VALUES = [0, 0.1, 0.5, 0.75, 1, 1.5, 2, 2.5, 5, 10]
     L0_VALUES = [0.025, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-    LAMBDA = 1000
+    LAMBDA = 1000 # <- a constant used in our prior leakage/utility models that are in our git history, it is kept incase we want to try those
 
     BASE_OUTPUT_DIR = "data"
     os.makedirs(BASE_OUTPUT_DIR, exist_ok=True)
@@ -516,6 +518,77 @@ def run_all_experiments():
             )
 
         with_db_copies(run_once, dataset=dataset)
+
+def build_main_data(
+    source_dir: str = "data",
+    output_dir: str = "main_data",
+    target_epsilon: float = 0.1,
+    target_L0: float = 0.2,
+):
+    """
+    Build a main_data/ folder containing:
+      - exp/   : rows filtered to epsilon_m=0.1, L0=0.2
+      - gumbel/: rows filtered to epsilon_m=0.1, L0=0.2  (sourced from gum/)
+      - min/   : all rows copied as-is (no epsilon/L0 params)
+    """
+
+    # --- exp and gumbel (filtered) ---
+    method_map = {
+        "exp":    ("exp",    "del2ph"),
+        "gumbel": ("gum",   "marginal_em"),
+    }
+
+    for out_name, (src_name, method_label) in method_map.items():
+        for dataset in DATASETS:
+            src_csv = os.path.join(source_dir, src_name, dataset, "full_data.csv")
+            dst_dir = os.path.join(output_dir, out_name, dataset)
+            dst_csv = os.path.join(dst_dir, "full_data.csv")
+
+            os.makedirs(dst_dir, exist_ok=True)
+
+            if not os.path.exists(src_csv):
+                print(f"[WARN] Missing source: {src_csv}")
+                continue
+
+            with open(src_csv, "r", newline="") as src_f, \
+                 open(dst_csv, "w", newline="") as dst_f:
+
+                reader = csv.DictReader(src_f)
+                writer = csv.DictWriter(dst_f, fieldnames=reader.fieldnames)
+                writer.writeheader()
+
+                written = 0
+                for row in reader:
+                    try:
+                        em  = float(row["epsilon_m"]) if row["epsilon_m"] else None
+                        l0  = float(row["L0"])         if row["L0"]        else None
+                    except (ValueError, KeyError):
+                        continue
+
+                    if em == target_epsilon and l0 == target_L0:
+                        writer.writerow(row)
+                        written += 1
+
+                print(f"[{out_name}/{dataset}] wrote {written} rows "
+                      f"(ε={target_epsilon}, L0={target_L0})")
+
+    # --- min (copy everything) ---
+    for dataset in DATASETS:
+        src_csv = os.path.join(source_dir, "min", dataset, "full_data.csv")
+        dst_dir = os.path.join(output_dir, "min", dataset)
+        dst_csv = os.path.join(dst_dir, "full_data.csv")
+
+        os.makedirs(dst_dir, exist_ok=True)
+
+        if not os.path.exists(src_csv):
+            print(f"[WARN] Missing source: {src_csv}")
+            continue
+
+        shutil.copy2(src_csv, dst_csv)
+
+        with open(src_csv) as f:
+            row_count = sum(1 for _ in f) - 1  # subtract header
+        print(f"[min/{dataset}] copied {row_count} rows")
 
 if __name__ == "__main__":
     #run_all_experiments()

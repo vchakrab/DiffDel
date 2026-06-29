@@ -5,6 +5,7 @@ sys.path.insert(0, str(Path(__file__).parent / 'DataGeneration'))
 import mysql.connector
 import config
 import collect_data, graph
+import collect_all_masks_all_data
 from DataGeneration.populate_all_datasets import DATASETS as _datasets
 
 
@@ -40,5 +41,9 @@ if __name__ == '__main__':
         fn()
     print('Collecting data...')
     collect_data.run_all_experiments()
+    print("Collecting additional experiments...")
+    collect_data.run_gum_score_ablation()
+    collect_data.build_main_data()
+    collect_all_masks_all_data.main()
     print('Constructing graphs...')
     graph.graph_all_experiments()
