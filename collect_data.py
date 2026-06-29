@@ -8,6 +8,8 @@ import os, time
 from typing import Callable, Any, Dict, Optional, Tuple
 import mysql.connector
 import config, exp, gum, min
+import shutil
+import csv
 
 
 DATASETS = ["airport", "hospital", "adult", "flight", "tax"]
@@ -294,7 +296,45 @@ def run_exp(out_csv, ds, epsilon, lam, L0):
 
             write_csv_row(f, row)
 
+def run_gum_ordering(out_csv, ds, epsilon, lam, L0, ordering_method):
 
+    file_exists = os.path.exists(out_csv) and os.path.getsize(out_csv) > 0
+
+    with open(out_csv, "a", newline="") as f:
+        if not file_exists:
+            write_csv_header(f)
+
+        attr = TARGET_ATTR[ds]
+
+        for _ in range(ITERS):
+            key = get_random_key(ds)
+            if key is None:
+                continue
+
+            raw = gum.gum(
+                dataset=ds,
+                target_cell=attr,
+                epsilon=float(epsilon),
+                lam=float(lam),
+                L0=float(L0),
+                ordering_method=ordering_method,
+            )
+
+            upd_mask = set(raw["mask"]) | {attr}
+            upd_t, _ = update_mask_to_null(ds, key, upd_mask)
+
+            row = standardize_row(
+                method=f"marginal_em_{ordering_method}",
+                dataset=ds,
+                attr=attr,
+                raw=raw,
+                update_time=upd_t,
+                epsilon_m=epsilon,
+                lambda_val=lam,
+                L0=L0,
+            )
+
+            write_csv_row(f, row)
 # ============================
 # DB COPY WRAPPER (SAFE)
 # ============================
@@ -376,13 +416,42 @@ def with_db_copies(fn: Callable[[], None], dataset: str) -> None:
 
 
 # ============================
-# MAIN LOOP (UNCHANGED)
+# MAIN LOOP
 # ============================
+def run_gum_score_ablation():
+    EM_VALUES = [0, 0.1, 0.5, 0.75, 1, 1.5, 2, 2.5, 5, 10]
+    L0_VALUES = [0.025, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    LAMBDA = 1000
+
+    for ordering_method in ("random", "zero"):
+        ORD_DIR = os.path.join("data", "gum_score_ablation", ordering_method)
+        os.makedirs(ORD_DIR, exist_ok=True)
+
+        for epsilon_m in EM_VALUES:
+            for L0 in L0_VALUES:
+                for dataset in DATASETS:
+
+                    dataset_dir = os.path.join(ORD_DIR, dataset)
+                    os.makedirs(dataset_dir, exist_ok=True)
+
+                    file_path = os.path.join(dataset_dir, "full_data.csv")
+
+                    def run_once(om=ordering_method, fp=file_path, ds=dataset):
+                        run_gum_ordering(
+                            out_csv=fp,
+                            ds=ds,
+                            epsilon=epsilon_m,
+                            L0=L0,
+                            lam=LAMBDA,
+                            ordering_method=om,
+                        )
+
+                    with_db_copies(run_once, dataset=dataset)
 
 def run_all_experiments():
     EM_VALUES = [0, 0.1, 0.5, 0.75, 1, 1.5, 2, 2.5, 5, 10]
     L0_VALUES = [0.025, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-    LAMBDA = 1000
+    LAMBDA = 1000 # <- a constant used in our prior leakage/utility models that are in our git history, it is kept incase we want to try those
 
     BASE_OUTPUT_DIR = "data"
     os.makedirs(BASE_OUTPUT_DIR, exist_ok=True)
@@ -450,5 +519,77 @@ def run_all_experiments():
 
         with_db_copies(run_once, dataset=dataset)
 
+def build_main_data(
+    source_dir: str = "data",
+    output_dir: str = "data/main_data",
+    target_epsilon: float = 0.1,
+    target_L0: float = 0.2,
+):
+    """
+    Build a main_data/ folder containing:
+      - exp/   : rows filtered to epsilon_m=0.1, L0=0.2
+      - gumbel/: rows filtered to epsilon_m=0.1, L0=0.2  (sourced from gum/)
+      - min/   : all rows copied as-is (no epsilon/L0 params)
+    """
+
+    # --- exp and gumbel (filtered) ---
+    method_map = {
+        "exp":    ("exp",    "del2ph"),
+        "gumbel": ("gum",   "marginal_em"),
+    }
+
+    for out_name, (src_name, method_label) in method_map.items():
+        for dataset in DATASETS:
+            src_csv = os.path.join(source_dir, src_name, dataset, "full_data.csv")
+            dst_dir = os.path.join(output_dir, out_name, dataset)
+            dst_csv = os.path.join(dst_dir, "full_data.csv")
+
+            os.makedirs(dst_dir, exist_ok=True)
+
+            if not os.path.exists(src_csv):
+                # print(f"[WARN] Missing source: {src_csv}")
+                continue
+
+            with open(src_csv, "r", newline="") as src_f, \
+                 open(dst_csv, "w", newline="") as dst_f:
+
+                reader = csv.DictReader(src_f)
+                writer = csv.DictWriter(dst_f, fieldnames=reader.fieldnames)
+                writer.writeheader()
+
+                written = 0
+                for row in reader:
+                    try:
+                        em  = float(row["epsilon_m"]) if row["epsilon_m"] else None
+                        l0  = float(row["L0"])         if row["L0"]        else None
+                    except (ValueError, KeyError):
+                        continue
+
+                    if em == target_epsilon and l0 == target_L0:
+                        writer.writerow(row)
+                        written += 1
+
+                # print(f"[{out_name}/{dataset}] wrote {written} rows "
+                      # f"(ε={target_epsilon}, L0={target_L0})")
+
+    # --- min (copy everything) ---
+    for dataset in DATASETS:
+        src_csv = os.path.join(source_dir, "min", dataset, "full_data.csv")
+        dst_dir = os.path.join(output_dir, "min", dataset)
+        dst_csv = os.path.join(dst_dir, "full_data.csv")
+
+        os.makedirs(dst_dir, exist_ok=True)
+
+        if not os.path.exists(src_csv):
+            # print(f"[WARN] Missing source: {src_csv}")
+            continue
+
+        shutil.copy2(src_csv, dst_csv)
+
+        with open(src_csv) as f:
+            row_count = sum(1 for _ in f) - 1  # subtract header
+        # print(f"[min/{dataset}] copied {row_count} rows")
+
 if __name__ == "__main__":
-    run_all_experiments()
+    #run_all_experiments()
+    run_gum_score_ablation()

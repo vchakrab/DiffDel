@@ -1,0 +1,8 @@
+dataset,gamma_frac,S,seed,ci_level,nVmin,nEmin,dc_id,dc_str,m,nV,nE_best,best_head_j,best_base,weight
+airport,0.25,300000,7,0.9,200,200,1,t0.iso_country str EQUAL t1.iso_country str AND t0.scheduled_service str UNEQUAL t1.scheduled_service str,2,297289,41376,0,0.6329903936131864,0.38299039361318643
+airport,0.25,300000,7,0.9,200,200,15,t0.type str EQUAL t1.type str AND t0.scheduled_service str UNEQUAL t1.scheduled_service str AND t0.keywords str UNEQUAL t1.keywords str,3,8721,1949,0,0.46524107407941917,0.21524107407941917
+airport,0.25,300000,7,0.9,200,200,21,t0.scheduled_service str UNEQUAL t1.scheduled_service str AND t0.municipality str EQUAL t1.municipality str,2,241408,35014,1,0.3781024715056564,0.1281024715056564
+airport,0.25,300000,7,0.9,200,200,27,t0.iso_country str EQUAL t1.iso_country str AND t0.continent str UNEQUAL t1.continent str,2,72678,3192,1,0.9873269363538364,0.7373269363538364
+airport,0.25,300000,7,0.9,200,200,33,t0.type str EQUAL t1.type str AND t0.continent str EQUAL t1.continent str AND t0.scheduled_service str UNEQUAL t1.scheduled_service str,3,74053,8144,2,0.6414363414566598,0.39143634145665984
+airport,0.25,300000,7,0.9,200,200,50,t0.municipality str EQUAL t1.municipality str AND t0.type str UNEQUAL t1.type str,2,241408,137550,0,0.39895280730490257,0.14895280730490257
+airport,0.25,300000,7,0.9,200,200,67,t0.type str EQUAL t1.type str AND t0.scheduled_service str UNEQUAL t1.scheduled_service str AND t0.home_link str UNEQUAL t1.home_link str,3,869,348,1,0.5062156779261009,0.2562156779261009

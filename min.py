@@ -327,7 +327,7 @@ def ilp_approach(
             if os.path.exists(ilp_write_path):
                 ilp_file_bytes = int(os.path.getsize(ilp_write_path))
         except Exception as e:
-            print(f"[WARN] Failed to write ILP model to {ilp_write_path}: {e}")
+            # print(f"[WARN] Failed to write ILP model to {ilp_write_path}: {e}")
             ilp_file_bytes = 0
 
     model.optimize()
@@ -382,11 +382,11 @@ def load_parsed_dcs_for_dataset(dataset: str):
     except Exception:
         return []
 def min(target: str, key: int, dataset: str, threshold: float):
-    if not GUROBI_AVAILABLE:
-        return 0, set(), 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0
+    # if not GUROBI_AVAILABLE:
+    #     return 0, set(), 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0
 
     if config is None or mysql is None:
-        print("[WARN] Missing deps for baseline_deletion_3 (config/mysql).")
+        # print("[WARN] Missing deps for baseline_deletion_3 (config/mysql).")
         return 0, set(), 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0
 
     # ============================================================
@@ -503,7 +503,7 @@ def min(target: str, key: int, dataset: str, threshold: float):
         memory_bytes = int(ilp_file_bytes)
 
     except Exception as e:
-        print(f"Error in Baseline 3: {e}")
+        # print(f"Error in Baseline 3: {e}")
         import traceback
         traceback.print_exc()
         return 0, set(), 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0
@@ -532,4 +532,10 @@ def min(target: str, key: int, dataset: str, threshold: float):
         "memory_overhead_bytes": memory_bytes,
         "num_instantiated_cells": int(zone_size),
     }
+
+if __name__ == "__main__":
+    pass
+    # print(min("continent", 0, "airport", 0))
+    # print(min("ProviderNumber", 0, "hospital", 0))
+    # print(min("education", 0, "adult", 0))
 

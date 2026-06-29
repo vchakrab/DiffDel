@@ -217,7 +217,7 @@ def exp(
     epsilon: float = 50.0,
     lam: float = 0.5,
     L0: float = 0.25,
-    lambda_penalty: float = 100.0,
+    lambda_penalty: float = 1000,
     tau: Optional[float] = None,
     leakage_method: str = "greedy_disjoint",
     hypergraph_mode: str = "MAX",

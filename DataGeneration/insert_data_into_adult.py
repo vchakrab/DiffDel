@@ -1,44 +1,34 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 import mysql.connector
 import csv
+from config import DB_CONFIG, PROJECT_ROOT
 
-# =====================
-# CONFIG
-# =====================
-DB_NAME = "adult"
+DB_NAME    = "adult"
 TABLE_NAME = "adult_data"
-CSV_PATH = "/csv_files/adult.csv"  # <-- replace with your CSV path
-USER = "root"
-PASSWORD = "my_password"  # <-- replace with your MySQL password
-HOST = "localhost"
+CSV_PATH   = PROJECT_ROOT / 'csv_files' / 'adult.csv'
 
-# =====================
-# CONNECT TO MYSQL
-# =====================
-conn = mysql.connector.connect(
-    host=HOST,
-    user=USER,
-    password=PASSWORD
-)
-cursor = conn.cursor()
 
-# =====================
-# CREATE DATABASE
-# =====================
-cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
-cursor.execute(f"USE {DB_NAME}")
-print(f"✅ Database '{DB_NAME}' ready.")
+def main():
+    conn = mysql.connector.connect(
+        host=DB_CONFIG['host'],
+        user=DB_CONFIG['user'],
+        password=DB_CONFIG['password'],
+    )
+    cursor = conn.cursor()
 
-# =====================
-# DROP TABLE IF EXISTS
-# =====================
-cursor.execute(f"DROP TABLE IF EXISTS {TABLE_NAME}")
-print(f"✅ Table '{TABLE_NAME}' dropped (if it existed).")
+    cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
+    cursor.execute(f"USE {DB_NAME}")
+    # print(f"✅ Database '{DB_NAME}' ready.")
 
-# =====================
-# CREATE TABLE
-# =====================
-create_table_query = f"""
+    cursor.execute(f"DROP TABLE IF EXISTS {TABLE_NAME}")
+    # print(f"✅ Table '{TABLE_NAME}' dropped (if it existed).")
+
+    create_table_query = f"""
 CREATE TABLE {TABLE_NAME} (
+    id INT AUTO_INCREMENT PRIMARY KEY,
     age INT,
     workclass VARCHAR(50),
     fnlwgt INT,
@@ -56,14 +46,63 @@ CREATE TABLE {TABLE_NAME} (
     class VARCHAR(10)
 );
 """
-cursor.execute(create_table_query)
-conn.commit()
-print(f"✅ Table '{TABLE_NAME}' created.")
+    cursor.execute(create_table_query)
+    conn.commit()
+    # print(f"✅ Table '{TABLE_NAME}' created.")
 
-# =====================
-# INSERT QUERY
-# =====================
-insert_query = f"""
+    rows = []
+    required_numeric_fields = [
+        "age", "fnlwgt", "education_num",
+        "capital_gain", "capital_loss", "hours_per_week",
+    ]
+
+    with open(CSV_PATH, newline='', encoding='utf-8-sig') as csvfile:
+        reader = csv.DictReader(csvfile)
+
+        # Strip type annotations and normalize: "Education-num int" → "education_num"
+        clean_header = [h.split()[0].strip().lower().replace('-', '_') for h in reader.fieldnames]
+        reader.fieldnames = clean_header
+        # print(f"Headers: {reader.fieldnames}")
+
+        for i, raw_row in enumerate(reader):
+            row = {k.strip(): v.strip() for k, v in raw_row.items() if v is not None}
+
+            missing = [f for f in required_numeric_fields if not row.get(f)]
+            if missing:
+                continue
+
+            try:
+                values = (
+                    int(row["age"]),
+                    row.get("workclass"),
+                    int(row["fnlwgt"]),
+                    row.get("education"),
+                    int(row["education_num"]),
+                    row.get("marital_status"),
+                    row.get("occupation"),
+                    row.get("relationship"),
+                    row.get("race"),
+                    row.get("sex"),
+                    int(row["capital_gain"]),
+                    int(row["capital_loss"]),
+                    int(row["hours_per_week"]),
+                    row.get("native_country"),
+                    row.get("class"),
+                )
+                rows.append(values)
+            except (ValueError, KeyError) as e:
+                # print(f"Row {i} skipped – parse error: {e}")
+                continue
+
+    # print(f"Total rows collected: {len(rows)}")
+
+    if not rows:
+        # print("❌ No rows to insert – check CSV path and headers above.")
+        cursor.close()
+        conn.close()
+        return
+
+    insert_query = f"""
 INSERT INTO {TABLE_NAME} (
     age, workclass, fnlwgt, education, education_num,
     marital_status, occupation, relationship, race, sex,
@@ -71,54 +110,19 @@ INSERT INTO {TABLE_NAME} (
 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
 """
 
-# =====================
-# READ CSV AND INSERT
-# =====================
-rows = []
+    try:
+        cursor.executemany(insert_query, rows)
+        conn.commit()
+        # print(f"✅ Inserted {cursor.rowcount} rows into '{TABLE_NAME}'.")
+    except mysql.connector.Error as e:
+        conn.rollback()
+        # print(f"❌ Insert failed: {e}")
+        raise
 
-required_numeric_fields = ["age","fnlwgt","Education-num","capital-gain","capital-loss","Hours-per-week"]
+    cursor.close()
+    conn.close()
+    # print("✅ Done.")
 
-with open(CSV_PATH, newline='', encoding='utf-8-sig') as csvfile:
-    reader = csv.DictReader(csvfile)
-    # Strip headers
-    reader.fieldnames = [h.strip() for h in reader.fieldnames]
 
-    for row in reader:
-        # Strip keys and values
-        row = {k.strip(): v.strip() for k, v in row.items() if v is not None}
-
-        # Skip rows with missing numeric fields
-        if any(not row.get(f) for f in required_numeric_fields):
-            continue
-
-        values = (
-            int(row["age"]),
-            row.get("workclass"),
-            int(row["fnlwgt"]),
-            row.get("education"),
-            int(row["Education-num"]),
-            row.get("Marital-status"),
-            row.get("occupation"),
-            row.get("relationship"),
-            row.get("race"),
-            row.get("sex"),
-            int(row["capital-gain"]),
-            int(row["capital-loss"]),
-            int(row["Hours-per-week"]),
-            row.get("Native-country"),
-            row.get("class")
-        )
-        rows.append(values)
-
-# Bulk insert
-if rows:
-    cursor.executemany(insert_query, rows)
-    conn.commit()
-    print(f"✅ Inserted {cursor.rowcount} rows from {CSV_PATH} into '{TABLE_NAME}'.")
-
-# =====================
-# CLEANUP
-# =====================
-cursor.close()
-conn.close()
-print("✅ Database initialization complete.")
+if __name__ == '__main__':
+    main()

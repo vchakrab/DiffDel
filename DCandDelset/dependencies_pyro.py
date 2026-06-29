@@ -166,30 +166,30 @@ def example_pyro():
                       'Diabetes', 'Diabetes', 'Hypertension', 'Diabetes']
     })
     
-    print("=" * 60)
-    print("PYRO AFD EXTRACTION (g3 error measure)")
-    print("=" * 60)
+    # print("=" * 60)
+    # print("PYRO AFD EXTRACTION (g3 error measure)")
+    # print("=" * 60)
     
     extractor = PyroAFDExtractor(data, error_threshold=0.15)
     
     # Extract specific AFD
     result = extractor.extract_afd_weight(['Age', 'BMI'], 'Diagnosis')
     
-    print(f"\nAFD: {result['lhs']} -> {result['rhs']}")
-    print(f"g3 error: {result['g3_error']:.3f}")
-    print(f"Weight: {result['weight']:.3f}")
-    print(f"Valid AFD (error < 0.15): {result['is_valid_afd']}")
+    # print(f"\nAFD: {result['lhs']} -> {result['rhs']}")
+    # print(f"g3 error: {result['g3_error']:.3f}")
+    # print(f"Weight: {result['weight']:.3f}")
+    # print(f"Valid AFD (error < 0.15): {result['is_valid_afd']}")
     
-    print("\nInterpretation:")
-    print(f"  - {result['g3_error']*100:.1f}% of tuples violate this dependency")
-    print(f"  - {result['weight']*100:.1f}% of tuples satisfy it")
-    print(f"  - For privacy: adversary has ~{result['weight']*100:.1f}% inference success rate")
+    # print("\nInterpretation:")
+    # print(f"  - {result['g3_error']*100:.1f}% of tuples violate this dependency")
+    # print(f"  - {result['weight']*100:.1f}% of tuples satisfy it")
+    # print(f"  - For privacy: adversary has ~{result['weight']*100:.1f}% inference success rate")
     
     # Discover all AFDs
-    print("\n" + "=" * 60)
-    print("Discovering all AFDs with error threshold 0.15:")
-    print("=" * 60)
+    # print("\n" + "=" * 60)
+    # print("Discovering all AFDs with error threshold 0.15:")
+    # print("=" * 60)
     all_afds = extractor.discover_all_afds(max_lhs_size=2)
-    print(all_afds[['lhs', 'rhs', 'weight', 'g3_error']])
+    # print(all_afds[['lhs', 'rhs', 'weight', 'g3_error']])
 
 example_pyro()

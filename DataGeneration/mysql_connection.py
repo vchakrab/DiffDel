@@ -13,7 +13,7 @@ def connect_to_database():
  
         # Check if the connection is successful
         if connection.is_connected():
-            print("Successfully connected to the database")
+            # print("Successfully connected to the database")
 
             # Create a cursor object to interact with the database
             cursor = connection.cursor()
@@ -21,22 +21,25 @@ def connect_to_database():
             # Example: Query to fetch all tables in the database
             cursor.execute("SHOW TABLES")
             tables = cursor.fetchall()
-            print("Tables in the database:")
+            # print("Tables in the database:")
             for table in tables:
-                print(table)
+                pass
+                # print(table)
 
         else:
-            print("Connection failed")
+            pass
+            # print("Connection failed")
 
     except Error as e:
-        print(f"Error: {e}")
+        pass
+        # print(f"Error: {e}")
     
     finally:
         if connection.is_connected():
             # Close the connection
             cursor.close()
             connection.close()
-            print("Connection closed")
+            # print("Connection closed")
 
 if __name__ == "__main__":
     connect_to_database()
