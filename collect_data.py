@@ -521,7 +521,7 @@ def run_all_experiments():
 
 def build_main_data(
     source_dir: str = "data",
-    output_dir: str = "main_data",
+    output_dir: str = "data/main_data",
     target_epsilon: float = 0.1,
     target_L0: float = 0.2,
 ):

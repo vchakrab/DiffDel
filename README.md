@@ -15,6 +15,7 @@
 5. **Run**: `python main.py`
 
 That's it. `main.py` will load all datasets, run all experiments, and generate all figures automatically.
+To see results from the paper as they appear look at `data/release_data` and `fig/release_figures`.
 
 ---
 
@@ -81,7 +82,7 @@ L0_VALUES  = [0.025, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 Pre-collected data and pre-generated figures are already included if you want to skip the full run:
 
 - **`data/release_data/`** — raw experiment results used in the paper
-- **`fig/`** — all figures as they appear in the paper
+- **`fig/release_figures/`** — all figures as they appear in the paper
 
 To regenerate figures only:
 ```bash
@@ -89,7 +90,7 @@ python graph.py
 ```
 
 Figure 7 (dependency weight assignment) is documented in **`csv_files/compute_dc_weights.py`**.
-
+The `csv_files` folder also contains pre-computed results for $\gamma_{\frac{1}{4}}$ and $\gamma_{\frac{1}{2}}$. 
 ---
 
 # Project Structure
