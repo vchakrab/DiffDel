@@ -6,6 +6,7 @@ import mysql.connector
 import config
 import collect_data, graph
 import collect_all_masks_all_data
+import collect_table_data
 from DataGeneration.populate_all_datasets import DATASETS as _datasets
 
 
@@ -44,6 +45,8 @@ if __name__ == '__main__':
     print("Collecting additional experiments...")
     collect_data.run_gum_score_ablation()
     collect_data.build_main_data()
+    print("Collecting table statistics...")
+    collect_table_data.main()
     collect_all_masks_all_data.main()
     print('Constructing graphs...')
     graph.graph_all_experiments()

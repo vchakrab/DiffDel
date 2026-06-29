@@ -84,7 +84,7 @@ Pre-collected data and pre-generated figures are already included if you want to
 - **`data/release_data/`** — raw experiment results used in the paper
 - **`fig/release_figures/`** — all figures as they appear in the paper
 
-To regenerate figures only:
+To regenerate figures only set the source directory to `data/release_data` in graph.py and then graph:
 ```bash
 python graph.py
 ```

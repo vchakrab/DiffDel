@@ -76,6 +76,7 @@ def _em_sample_index(utilities: np.ndarray, epsilon: float, delta_u: float) -> i
     return int(np.random.choice(len(utilities), p=p))
 
 
+#Algorithm 2
 def gum(
     dataset: str,
     target_cell: str,

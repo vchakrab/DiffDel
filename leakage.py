@@ -165,7 +165,7 @@ def construct_hypergraph_max(target_cell: str, rdrs: List[Tuple[str, ...]], weig
 def construct_hypergraph_actual(target_cell: str, rdrs: List[Tuple[str, ...]], weights: List[float]) -> Hypergraph:
     return construct_local_hypergraph(target_cell, rdrs, weights, mode="ACTUAL")
 
-def compute_utility_em(*, leakage: float, mask_size: int, zone_size: int, L0: float, lambda_penalty: float = 100.0) -> float:
+def compute_utility_em(*, leakage: float, mask_size: int, zone_size: int, L0: float, lambda_penalty: float = 1000.0) -> float:
     """
     Exponential-mechanism utility with a hard leakage cap via penalty.
 
@@ -223,15 +223,8 @@ def is_edge_active_by_mask_rule(edge_verts: Set[str], mask: Set[str], target_cel
 
 def iter_chains(mask: Set[str], target: str, edges: Dict[str, Tuple[Set[str], float]]):
     """
-    EnumerateChains(M, c*, H) with *visited-state pruning*.
+    EnumerateChains(M, c*, H)
 
-    Same as your current implementation, but adds:
-      visited_K: Set[frozenset] to avoid re-expanding identical knowledge states K.
-
-    NOTE: This pruning is NOT in the paper. It intentionally collapses multiple
-    distinct edge-sequences that reach the same K into one expansion, which can
-    significantly reduce chain counts (and will change leakage if you're summing
-    over chains).
     """
     if not edges:
         return
