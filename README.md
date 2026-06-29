@@ -90,7 +90,8 @@ python graph.py
 ```
 
 Figure 7 (dependency weight assignment) is documented in **`csv_files/compute_dc_weights.py`**.
-The `csv_files` folder also contains pre-computed results for $\gamma_{\text{frac}}$ = 0.25 and $\gamma_{\text{frac}}$ = 0.5. 
+The `csv_files` folder also contains pre-computed results for gamma_frac = 0.25 and gamma_frac = 0.5.
+
 ---
 
 # Project Structure
