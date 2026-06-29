@@ -181,7 +181,6 @@ def gum(
     model_time = time.time() - model_start
 
     out_dir = os.path.join("data", "hypergraphs_gum")
-    os.makedirs(out_dir, exist_ok = True)
     os.makedirs(out_dir, exist_ok=True)
     pkl_path = os.path.join(
         out_dir,
