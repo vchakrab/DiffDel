@@ -27,6 +27,7 @@ def write_parsed_dcs_to_file(denial_constraints, output_file):
         for dc in denial_constraints:
             f.write(f"    {dc},\n")
         f.write("]\n")
+    # print(f"Parsed {len(denial_constraints)} denial constraints and saved to {output_file}")
 
 if __name__ == "__main__":
     input_file = "raw_constraints/topHospitalDCs"       # Rename to 'topAdultDCs.txt' if needed

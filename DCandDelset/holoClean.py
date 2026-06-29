@@ -162,14 +162,26 @@ def example_holoclean():
         'Diagnosis': ['Healthy', 'Healthy', 'Diabetes', 'Diabetes', 'Hypertension', 'Diabetes']
     })
     
+    # print("=" * 60)
+    # print("HOLOCLEAN PROBABILISTIC EXTRACTION")
+    # print("=" * 60)
     
     extractor = HoloCleanWeightExtractor(data)
     
     # Extract using average confidence
     result_avg = extractor.extract_holoclean_weight(['Zip'], 'City', method='average')
+    # print(f"\nConstraint: {result_avg['lhs']} -> {result_avg['rhs']}")
+    # print(f"Average confidence: {result_avg['average_confidence']:.3f}")
+    # print(f"Worst-case confidence: {result_avg['worst_case_confidence']:.3f}")
+    # print(f"Weight (average): {result_avg['weight']:.3f}")
     
     # Extract using entropy
     result_entropy = extractor.extract_holoclean_weight(['Age'], 'Diagnosis', method='entropy')
+    # print(f"\nConstraint: {result_entropy['lhs']} -> {result_entropy['rhs']}")
+    # print(f"Weight (information gain): {result_entropy['weight']:.3f}")
     
+    # print("\nInterpretation:")
+    # print(f"  - Zip -> City has {result_avg['weight']*100:.1f}% average inference confidence")
+    # print(f"  - Age reduces Diagnosis uncertainty by {result_entropy['weight']*100:.1f}%")
 
 example_holoclean()

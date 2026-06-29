@@ -133,6 +133,9 @@ def main():
     out_file = "main_data_statistics.csv"
     out_df.to_csv(out_file, index=False)
 
+    # print("\nMain statistics collected successfully.")
+    # print(f"Saved to: {out_file}\n")
+    # print(out_df)
 
 
 if __name__ == "__main__":

@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS `{TABLE_NAME}` (
 """
         cursor.execute(create_table_query)
         conn.commit()
+        # print(f"✅ Table `{DB_NAME}`.`{TABLE_NAME}` created (if not already).")
 
         insert_query = f"""
 INSERT INTO `{TABLE_NAME}` (
@@ -107,18 +108,24 @@ INSERT INTO `{TABLE_NAME}` (
                 rows.append(values)
 
         if not rows:
+            pass
+            # print(f"⚠️ No rows parsed from CSV. Skipped={skipped}. Check header names.")
         else:
             cursor.executemany(insert_query, rows)
             conn.commit()
+            # print(f"✅ Inserted {len(rows)} rows into `{DB_NAME}`.`{TABLE_NAME}` (skipped {skipped}).")
             cursor.execute(f"SELECT COUNT(*) FROM `{TABLE_NAME}`")
             count = cursor.fetchone()[0]
+            # print(f"✅ Table now contains {count} rows.")
 
     except mysql.connector.Error as e:
         conn.rollback()
+        # print("❌ MySQL error:", e)
         raise
     finally:
         cursor.close()
         conn.close()
+    # print("✅ Done.")
 
 
 if __name__ == '__main__':

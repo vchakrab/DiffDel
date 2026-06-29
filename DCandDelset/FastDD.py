@@ -192,6 +192,9 @@ def example_fastdd():
     # Create dependency: similar Age -> similar BMI (with noise)
     data['BMI'] = data['Age'] * 0.3 + np.random.normal(0, 2, 100) + 10
     
+    # print("=" * 60)
+    # print("FASTDD EXTRACTION (support/confidence measure)")
+    # print("=" * 60)
     
     extractor = FastDDExtractor(data, min_support=0.7)
     
@@ -200,7 +203,19 @@ def example_fastdd():
                                          lhs_threshold=5, 
                                          rhs_threshold=2)
     
+    # print(f"\nDD: {result['lhs']}(≤{result['lhs_threshold']}) -> "
+          # f"{result['rhs']}(≤{result['rhs_threshold']})")
+    # print(f"Support (confidence): {result['support']:.3f}")
+    # print(f"Weight: {result['weight']:.3f}")
+    # print(f"Valid DD (support ≥ 0.7): {result['is_valid_dd']}")
     
+    # print(f"\nStatistics:")
+    # print(f"  - Pairs checked: {result['pairs_checked']}")
+    # print(f"  - Pairs similar on LHS: {result['pairs_similar_lhs']}")
+    # print(f"  - Pairs satisfying DD: {result['pairs_satisfy_dd']}")
     
+    # print("\nInterpretation for privacy:")
+    # print(f"  - If adversary knows two patients have similar age (±{result['lhs_threshold']} years),")
+    # print(f"  - They can infer BMI similarity with {result['weight']*100:.1f}% confidence")
 
 example_fastdd()

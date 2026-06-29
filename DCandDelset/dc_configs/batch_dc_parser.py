@@ -20,7 +20,10 @@ def parse_denial_constraints_from_file(input_file):
                     parsed = [(lhs, operator_map.get(op, op), rhs) for lhs, op, rhs in predicates]
                     parsed_dcs.append(parsed)
                 else:
+                    pass
+                    # print(f"Warning: Could not parse line {line_num}: {line}")
     except Exception as e:
+        # print(f"Error reading file {input_file}: {e}")
         return []
 
     return parsed_dcs
@@ -35,6 +38,7 @@ def write_parsed_dcs_to_file(denial_constraints, output_file, dataset_name):
             f.write(f"    {dc},\n")
         f.write("]\n")
     
+    # print(f"✓ Parsed {len(denial_constraints)} denial constraints for {dataset_name}")
 
 def batch_parse_all_dcs():
     """Parse all DC files in the raw_constraints directory."""
@@ -42,16 +46,22 @@ def batch_parse_all_dcs():
     raw_constraints_dir = os.path.join(script_dir, "raw_constraints")
     
     if not os.path.exists(raw_constraints_dir):
+        # print(f"Error: Directory {raw_constraints_dir} does not exist")
         return
     
     # Get all files in raw_constraints directory
     raw_files = [f for f in os.listdir(raw_constraints_dir) if os.path.isfile(os.path.join(raw_constraints_dir, f))]
     
     if not raw_files:
+        # print(f"No files found in {raw_constraints_dir}")
         return
     
+    # print(f"Found {len(raw_files)} files in raw_constraints:")
     for f in raw_files:
+        pass
+        # print(f"  - {f}")
     
+    # print("\nProcessing files...")
     
     successful_parses = 0
     total_constraints = 0
@@ -68,6 +78,7 @@ def batch_parse_all_dcs():
         if not dataset_name:
             dataset_name = raw_file
         
+        # print(f"\nProcessing: {raw_file}")
         
         # Parse the constraints
         dcs = parse_denial_constraints_from_file(input_path)
@@ -77,7 +88,15 @@ def batch_parse_all_dcs():
             successful_parses += 1
             total_constraints += len(dcs)
         else:
+            pass
+            # print(f"✗ No constraints found or error parsing {raw_file}")
     
+    # print(f"\n" + "="*50)
+    # print(f"Summary:")
+    # print(f"Files processed: {len(raw_files)}")
+    # print(f"Successful parses: {successful_parses}")
+    # print(f"Total constraints parsed: {total_constraints}")
+    # print(f"Generated files saved in: {script_dir}")
 
 if __name__ == "__main__":
     batch_parse_all_dcs()

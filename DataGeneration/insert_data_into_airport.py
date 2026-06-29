@@ -21,8 +21,10 @@ def main():
 
     cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
     cursor.execute(f"USE {DB_NAME}")
+    # print(f"✅ Database '{DB_NAME}' ready.")
 
     cursor.execute(f"DROP TABLE IF EXISTS {TABLE_NAME}")
+    # print(f"✅ Table '{TABLE_NAME}' dropped (if it existed).")
 
     create_table_query = f"""
 CREATE TABLE {TABLE_NAME} (
@@ -48,6 +50,7 @@ CREATE TABLE {TABLE_NAME} (
 """
     cursor.execute(create_table_query)
     conn.commit()
+    # print(f"✅ Table '{TABLE_NAME}' created.")
 
     rows = []
 
@@ -57,11 +60,14 @@ CREATE TABLE {TABLE_NAME} (
         # Strip type annotations: "latitude_deg float" → "latitude_deg"
         clean_header = [h.split()[0].strip().lower().replace('-', '_') for h in reader.fieldnames]
         reader.fieldnames = clean_header
+        # print(f"Headers: {reader.fieldnames}")
 
         for i, raw_row in enumerate(reader):
             row = {k.strip(): v.strip() for k, v in raw_row.items() if v is not None}
 
             if i == 0:
+                pass
+                # print(f"First row: {row}")
 
             try:
                 values = (
@@ -85,10 +91,13 @@ CREATE TABLE {TABLE_NAME} (
                 )
                 rows.append(values)
             except (ValueError, KeyError) as e:
+                # print(f"Row {i} skipped – parse error: {e}")
                 continue
 
+    # print(f"Total rows collected: {len(rows)}")
 
     if not rows:
+        # print("❌ No rows to insert – check CSV path and headers above.")
         cursor.close()
         conn.close()
         return
@@ -104,12 +113,15 @@ INSERT INTO {TABLE_NAME} (
     try:
         cursor.executemany(insert_query, rows)
         conn.commit()
+        # print(f"✅ Inserted {cursor.rowcount} rows into '{TABLE_NAME}'.")
     except mysql.connector.Error as e:
         conn.rollback()
+        # print(f"❌ Insert failed: {e}")
         raise
 
     cursor.close()
     conn.close()
+    # print("✅ Done.")
 
 
 if __name__ == '__main__':

@@ -53,10 +53,17 @@ def convert_constraints(input_file, output_file_py):
                 f_out.write(f"    {dc},\n")
             f_out.write("]\n")
 
+        # print(f"Success! Converted constraints saved to {output_file_py}")
 
     except FileNotFoundError:
+        pass
+        # print("Error: Input file not found.")
     except json.JSONDecodeError:
+        pass
+        # print("Error: Failed to decode JSON. Ensure each line is a valid JSON object.")
     except Exception as e:
+        pass
+        # print(f"An unexpected error occurred: {e}")
 
 # Example usage (update as needed for specific dataset conversion)
 # This will now create a .py file that can be imported

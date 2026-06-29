@@ -47,6 +47,7 @@ CREATE TABLE `{TABLE_NAME}` (
 """
     cursor.execute(create_table_query)
     conn.commit()
+    # print(f"✅ Table '{TABLE_NAME}' created fresh.")
 
     insert_query = f"""
 INSERT INTO {TABLE_NAME} (
@@ -79,8 +80,10 @@ INSERT INTO {TABLE_NAME} (
         cursor.executemany(insert_query, rows)
         conn.commit()
 
+    # print(f"✅ Inserted {cursor.rowcount} rows into '{TABLE_NAME}' (skipped {skipped}).")
     cursor.close()
     conn.close()
+    # print("✅ Done.")
 
 
 if __name__ == '__main__':

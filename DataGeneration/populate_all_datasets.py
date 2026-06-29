@@ -26,4 +26,8 @@ DATASETS = [
 
 if __name__ == '__main__':
     for name, fn in DATASETS:
+        # print(f"\n{'=' * 50}")
+        # print(f"  Loading: {name}")
+        # print(f"{'=' * 50}")
         fn()
+    # print("\n✅ All datasets loaded successfully.")

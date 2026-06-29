@@ -146,6 +146,7 @@ def build_bfs_tree(dcs, target):
 
 def print_tree(node, children, target, depth, indent=0):
     tag = " [ROOT]" if node == target else (" [leaf]" if not children[node] else "")
+    # print("  " * indent + node + tag)
     for child in children[node]:
         print_tree(child, children, target, depth, indent + 1)
 
@@ -153,10 +154,24 @@ def print_tree(node, children, target, depth, indent=0):
 def run_example():
     """Run build_bfs_tree on the tiny a/b/c/d/e example and print everything
     needed to verify it by hand against the diagram in the comments above."""
+    # print("=" * 60)
+    # print("EXAMPLE (a/b/c/d/e) -- sanity check")
+    # print("=" * 60)
 
     V, E, children, depth, visited = build_bfs_tree(EXAMPLE_DCS, EXAMPLE_TARGET)
 
+    # print("children:", dict(children))
+    # print("depth:", depth)
+    # print("visited:", visited)
+    # print(f"|V| = {V}, |E| = {E}")
+    # print(f"rho1 = {E}/{V} = {E / V:.6f}")
+    # print()
+    # print("BFS tree:")
     print_tree(EXAMPLE_TARGET, children, EXAMPLE_TARGET, depth)
+    # print()
+    # print("Expected: |V|=5, |E|=5, rho1=1.0, tree = a->[b,c], b->[d], c->[e]")
+    # print("=" * 60)
+    # print()
 
 
 def main():
@@ -169,14 +184,21 @@ def main():
         V, E, children, depth, visited = build_bfs_tree(dcs, target)
 
         rho1 = E / V
+        # print("children", target, children)
+        # print("depth", target, depth)
+        # print("target", target, visited)
 
         # Uncomment to also see the BFS tree structure for this dataset:
+        # print(f"--- {name} (root={target}) ---")
         # print_tree(target, children, target, depth)
+        # print()
 
         results[name] = rho1
 
     # Output: just rho1 for each dataset
     for name, rho1 in results.items():
+        pass
+        # print(f"{name}: rho1 = {rho1:.6f}")
 
 
 if __name__ == "__main__":

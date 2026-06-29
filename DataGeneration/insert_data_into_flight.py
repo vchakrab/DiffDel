@@ -22,8 +22,10 @@ def main():
 
     cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
     cursor.execute(f"USE {DB_NAME}")
+    # print(f"✅ Database '{DB_NAME}' ready.")
 
     cursor.execute(f"DROP TABLE IF EXISTS {TABLE_NAME}")
+    # print(f"✅ Table '{TABLE_NAME}' dropped (if it existed).")
 
     create_table_query = f"""
 CREATE TABLE {TABLE_NAME} (
@@ -52,6 +54,7 @@ CREATE TABLE {TABLE_NAME} (
 """
     cursor.execute(create_table_query)
     conn.commit()
+    # print(f"✅ Table '{TABLE_NAME}' created.")
 
     insert_query = f"""
 INSERT INTO {TABLE_NAME} (
@@ -86,9 +89,11 @@ INSERT INTO {TABLE_NAME} (
         batch = rows[i:i + BATCH_SIZE]
         cursor.executemany(insert_query, batch)
         conn.commit()
+        # print(f"✅ Inserted batch {i + 1} to {i + len(batch)}")
 
     cursor.close()
     conn.close()
+    # print("✅ Done.")
 
 
 if __name__ == '__main__':

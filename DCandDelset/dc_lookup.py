@@ -42,11 +42,15 @@ def generate_lookup_table_from_dc_list(dc_list):
                         lookup_table[key] = set()
                     lookup_table[key].add(dc_label)
             else:
+                pass
+                # print(f"Skipped malformed predicate in {dc_label}: {predicate}")
 
     return lookup_table
 
 def print_lookup_table(lookup_table):
     for attr, dcs in lookup_table.items():
+        pass
+        # print(f"Attribute: {attr}, Denial Constraints: {', '.join(dcs)}")
 
 def main():
     parser = argparse.ArgumentParser(description='Generate denial constraint lookup table')
@@ -57,9 +61,11 @@ def main():
     args = parser.parse_args()
     denial_constraints = load_dc_config(args.db)
     if not denial_constraints:
+        # print(f"No denial constraints found for database '{args.db}'.")
         return
     
     lookup = generate_lookup_table_from_dc_list(denial_constraints)
+    # print(f"Denial Constraint Lookup Table for '{args.db}':\n")
     print_lookup_table(lookup)
 
 if __name__ == "__main__":
