@@ -64,7 +64,7 @@ setup_mysql_password() {
     if mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SELECT 1;" &>/dev/null; then
         warn "MySQL root password is already set to that value, nothing to do."
     else
-        local alter_sql="ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;"
+        local alter_sql="ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;"
         if [[ "$platform" == "linux" ]]; then
             # Fresh apt installs use auth_socket for root, so connect via sudo first.
             if sudo mysql -e "$alter_sql" 2>/dev/null; then
