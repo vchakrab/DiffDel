@@ -49,9 +49,7 @@ Our implementation depends on the following requirements, which `install.sh` wil
    ```
 
 4. **Run**: `python3 main.py`
-
 That's it. `main.py` will load all datasets, run all experiments, and generate all figures automatically. 
-If `main.py` still gives you an error on MySQL credentials do sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY 'my_password'; FLUSH PRIVILEGES;"
 To see results from the paper as they appear, look at `data/release_data` and `fig/release_figures`. 
 ---
 
