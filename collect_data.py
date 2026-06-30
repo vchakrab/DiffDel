@@ -535,7 +535,7 @@ def build_main_data(
     # --- exp and gumbel (filtered) ---
     method_map = {
         "exp":    ("exp",    "del2ph"),
-        "gumbel": ("gum",   "marginal_em"),
+        "gum": ("gum",   "marginal_em"),
     }
 
     for out_name, (src_name, method_label) in method_map.items():

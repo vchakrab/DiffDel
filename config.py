@@ -164,14 +164,8 @@ def list_available_datasets():
 
 
 # ============================================================================
-# FILE PATH FUNCTIONS (Domains, DCs, etc.)
+# FILE PATH FUNCTIONS
 # ============================================================================
-
-def get_domain_file_path(dataset_name):
-    """Get path to computed domain map JSON file for a dataset."""
-    dataset = get_dataset_info(dataset_name)
-    return PATHS['id_computation'] / dataset['domain_file']
-
 
 def get_dc_config_path(dataset_name):
     """Get path to parsed denial constraint Python file."""
@@ -183,16 +177,6 @@ def get_dc_raw_path(dataset_name):
     """Get path to raw denial constraint file."""
     dataset = get_dataset_info(dataset_name)
     return PATHS['dc_raw'] / dataset['dc_raw_file']
-
-
-def get_output_file(filename):
-    """Get path for output files."""
-    return PATHS['output'] / filename
-
-
-def get_log_file(filename):
-    """Get path for log files."""
-    return PATHS['logs'] / filename
 
 
 def get_data_generation_path(dataset_name):
@@ -216,7 +200,6 @@ DC_CONFIGS = {
     if dataset['dc_config_module']
 }
 
-#OUTPUT_DIR = str(PATHS['output'])  # Your existing OUTPUT_DIR as string
 
 
 # ============================================================================
@@ -252,11 +235,10 @@ __all__ = [
     'get_primary_table', 'get_key_column', 'get_all_tables',
 
     # File path functions
-    'get_domain_file_path', 'get_dc_config_path', 'get_dc_raw_path',
-    'get_output_file', 'get_log_file', 'get_data_generation_path',
+    'get_dc_config_path', 'get_dc_raw_path', 'get_data_generation_path',
 
     # Backward compatibility
-    'DATABASES', 'DC_CONFIGS', 'OUTPUT_DIR',
+    'DATABASES', 'DC_CONFIGS',
 
     # Utilities
     'validate_dataset', 'DEFAULT_TARGET_EID'

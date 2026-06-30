@@ -51,61 +51,6 @@ class CellILP:
     key: int
 
 
-def estimate_memory_bytes_standard(
-    *,
-    num_vertices: int,
-    num_edges: int,
-    edge_members: int,
-    mask_size: int,
-    stores_candidate_masks: bool,
-    num_candidate_masks: int = 0,
-    candidate_mask_members: int = 0,
-    includes_inferable_model: bool = False,
-    includes_channel_map: bool = False,
-    ilp_num_cells: int = 0,
-    ilp_num_vars: int = 0,
-    ilp_num_constrs: int = 0,
-) -> int:
-    BYTES_PER_VERTEX = 112
-    BYTES_PER_EDGE = 184
-    BYTES_PER_EDGE_MEMBER = 72
-    BYTES_PER_MASK_MEMBER = 72
-    BYTES_PER_MASK_SET = 96
-
-    BYTES_PER_EDGE_STRUCT = 80
-    BYTES_PER_FLOAT = 8
-    BYTES_PER_INT = 28
-    BYTES_PER_CAND_MASK = 96
-
-    BYTES_PER_ILP_CELL = 128
-    BYTES_PER_ILP_VAR = 96
-    BYTES_PER_ILP_CONSTR = 128
-
-    est = 0
-    est += num_vertices * BYTES_PER_VERTEX
-    est += num_edges * BYTES_PER_EDGE
-    est += edge_members * BYTES_PER_EDGE_MEMBER
-    est += BYTES_PER_MASK_SET + mask_size * BYTES_PER_MASK_MEMBER
-
-    if includes_inferable_model:
-        est += num_edges * BYTES_PER_EDGE_STRUCT
-        est += num_vertices * BYTES_PER_FLOAT
-        est += num_edges * BYTES_PER_FLOAT
-
-    if includes_channel_map:
-        est += num_edges * (BYTES_PER_INT + BYTES_PER_FLOAT)
-
-    if stores_candidate_masks:
-        est += num_candidate_masks * BYTES_PER_CAND_MASK
-        est += candidate_mask_members * BYTES_PER_MASK_MEMBER
-
-    if ilp_num_cells or ilp_num_vars or ilp_num_constrs:
-        est += ilp_num_cells * BYTES_PER_ILP_CELL
-        est += ilp_num_vars * BYTES_PER_ILP_VAR
-        est += ilp_num_constrs * BYTES_PER_ILP_CONSTR
-
-    return int(est)
-
 
 def get_insertion_time(cursor, table, key, attr):
     try:
