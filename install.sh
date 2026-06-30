@@ -53,6 +53,20 @@ ensure_apt_updated() {
     fi
 }
 
+# Checks whether the full LaTeX toolchain matplotlib's usetex mode needs is
+# present — not just pdflatex itself. A bare/partial TeX install can have
+# pdflatex on PATH while still being missing packages like cm-super, which
+# causes silent failures later when matplotlib tries to render with usetex.
+latex_stack_complete() {
+    have pdflatex || return 1
+    if [[ "$PLATFORM" == "linux" ]]; then
+        dpkg -s cm-super &>/dev/null || return 1
+    else
+        kpsewhich type1ec.sty &>/dev/null || return 1
+    fi
+    return 0
+}
+
 # ── MySQL root password setup (interactive, with sensible default) ──────────
 setup_mysql_password() {
     local platform="$1"
@@ -143,7 +157,8 @@ if [[ "$PLATFORM" == "macos" ]]; then
 
     setup_mysql_password "macos"
 
-    if have pdflatex; then
+    export PATH="/Library/TeX/texbin:$PATH"
+    if latex_stack_complete; then
         step "LaTeX already installed, skipping."
     else
         step "Installing BasicTeX + required LaTeX packages (~200 MB)..."
@@ -156,7 +171,7 @@ if [[ "$PLATFORM" == "macos" ]]; then
         brew install ghostscript
         step "Installing LaTeX packages via tlmgr..."
         sudo tlmgr update --self
-        sudo tlmgr install collection-latexrecommended dvipng
+        sudo tlmgr install collection-latexrecommended dvipng cm-super
     fi
 
     echo ""
@@ -216,11 +231,11 @@ if [[ "$PLATFORM" == "linux" ]]; then
 
     setup_mysql_password "linux"
 
-    if have pdflatex; then
+    if latex_stack_complete; then
         step "LaTeX already installed, skipping."
     else
         step "Installing LaTeX packages..."
-        apt_install texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended dvipng ghostscript
+        apt_install texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended dvipng ghostscript cm-super
     fi
 fi
 
@@ -334,6 +349,7 @@ check "pip"      "venv/bin/pip --version"
 check "gurobipy" "venv/bin/python -c 'import gurobipy'"
 check "mysql"    "have mysql"
 check "pdflatex" "have pdflatex"
+check "cm-super" "latex_stack_complete"
 
 echo -e "\n${GREEN}All done!${NC} To get started:"
 echo "  source venv/bin/activate"
