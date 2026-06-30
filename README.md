@@ -14,42 +14,45 @@ The codebase for the same project is available at [click here] (https://github.c
 
 1. Clone the repository to your machine.
 
-Our implementation depends on the following requirements, which we will guide you on how to install. 
+Our implementation depends on the following requirements, which `install.sh` will install for you automatically.
+
 # Requirements
 
 - **Python 3.10+**
-- **MySQL** (e.g., MySQL v9.4.0) — see install instructions below
-- **Gurobi** installed and licensed (e.g., Gurobi v13.0) — required by `min.py`.
-- **LaTeX** — required by `graph.py` for figure rendering (`text.usetex = True`); needs `latex`, `dvipng`, and `ghostscript` on your PATH
-- **Python packages** (install via `pip install -r requirements.txt`):
+- **MySQL** (e.g., MySQL v9.4.0) — set up automatically by `install.sh`
+- **Gurobi** installed and licensed (e.g., Gurobi v13.0) — required by `min.py`, activated automatically by `install.sh`
+- **LaTeX** — required by `graph.py` for figure rendering (`text.usetex = True`); needs `latex`, `dvipng`, and `ghostscript` on your PATH — installed automatically by `install.sh`
+- **Python packages** (installed automatically into a virtual environment via `requirements.txt`):
   - `mysql-connector-python` — MySQL driver
   - `numpy`, `pandas`, `scipy` — data processing
   - `matplotlib` — figure generation
-  - `gurobipy` — Gurobi Python bindings (requires Gurobi to be installed first)
-  
-3. **Install MySQL** and set the root password to "my_password" as it is already configured in `config.py`.
+  - `gurobipy` — Gurobi Python bindings
 
-### Mac
-```bash
-brew install mysql
-brew services start mysql
-mysql_secure_installation   # set root password when prompted
-```
-
-3. **Install Gurobi** and activate your license (see [Requirements](#requirements) below). 
-For more instructions on setting up an Academic License with Gurobi.
-For a tutorial [click here](https://support.gurobi.com/hc/en-us/articles/14799677517585-Getting-Started-with-Gurobi-Optimizer). 
-For more information on how to obtain a free academic license [click here](https://www.gurobi.com/academia/academic-program-and-licenses/).
-4. **Install LaTeX** (required for figure rendering — see [Requirements](#requirements) below)
-5. **Install Python dependencies**:
+2. **Run the setup script:**
    ```bash
-   pip install -r requirements.txt
+   chmod +x install.sh
+   ./install.sh
    ```
-6. **Run**: `python main.py`
+   This single script works on both macOS and Linux, starting from a clean machine with nothing pre-installed. It will:
+   - Install any missing prerequisites (`git`, `curl`, Python 3, build tools)
+   - Install and start MySQL, then prompt you to set the root password (press Enter to accept the default `my_password`, which matches what's already configured in `config.py`)
+   - Walk you through getting a free Gurobi license and prompt you to paste your license key, then activate it automatically (leave blank to skip and use the default trial license instead)
+   - Install LaTeX (`dvipng`, `ghostscript`) for figure rendering
+   - Create a Python virtual environment (`venv/`) and install all dependencies from `requirements.txt`
+   - Finish with a pass/fail check confirming git, Python, pip, `gurobipy`, MySQL, and LaTeX are all working
+
+   It's safe to re-run `./install.sh` at any time — every step skips automatically if it's already done.
+
+3. **Activate the virtual environment** in any new terminal session before running the project:
+   ```bash
+   source venv/bin/activate
+   ```
+
+4. **Run**: `python3 main.py`
 
 That's it. `main.py` will load all datasets, run all experiments, and generate all figures automatically. 
-To see results from the paper as they appear, look at `data/release_data` and `fig/release_figures`.
-
+If `main.py` still gives you an error on MySQL credentials do sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY 'my_password'; FLUSH PRIVILEGES;"
+To see results from the paper as they appear, look at `data/release_data` and `fig/release_figures`. 
 ---
 
 # Running
@@ -69,6 +72,28 @@ L0_VALUES  = [0.025, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 
 ```bash
 python main.py
+```
+
+---
+
+# Troubleshooting
+ 
+**`main.py` reports that MySQL is running but credentials are wrong**
+ 
+This usually means the root password wasn't set correctly during `install.sh` — for example, if `mysql_native_password` isn't available on your MySQL version. Reset it explicitly:
+ 
+- **Linux:**
+```bash
+  sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY 'my_password'; FLUSH PRIVILEGES;"
+```
+- **macOS:**
+```bash
+  mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY 'my_password'; FLUSH PRIVILEGES;"
+```
+ 
+Then confirm it worked:
+```bash
+mysql -u root -pmy_password -e "SELECT 1;"
 ```
 
 ---
@@ -113,5 +138,4 @@ DiffDel/
 
 # Acknowledgements
 
-Experiment scripts were generated with the help of Claude. 
-
+Experiment scripts were generated with the help of Claude.
