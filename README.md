@@ -59,7 +59,7 @@ To see results from the paper as they appear, look at `data/release_data` and `f
 
 1. Verifies MySQL is reachable (prints a helpful error if not)
 2. Creates and populates all five databases from the CSVs in `csv_files/`
-3. Runs all experiments (~3–4 hours with default parameters)
+3. Runs all experiments with default parameters
 4. Generates all figures into `fig/`. The graphing code assumes that the full experiment has ran and will produce an error if the full set of default parameters has not run and isn't present in  `/data/`.
 
 ### Default experiment parameters (in `collect_data.py`):
